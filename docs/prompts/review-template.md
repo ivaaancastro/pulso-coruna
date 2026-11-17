@@ -1,0 +1,1 @@
+Revisa la rama <rama> contra AGENTS.md y los criterios de <ID>. Busca: incumplimiento del contrato de schema, tests que llamen a APIs reales, secretos, dependencias sin ADR, casos límite. Responde con lista priorizada, sin editar.
