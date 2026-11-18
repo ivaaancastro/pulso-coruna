@@ -61,6 +61,16 @@ importers:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@26.6.6)
 
+  packages/adapters:
+    dependencies:
+      '@pulso/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
   packages/schema:
     dependencies:
       zod:
