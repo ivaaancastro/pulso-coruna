@@ -4,7 +4,13 @@ import type { Sql } from "postgres";
 import { type BackoffOptions, backoffDelay } from "../backoff.js";
 import type { Clock, Logger } from "../types.js";
 
-export const MIGRATIONS_DIR = fileURLToPath(new URL("../../migrations/", import.meta.url));
+/**
+ * Con el bundle de producción (`dist/main.js`, ADR-0017) la ruta relativa al fuente deja de valer:
+ * la imagen fija `INGEST_MIGRATIONS_DIR`.
+ */
+export const MIGRATIONS_DIR =
+  process.env["INGEST_MIGRATIONS_DIR"] ||
+  fileURLToPath(new URL("../../migrations/", import.meta.url));
 
 /** Clave arbitraria del advisory lock que serializa migraciones concurrentes. */
 const LOCK_KEY = 7_303_5;

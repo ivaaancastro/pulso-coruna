@@ -14,3 +14,7 @@ apps/web/public/tiles/*.pmtiles
 .lighthouseci/
 test-results/
 playwright-report/
+
+# Despliegue (M3.6)
+infra/deploy/backups/
+infra/deploy/tiles/
