@@ -35,7 +35,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M3.2 Adaptador BiciCoruña
 - [x] M3.3 Adaptador MeteoGalicia
 - [x] M3.4 Adaptador iTranvías o plan B
-- [ ] M3.5 Ingesta + TimescaleDB + `source_health`
+- [x] M3.5 Ingesta + TimescaleDB + `source_health`
 - [ ] M3.6 Despliegue mínimo en VPS
 
 ## M4 — El latido
