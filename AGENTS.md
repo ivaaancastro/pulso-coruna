@@ -1,6 +1,6 @@
 # AGENTS.md — Pulso A Coruña
 
-Fuente de verdad para cualquier agente (Claude Code, opencode…). Spec completa: `docs/SPEC.md`. Tareas: `docs/TASKS.md`.
+Fuente de verdad para cualquier agente (Claude Code, opencode…). Spec: `docs/SPEC.md`. Roadmap y presupuestos: `docs/ROADMAP.md`. Tareas: `docs/TASKS.md`. Diseño: `docs/design/`.
 
 ## Qué es
 
@@ -27,7 +27,7 @@ pnpm workspaces · TypeScript estricto · Vite · MapLibre GL + deck.gl · Fasti
 
 ## Definición de hecho
 
-Tests verdes, typecheck sin errores, docs/ADR actualizados si cambia una decisión, resumen de cambios + riesgos + cómo probarlo.
+Tests verdes, typecheck sin errores, docs/ADR actualizados si cambia una decisión, resumen de cambios + riesgos + cómo probarlo. En UI (desde M2): `perf-budget` dentro de presupuesto y `design-review` sin bloqueantes.
 
 ## Prohibido
 
@@ -43,13 +43,14 @@ Flujo completo: `docs/WORKFLOW.md`. `main` y `develop` protegidas: nunca commit/
 
 1. Una tarea = una rama = una PR (tamaño máx. media jornada).
 2. Leer la sección relevante de la spec y proponer plan breve antes de tocar archivos.
-3. Un git worktree por tarea y agente para paralelizar (`git worktree add ../pulso-T1.4 -b feat/T1.4 develop`).
+3. Un git worktree por tarea y agente para paralelizar (`git worktree add ../pulso-M3.2 -b feat/M3.2-bicicoruna develop`).
 4. Revisión cruzada: lo que escribe un agente lo revisa el otro.
 5. ADR de ≤10 líneas por decisión técnica relevante.
 
 ## Herramientas (MCP y skills)
 
 - Antes de escribir código que dependa de MapLibre, deck.gl, Fastify o Timescale, consulta Context7 (versiones fijadas en los ADR).
-- Rendimiento: chrome-devtools (trazas). Pruebas visuales del mapa: Playwright en modo visión (canvas/WebGL no tiene árbol de accesibilidad).
-- Skills del proyecto en `.claude/skills/` (también las lee opencode): `new-adapter`, `source-note`, `contract-change`. Subagente `reviewer` para revisar antes de cerrar.
+- Rendimiento: chrome-devtools (trazas, Lighthouse). Pruebas visuales del mapa: Playwright en modo visión (canvas/WebGL no tiene árbol de accesibilidad).
+- GitHub: `gh` CLI (no hay MCP de GitHub).
+- Skills del proyecto en `.claude/skills/` (también las lee opencode): `new-adapter`, `source-note`, `contract-change`, `design-review`, `perf-budget`. Para UI nueva, skill `frontend-design`. Subagente `reviewer` para revisar antes de cerrar.
 - Detalle y puesta en marcha: `docs/TOOLING.md`.

@@ -1,6 +1,6 @@
 ---
 name: new-adapter
-description: Crear un adaptador de datos nuevo (bus, bici, meteo, aire, mar, barcos, aviones) con fixtures grabadas y tests. Úsalo al implementar cualquier tarea T1.3–T1.6 o T2.1.
+description: Crear un adaptador de datos nuevo (bus, bici, meteo, aire, mar, barcos, aviones) con fixtures grabadas y tests. Úsalo al implementar cualquier adaptador (M3.1–M3.4, M5.1).
 ---
 # Nuevo adaptador
 

@@ -1,8 +1,7 @@
 # Pulso A Coruña — Especificación
 
-> Versión completa (con diagramas de arquitectura y roadmap, tablas de fuentes y criterios de cada tarea) en el doc online:
-> https://claude.ai/artifact/NADta5KrKPrP8Uq2GJCAga
-> Pendiente: pegar aquí el export completo en Markdown (menú Export del doc) para que los agentes lo lean en local.
+> Fuente de verdad: este repo. Roadmap y presupuestos en `docs/ROADMAP.md`; dirección de arte en `docs/design/`.
+> Versión extendida (diagramas, tablas de fuentes, plan de lanzamiento) en el doc online: https://claude.ai/artifact/NADta5KrKPrP8Uq2GJCAga. Si discrepa, manda el repo.
 
 ## Resumen
 
@@ -11,7 +10,7 @@ Fuera de alcance: cuentas, monetización, publicidad, planificador de rutas, dat
 
 ## Metas
 
-60 fps en móvil de gama media; primera pintura útil < 2,5 s; datos < 60 s de retraso; coste < 10 €/mes; README con GIF y despliegue con un comando.
+Producto premium que destaque por diseño y rendimiento. Presupuestos completos en `docs/ROADMAP.md` (fps, primer fotograma del mapa, peso de JS, INP, cero peticiones a terceros), medidos con la skill `perf-budget` y, lo que no depende de GPU, en CI desde M2.5. Además: datos < 60 s de retraso; coste < 10 €/mes; README con GIF y despliegue con un comando.
 
 ## Capas y fuentes
 
@@ -39,7 +38,7 @@ Cambios incompatibles → `v2`. Tiempos UTC epoch ms. Nada de datos personales (
 
 ## Visual
 
-Ciudad nocturna vista desde arriba. MapLibre + PMTiles propios, edificios extruidos de OSM, deck.gl (TripsLayer, ScatterplotLayer, IconLayer, HeatmapLayer), viento con partículas WebGL propias, interpolación entre mensajes. `prefers-reduced-motion` respetado.
+Dirección cinematográfica nocturna (brief en `docs/design/README.md`): el mar como protagonista, solo brilla lo que es dato, cámara con intro coreografiada, poco texto y muy cuidado. MapLibre + PMTiles propios, edificios extruidos de OSM, deck.gl (TripsLayer, ScatterplotLayer, IconLayer, HeatmapLayer), viento con partículas WebGL propias, interpolación entre mensajes. `prefers-reduced-motion` respetado.
 
 ## Riesgos principales
 

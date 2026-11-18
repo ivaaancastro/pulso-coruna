@@ -1,6 +1,6 @@
 ---
 name: source-note
-description: Verificar una fuente de datos y documentarla en docs/sources/<fuente>.md (URL, licencia, frecuencia, respuesta de ejemplo). Úsalo en la Fase 0 (T0.x) o antes de crear un adaptador.
+description: Verificar una fuente de datos y documentarla en docs/sources/<fuente>.md (URL, licencia, frecuencia, respuesta de ejemplo). Úsalo en M1 (M1.1–M1.4) o antes de crear un adaptador.
 ---
 # Nota de fuente
 

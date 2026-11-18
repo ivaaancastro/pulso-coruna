@@ -10,7 +10,7 @@
 
 Nadie hace commit ni push directo a `main` ni `develop`: todo entra por PR con CI verde y 1 revisión aprobada, historial lineal (squash merge).
 
-Nombre de rama: `<tipo>/<ID>-<slug>` (ej. `feat/T1.2-schema-zod`). Commits convencionales.
+Nombre de rama: `<tipo>/<ID>-<slug>` (ej. `feat/M0.2-schema-zod`). Commits convencionales.
 
 ## Spec-Driven Development (SDD)
 
@@ -25,10 +25,10 @@ Nombre de rama: `<tipo>/<ID>-<slug>` (ej. `feat/T1.2-schema-zod`). Commits conve
 
 ```bash
 git switch develop && git pull
-git switch -c feat/T1.2-schema-zod
+git switch -c feat/M0.2-schema-zod
 # ... trabajo ...
 pnpm -r typecheck && pnpm -r lint && pnpm -r test && pnpm format:check
-git push -u origin feat/T1.2-schema-zod
+git push -u origin feat/M0.2-schema-zod
 gh pr create --base develop
 ```
 
