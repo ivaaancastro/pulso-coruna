@@ -1,0 +1,103 @@
+/* Tokens de diseño "Faro". Fuente: docs/design/tokens.md (aprobada 2026-11-18). */
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo-latin-wdth-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* base */
+  --pulso-bg: #05080e;
+  --pulso-land: #0a0f19;
+  --pulso-water: #0b2236;
+  --pulso-water-deep: #06131f;
+  --pulso-coast: #1e3a55;
+  --pulso-building: #1a2438;
+  --pulso-building-side: #111827;
+  --pulso-surface: #0c1220;
+  --pulso-surface-overlay: #141c2e;
+
+  /* texto */
+  --pulso-text: #e8eef7;
+  --pulso-text-muted: #8e9bb0;
+  --pulso-text-subtle: #7a88a4;
+
+  /* bordes */
+  --pulso-border-control: #5a6a88;
+  --pulso-border-hairline: #243049;
+
+  /* estados */
+  --pulso-focus: #f5f1e4;
+  --pulso-warn: #ffb020;
+  --pulso-error: #ff6b6b;
+
+  /* capas */
+  --pulso-bus: #ffc23d;
+  --pulso-bike: #6be8a4;
+  --pulso-wind: #c9dcf5;
+  --pulso-sea: #22c7d9;
+  --pulso-ship: #ff7a59;
+  --pulso-air: #a78bfa;
+  --pulso-plane: #f5f1e4;
+  --pulso-train: #f45cd8;
+  --pulso-layer-muted-opacity: 0.35;
+
+  /* tipografía */
+  --pulso-font: "Archivo", system-ui, sans-serif;
+  --pulso-tabular: tabular-nums;
+  --pulso-text-display: 64px;
+  --pulso-text-title: 28px;
+  --pulso-text-body: 16px;
+  --pulso-text-label: 13px;
+  --pulso-leading-display: 1;
+  --pulso-leading-body: 1.5;
+
+  /* espaciado (base 4 px) */
+  --pulso-space-1: 4px;
+  --pulso-space-2: 8px;
+  --pulso-space-3: 12px;
+  --pulso-space-4: 16px;
+  --pulso-space-5: 24px;
+  --pulso-space-6: 32px;
+  --pulso-space-7: 48px;
+  --pulso-space-8: 72px;
+  --pulso-gutter: 16px;
+
+  /* radios */
+  --pulso-radius-0: 0;
+  --pulso-radius-1: 6px;
+  --pulso-radius-2: 14px;
+  --pulso-radius-pill: 999px;
+
+  /* movimiento */
+  --pulso-dur-instant: 80ms;
+  --pulso-dur-fast: 160ms;
+  --pulso-dur-base: 280ms;
+  --pulso-dur-slow: 600ms;
+  --pulso-dur-camera: 2200ms;
+  --pulso-dur-intro: 3800ms;
+  --pulso-ease-drone: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pulso-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --pulso-ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --pulso-text-display: 120px;
+    --pulso-text-title: 40px;
+    --pulso-gutter: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pulso-dur-fast: 80ms;
+    --pulso-dur-base: 80ms;
+    --pulso-dur-slow: 80ms;
+    --pulso-dur-camera: 0ms;
+    --pulso-dur-intro: 200ms;
+  }
+}
