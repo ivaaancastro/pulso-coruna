@@ -1,0 +1,44 @@
+[
+  {
+    "_id": { "assetId": "10" },
+    "BikeHireDockingStation": {
+      "id": "10",
+      "type": "BikeHireDockingStation",
+      "stationCode": "10",
+      "stationName": "Mirador de los Castros",
+      "category": "",
+      "status": "working",
+      "availableBikeNumber": 2,
+      "availableElectricalBikeNumber": 1,
+      "freeSlotNumber": 17,
+      "totalSlotNumber": 19,
+      "outOfServiceSlotNumber": 0,
+      "location": { "coordinates": [43.3539722, -8.3904889], "type": "Point" },
+      "address": "Centro Deportivo San Diego",
+      "description": "",
+      "dateModified": "",
+      "ownership": "emvsa"
+    }
+  },
+  {
+    "_id": { "assetId": "11" },
+    "BikeHireDockingStation": {
+      "id": "11",
+      "type": "BikeHireDockingStation",
+      "stationCode": "11",
+      "stationName": "Los Rosales",
+      "category": "",
+      "status": "working",
+      "availableBikeNumber": 16,
+      "availableElectricalBikeNumber": 6,
+      "freeSlotNumber": 9,
+      "totalSlotNumber": 25,
+      "outOfServiceSlotNumber": 0,
+      "location": { "coordinates": [43.3743246, -8.4319872], "type": "Point" },
+      "address": "",
+      "description": "",
+      "dateModified": "",
+      "ownership": "emvsa"
+    }
+  }
+]
