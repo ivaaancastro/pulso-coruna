@@ -1,6 +1,6 @@
 # Teselas propias de A Coruña (M2.1)
 
-OSM → PMTiles (vectorial, esquema OpenMapTiles 3.16) con [Planetiler](https://github.com/onthegomap/planetiler) v0.10.2. Resultado medido: **6,85 MB**, zooms 0–14, bbox `-8.58,43.27,-8.25,43.45` (bahía, península, Oleiros, Arteixo, Sada y Bergondo).
+OSM → PMTiles (vectorial, esquema OpenMapTiles 3.16) con [Planetiler](https://github.com/onthegomap/planetiler) v0.10.2. Resultado medido: **7,67 MB**, zooms 0–14, bbox `-8.58,43.27,-8.25,43.52` (bahía, península, Oleiros, Arteixo, Sada y Bergondo; el norte hasta 43,52 es mar abierto, para que la intro de cámara no muestre el borde de las teselas). Desde M2.7 las alturas de edificios usan plantas reales del Catastro (ver «Alturas reales»).
 
 ## Reproducir
 
@@ -22,11 +22,24 @@ node infra/tiles/verify.mjs          # verifica (Node >= 20, sin dependencias)
 Comando efectivo (lo que ejecuta `build.sh`):
 
 ```bash
-java -Xmx3g -jar .work/planetiler.jar openmaptiles --download --download_dir=.work/sources \
+# (tras fetch-catastro.mjs, DumpBuildings.java y build-heights.mjs; ver «Alturas reales»)
+java -Xmx3g -cp .work/planetiler.jar CorunaTiles.java --heights=.work/heights.tsv --area=galicia \
+  --download --download_dir=.work/sources \
   --tmpdir=.work/tmp --osm-path=.work/sources/galicia-261117.osm.pbf \
-  --bounds=-8.58,43.27,-8.25,43.45 --minzoom=0 --maxzoom=14 \
+  --bounds=-8.58,43.27,-8.25,43.52 --minzoom=0 --maxzoom=14 \
   --nodemap_type=sortedtable --storage=ram --output=.work/coruna.pmtiles --force
 ```
+
+## Alturas reales (M2.7, ADR-0013)
+
+OpenMapTiles pone 5 m a los edificios sin `height` ni `building:levels` (≈ 45 % de los polígonos z14 en la primera versión). `build.sh` ahora completa las plantas con el **Catastro INSPIRE** (nota `docs/sources/catastro-edificios.md`; licencia aceptada por el humano, uso con atribución, solo información transformada):
+
+1. `fetch-catastro.mjs`: descarga los ZIP ATOM de 8 municipios (~34 MB, a `.work/catastro/`; `node --use-system-ca` porque el servidor omite el certificado intermedio de FNMT).
+2. `DumpBuildings.java`: vuelca las huellas OSM del bbox (`.work/osm-buildings.tsv`, ~10 s).
+3. `build-heights.mjs`: cruza por centroide cada `BuildingPart` del Catastro con la huella OSM, toma el máximo de plantas y escribe `.work/heights.tsv` (`w<id>/r<id>` → plantas) solo para edificios sin altura real ni partes OSM. Imprime la cobertura antes/después.
+4. `CorunaTiles.java`: copia de `OpenMapTilesMain` de Planetiler con un perfil que inyecta `building:levels` desde esa tabla antes de delegar; OpenMapTiles calcula `render_height = ceil(plantas × 3,66)`. Se publican solo plantas derivadas, nunca el dato del Catastro.
+
+Medido (bbox completo): altura real 28,8 % → 75,1 % de los edificios; en A Coruña (bbox aprox.) 72,4 % → 93,8 %. Polígonos z14 con la altura por defecto de 5 m: 44,9 % → 20,5 %. Peso 6,85 → 7,67 MB. La extrusión sigue desde z14 (a z13 el perfil OpenMapTiles no emite `render_height`).
 
 ## ¿Se versiona el `.pmtiles`?
 
@@ -65,9 +78,9 @@ node infra/tiles/verify.mjs [ruta.pmtiles] [--max-mb 15]
 Comprueba cabecera PMTiles v3, tamaño frente al límite (sale con código 1 si lo supera), bbox, zooms presentes, metadatos, capas requeridas (`building`, `water`, `waterway`, `landcover`, `landuse`, `park`, `transportation`, `transportation_name`, `place`, `boundary`) y recuento de polígonos de edificio con `render_height`. Salida real de la generación documentada:
 
 ```
-Tamaño:     6.85 MB (límite 15 MB)
+Tamaño:     7.67 MB (límite 15 MB)
 Zooms:      0-14
-Bbox:       -8.5800, 43.2700, -8.2500, 43.4500
+Bbox:       -8.5800, 43.2700, -8.2500, 43.5200
 Tiles:      284 direccionados; 170 en z14
 Edificios z14: 798 features (multipolígonos agrupados), ~94452 polígonos/anillos
   con render_height: 94452 (100.0 %); con render_min_height > 0: 4026
@@ -76,6 +89,7 @@ Edificios z14: 798 features (multipolígonos agrupados), ~94452 polígonos/anill
 ## Atribución y licencias
 
 - Datos: © colaboradores de OpenStreetMap, [ODbL 1.0](https://www.openstreetmap.org/copyright). Las teselas son una **base de datos derivada**: si se redistribuyen, deben mantener la atribución y la ODbL.
+- Alturas: plantas derivadas del Catastro INSPIRE; atribución «© Dirección General del Catastro (Ministerio de Hacienda)», también en los metadatos del PMTiles.
 - Esquema y perfil: © OpenMapTiles (el perfil de Planetiler exige el crédito visible «© OpenMapTiles © OpenStreetMap contributors»; el esquema es CC-BY 4.0).
-- La web debe mostrar en el mapa: `© OpenMapTiles © OpenStreetMap contributors` (con enlace a `https://www.openstreetmap.org/copyright`). Se cablea en M2.2 (`attribution` de la fuente).
+- La web debe mostrar en el mapa: `© OpenMapTiles © OpenStreetMap contributors © Dirección General del Catastro (Ministerio de Hacienda)` (con enlace a `https://www.openstreetmap.org/copyright`). Se cablea en M2.2 (`attribution` de la fuente).
 - Auxiliares usados por Planetiler: polígonos de agua de OSM (ODbL), Natural Earth (dominio público). Planetiler: Apache-2.0 (no se redistribuye el jar).

@@ -38,3 +38,20 @@
   outline: 2px solid var(--pulso-focus);
   outline-offset: 2px;
 }
+
+/* Móvil: la atribución (OpenMapTiles + OSM + Catastro) ocupa dos líneas; se reserva ese espacio bajo el selector. */
+@media (max-width: 599px) {
+  :root {
+    --pulso-attrib-room: 12px;
+  }
+
+  .maplibregl-ctrl-bottom-right {
+    bottom: env(safe-area-inset-bottom);
+  }
+
+  .maplibregl-ctrl.maplibregl-ctrl-attrib {
+    font-size: 10px;
+    line-height: 12px;
+    text-align: right;
+  }
+}

@@ -1,17 +1,19 @@
 #!/usr/bin/env node
-// Análisis (no genera teselas): cuántos edificios OSM tienen altura real y cuántos podría
-// completar el Catastro INSPIRE (BuildingPart.numberOfFloorsAboveGround) por intersección espacial.
+// Alturas reales (M2.7): cruza las plantas del Catastro INSPIRE (BuildingPart.numberOfFloorsAboveGround)
+// con las huellas OSM (centroide de la parte dentro del polígono, máximo de plantas) y escribe
+// infra/tiles/.work/heights.tsv (clave OSM w<id>/r<id> -> plantas) solo para edificios sin altura real.
+// Solo se publican plantas derivadas, nunca el dato original del Catastro. Imprime también la cobertura antes/después.
 // Entradas: infra/tiles/.work/osm-buildings.tsv (volcado con infra/tiles/DumpBuildings.java, ver docs/sources/catastro-edificios.md)
 //           infra/tiles/.work/catastro/<muni>.zip (infra/tiles/fetch-catastro.mjs)
-// Uso: node infra/tiles/analyze-heights.mjs
-import { readFileSync, existsSync } from "node:fs";
+// Uso: node infra/tiles/build-heights.mjs [lonMin,latMin,lonMax,latMax]
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const work = join(dirname(fileURLToPath(import.meta.url)), ".work");
-const BBOX = [-8.58, 43.27, -8.25, 43.45];
+const BBOX = (process.argv[2] ?? "-8.58,43.27,-8.25,43.52").split(",").map(Number);
 
 // --- UTM 29N (EPSG:25829, ETRS89 ~ WGS84 a este nivel) -> lon/lat -------------------------
 function utm29ToLonLat(E, N) {
@@ -180,6 +182,17 @@ for (const muni of ["15900", "15059", "15005", "15076", "15008", "15031", "15017
       }
     }
   }
+}
+
+// --- salida: plantas para edificios sin altura real ni partes OSM -------------------------------
+{
+  const lines = [];
+  buildings.forEach((b, i) => {
+    if (!b.hasReal && !hasOsmPart[i] && floorsByBuilding[i].length > 0)
+      lines.push(`${b.id}\t${Math.max(...floorsByBuilding[i].map((f) => f.floors))}`);
+  });
+  writeFileSync(join(work, "heights.tsv"), lines.join("\n") + "\n");
+  console.log(`heights.tsv: ${lines.length} edificios con plantas del Catastro`);
 }
 
 // --- informe -------------------------------------------------------------------------------------

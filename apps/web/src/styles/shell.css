@@ -65,7 +65,7 @@ body {
   justify-content: space-between;
   padding: calc(var(--pulso-space-6) + env(safe-area-inset-top))
     calc(var(--pulso-gutter) + env(safe-area-inset-right))
-    calc(var(--pulso-space-5) + env(safe-area-inset-bottom))
+    calc(var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + env(safe-area-inset-bottom))
     calc(var(--pulso-gutter) + env(safe-area-inset-left));
   pointer-events: none;
 }

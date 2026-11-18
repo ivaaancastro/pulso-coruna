@@ -1,7 +1,7 @@
 # Alturas de edificios: Catastro INSPIRE y alternativas (M2.7, fase 1)
 
 - **Verificado:** 2026-11-18 (UTC). Objetivo: sustituir las alturas por defecto de los edificios de las teselas (M2.1) por alturas reales.
-- **Estado:** investigación y medición hechas; **no se ha integrado nada en las teselas**. La licencia de la fuente recomendada **no es una licencia abierta estándar** (ver abajo): **pendiente de decisión humana**.
+- **Estado:** fase 2 implementada (opción A, ADR-0013). **Licencia: aceptada por el humano (2026-11-18), uso con atribución, solo información transformada** (solo se publican plantas/alturas derivadas, nunca el dato original). Atribución: «© Dirección General del Catastro (Ministerio de Hacienda)», integrada en la UI y en los metadatos del PMTiles. El texto de §2.1 y §6 se conserva como registro de la investigación; la decisión 1 queda resuelta y la compatibilidad con ODbL (decisión 2) sigue como riesgo residual.
 
 ## 1. Cobertura actual de altura real en OSM (medida)
 
@@ -124,8 +124,8 @@ Causa verificada en el desensamblado de `org.openmaptiles.layers.Building`: la c
 ```bash
 node --use-system-ca infra/tiles/fetch-catastro.mjs                      # ~34 MB en infra/tiles/.work/catastro/
 java -Xmx3g -cp infra/tiles/.work/planetiler.jar infra/tiles/DumpBuildings.java \
-  infra/tiles/.work/sources/galicia-261117.osm.pbf infra/tiles/.work/osm-buildings.tsv
-node infra/tiles/analyze-heights.mjs                                     # cifras de §1 y §3
+  infra/tiles/.work/sources/galicia-261117.osm.pbf infra/tiles/.work/osm-buildings.tsv -8.58,43.27,-8.25,43.52
+node infra/tiles/build-heights.mjs                                       # cifras de §1 y §3 (y escribe heights.tsv)
 node infra/tiles/verify.mjs                                              # % de altura por defecto en el PMTiles
 ```
 
@@ -135,3 +135,17 @@ node infra/tiles/verify.mjs                                              # % de 
 - Datos del Catastro con fecha 2026-08-21: edificios nuevos o demolidos tras esa fecha; OSM al 2026-11-17.
 - Plantas ≠ altura: cubiertas, áticos, plantas bajas altas; error típico ±1 planta (14 % +1, 6 % −1 donde se comparó).
 - `www.catastro.hacienda.gob.es` con cadena TLS incompleta: depender de `--use-system-ca`.
+
+## Resultado de la fase 2 (implementada)
+
+Teselas regeneradas con `infra/tiles/build.sh` (bbox `-8.58,43.27,-8.25,43.52`): 25 672 edificios reciben `building:levels` del Catastro.
+
+| Medida                                       | Antes (v. anterior) | Después |
+| -------------------------------------------- | ------------------: | ------: |
+| Edificios OSM con altura real, bbox completo |              28,8 % |  75,1 % |
+| …en A Coruña (bbox aprox.)                   |              72,4 % |  93,8 % |
+| …resto del bbox                              |               4,8 % |  64,8 % |
+| Anillos z14 con la altura por defecto de 5 m |              44,9 % |  20,5 % |
+| Peso del PMTiles                             |             6,85 MB | 7,67 MB |
+
+(Con el bbox anterior 43,45 la cobertura real era 30,6 % → 80,6 %; al ampliar al norte entran ~4 000 edificios de Ares/Mugardos/Ferrol cuyo municipio no se descarga del Catastro, por eso baja el porcentaje del bbox completo.) Los 5 m restantes son construcciones sin `BuildingPart` catastral (anexos, `otherconstruction`) y municipios no descargados.

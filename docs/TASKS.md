@@ -27,7 +27,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M2.4 Tokens de diseño y shell de UI
 - [x] M2.5 CI de rendimiento
 - [x] M2.6 PWA instalable
-- [ ] M2.7 Alturas reales de edificios (fase 1 hecha: `docs/sources/catastro-edificios.md`; fase 2 pendiente de decisión humana sobre la licencia del Catastro)
+- [x] M2.7 Alturas reales de edificios (plantas del Catastro, ADR-0013)
 
 ## M3 — La grabadora
 
