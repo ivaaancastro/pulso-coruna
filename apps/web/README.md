@@ -33,6 +33,16 @@ pnpm perf                         # desde la raíz: bundle + Lighthouse CI + fps
 
 - Atribución visible `© OpenMapTiles © OpenStreetMap contributors` con el control de MapLibre (`src/map/attribution.css`).
 
+## Intro de cámara (M2.3)
+
+- `src/map/intro.ts`: lógica pura (keyframes por progreso, easings, decisión, controlador y órbita) con planificador e interrupciones inyectables; tests en `intro.test.ts`. La cámara se aplica con `jumpTo` en cada `requestAnimationFrame`.
+- Vuelo de 3,6 s (< 4 s): del mar al noreste de la península (zoom final −2, pitch 28°, bearing −35°) a la cámara inicial (pitch 58°, bearing 20°). Empieza en el primer fotograma del mapa, así que no cuenta contra `map:first-frame`.
+- Cualquier `pointerdown`, `mousedown`, `touchstart`, `wheel` o `keydown` (también el clic en el selector de modo) la interrumpe: la cámara se queda donde está y no se reanuda. Una sola ejecución por carga.
+- `prefers-reduced-motion: reduce`: sin vuelo ni órbita; el mapa nace en la cámara final.
+- Marcas: `map:intro-start`, y `map:intro-end` o `map:intro-interrupted`; `map:intro-skipped` si no hay intro. El test de fps espera a cualquiera de ellas y mide sobre la cámara final.
+- Dev: `?intro=0` salta la intro; `?orbit=1` añade una órbita lenta tras ella (demo, `docs/demos/M2.md`). Ambos se ignoran en producción.
+- Pendiente (anotado): haz animado de la Torre de Hércules al llegar (pertenece a la capa del faro, no a la cámara; sin bloom).
+
 ## PWA (M2.6, ADR-0012)
 
 - `public/manifest.webmanifest` + iconos en `public/icons/`. Fuente: `icons/icon.svg`; regenerar PNG con `pnpm --filter @pulso/web icons` (sharp, solo dev).
