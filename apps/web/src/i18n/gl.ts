@@ -2,7 +2,8 @@ import type { Messages } from "./es";
 
 export const gl: Messages = {
   "app.name": "Pulso A Coruña",
-  "map.label": "Mapa da Coruña (en breve)",
+  "map.label": "Mapa 3D da Coruña: península, baía e edificios",
+  "map.unavailable": "Non se puido cargar o mapa neste dispositivo",
   "clock.label": "Hora actual na Coruña",
   "pulse.label": "Índice Pulso",
   "pulse.scale": "de 100",
