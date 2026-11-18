@@ -1,0 +1,256 @@
+{
+  "listUltimos10min": [
+    {
+      "estacion": "Coruña-Torre de Hércules",
+      "idEstacion": 10157,
+      "instanteLecturaUTC": "2026-11-18T17:00:00",
+      "listaMedidas": [
+        {
+          "codigoParametro": "BCN_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Brillo do Ceo Nocturno",
+          "unidade": "mag\/arsec2",
+          "valor": 8.03
+        },
+        {
+          "codigoParametro": "HR_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Humidade relativa media a 1.5m",
+          "unidade": "%",
+          "valor": 85.0
+        },
+        {
+          "codigoParametro": "PP_SUM_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Chuvia",
+          "unidade": "L\/m2",
+          "valor": 0.0
+        },
+        {
+          "codigoParametro": "TA_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura  a 1.5m",
+          "unidade": "ºC",
+          "valor": 15.1
+        },
+        {
+          "codigoParametro": "TO_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura de orballo a 1.5m",
+          "unidade": "ºC",
+          "valor": 12.6
+        }
+      ]
+    },
+    {
+      "estacion": "Coruña-Dique",
+      "idEstacion": 14000,
+      "instanteLecturaUTC": "2026-11-18T17:00:00",
+      "listaMedidas": [
+        {
+          "codigoParametro": "DV_CONDICION_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Dirección do refacho a 10m",
+          "unidade": "º",
+          "valor": 201.0
+        },
+        {
+          "codigoParametro": "DV_SD_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Desviación típica da dirección do vento a 10m",
+          "unidade": "º",
+          "valor": 7.0
+        },
+        {
+          "codigoParametro": "DV_AVG_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Dirección do vento a 10m",
+          "unidade": "º",
+          "valor": 209.0
+        },
+        {
+          "codigoParametro": "HR_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Humidade relativa media a 1.5m",
+          "unidade": "%",
+          "valor": 79.0
+        },
+        {
+          "codigoParametro": "PP_SUM_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Chuvia",
+          "unidade": "L\/m2",
+          "valor": 0.0
+        },
+        {
+          "codigoParametro": "PR_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Presión",
+          "unidade": "hPa",
+          "valor": 998.09
+        },
+        {
+          "codigoParametro": "PRED_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Presión reducida",
+          "unidade": "hPa",
+          "valor": 999.74
+        },
+        {
+          "codigoParametro": "TA_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura  a 1.5m",
+          "unidade": "ºC",
+          "valor": 15.61
+        },
+        {
+          "codigoParametro": "TO_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura de orballo a 1.5m",
+          "unidade": "ºC",
+          "valor": 11.99
+        },
+        {
+          "codigoParametro": "TSA_AVG_-1m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura superficial da auga",
+          "unidade": "ºC",
+          "valor": 14.375
+        },
+        {
+          "codigoParametro": "VV_AVG_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Velocidade do vento a 10m",
+          "unidade": "m\/s",
+          "valor": 8.64
+        },
+        {
+          "codigoParametro": "VV_RACHA_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Refacho a 10m",
+          "unidade": "m\/s",
+          "valor": 11.6
+        },
+        {
+          "codigoParametro": "VV_SD_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Desviación típica da velocidade do vento a 10m",
+          "unidade": "m\/s",
+          "valor": 1.11
+        }
+      ]
+    },
+    {
+      "estacion": "Punta Langosteira",
+      "idEstacion": 14003,
+      "instanteLecturaUTC": "2026-11-18T17:00:00",
+      "listaMedidas": [
+        {
+          "codigoParametro": "DV_AVG_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Dirección do vento a 10m",
+          "unidade": "º",
+          "valor": 211.0
+        },
+        {
+          "codigoParametro": "DV_CONDICION_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Dirección do refacho a 10m",
+          "unidade": "º",
+          "valor": 215.0
+        },
+        {
+          "codigoParametro": "DV_SD_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Desviación típica da dirección do vento a 10m",
+          "unidade": "º",
+          "valor": 7.0
+        },
+        {
+          "codigoParametro": "HR_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Humidade relativa media a 1.5m",
+          "unidade": "%",
+          "valor": 75.0
+        },
+        {
+          "codigoParametro": "HSOL_SUM_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Horas de sol",
+          "unidade": "h",
+          "valor": 0.0
+        },
+        {
+          "codigoParametro": "PP_SUM_1.5m",
+          "lnCodigoValidacion": 3,
+          "nomeParametro": "Chuvia",
+          "unidade": "L\/m2",
+          "valor": 0.0
+        },
+        {
+          "codigoParametro": "PR_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Presión",
+          "unidade": "hPa",
+          "valor": 997.52
+        },
+        {
+          "codigoParametro": "PRED_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Presión reducida",
+          "unidade": "hPa",
+          "valor": 999.64
+        },
+        {
+          "codigoParametro": "RS_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Radiación solar global",
+          "unidade": "W\/m2",
+          "valor": 0.0
+        },
+        {
+          "codigoParametro": "TA_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura  a 1.5m",
+          "unidade": "ºC",
+          "valor": 15.32
+        },
+        {
+          "codigoParametro": "TO_AVG_1.5m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Temperatura de orballo a 1.5m",
+          "unidade": "ºC",
+          "valor": 10.95
+        },
+        {
+          "codigoParametro": "VB_AVG_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Visibilidade media",
+          "unidade": "m",
+          "valor": 20000.0
+        },
+        {
+          "codigoParametro": "VV_AVG_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Velocidade do vento a 10m",
+          "unidade": "m\/s",
+          "valor": 10.42
+        },
+        {
+          "codigoParametro": "VV_RACHA_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Refacho a 10m",
+          "unidade": "m\/s",
+          "valor": 13.33
+        },
+        {
+          "codigoParametro": "VV_SD_10m",
+          "lnCodigoValidacion": 1,
+          "nomeParametro": "Desviación típica da velocidade do vento a 10m",
+          "unidade": "m\/s",
+          "valor": 1.06
+        }
+      ]
+    }
+  ]
+}
