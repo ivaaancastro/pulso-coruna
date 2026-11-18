@@ -1,4 +1,4 @@
-# ADR-0008: teselas propias con Planetiler y PMTiles
+# ADR-0009: teselas propias con Planetiler y PMTiles
 
 - Fecha: 2026-11-18
 - Estado: aceptada
