@@ -1,0 +1,21 @@
+{
+  "resultado": "OK",
+  "fecha_peticion": "20261118181340",
+  "peticion": "jmapas?linea=100&mostrar=b",
+  "tama\u00f1o": 314,
+  "mapas": [
+    {
+      "buses": [
+        {
+          "sentido": "0",
+          "buses": [
+            { "bus": 420, "posx": -8.401805, "posy": 43.368632 },
+            { "bus": 421, "posx": -8.396145, "posy": 43.355157 }
+          ]
+        },
+        { "sentido": "1", "buses": [{ "bus": 435, "posx": -8.405, "posy": 43.355055 }] }
+      ]
+    }
+  ],
+  "Origen": "Web_Beta"
+}
