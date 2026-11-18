@@ -2,6 +2,16 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import "./attribution.css";
+import {
+  createIntro,
+  createOrbit,
+  decideIntro,
+  decideOrbit,
+  domInterrupts,
+  introStart,
+  rafScheduler,
+  type Camera,
+} from "./intro";
 import { paletteAt, type MapPalette } from "./palette";
 import { buildStyle, lightFor, skyFor } from "./style";
 
@@ -82,13 +92,24 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
   setVeil(palette);
   const narrow = opts.container.clientWidth < 700;
 
-  const map = new maplibregl.Map({
-    container: opts.container,
-    style: buildStyle(palette, { tilesUrl, glyphsUrl, reducedMotion: reducedQuery.matches }),
+  // Intro (M2.3): una vez por carga. Con reduced-motion o ?intro=0 (dev) el mapa nace en la cámara final.
+  const decision = decideIntro({
+    search: window.location.search,
+    dev: import.meta.env.DEV,
+    reducedMotion: reducedQuery.matches,
+  });
+  const finalCamera: Camera = {
     center: CAMERA.center,
     zoom: narrow ? CAMERA.zoomNarrow : CAMERA.zoom,
     pitch: CAMERA.pitch,
     bearing: CAMERA.bearing,
+  };
+  const initial = decision.play ? introStart(finalCamera) : finalCamera;
+
+  const map = new maplibregl.Map({
+    container: opts.container,
+    style: buildStyle(palette, { tilesUrl, glyphsUrl, reducedMotion: reducedQuery.matches }),
+    ...initial,
     maxPitch: 70,
     minZoom: 10.5,
     maxZoom: 17,
@@ -112,6 +133,29 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
     requestAnimationFrame(() => {
       performance.mark("map:first-frame");
       opts.onFirstFrame?.();
+      if (!decision.play) {
+        performance.mark("map:intro-skipped");
+        return;
+      }
+      const interrupts = domInterrupts();
+      createIntro({
+        target: map,
+        from: initial,
+        to: finalCamera,
+        scheduler: rafScheduler,
+        interrupts,
+        mark: (name) => performance.mark(name),
+        onDone(how) {
+          const orbit = decideOrbit({
+            search: window.location.search,
+            dev: import.meta.env.DEV,
+            reducedMotion: reducedQuery.matches,
+          });
+          if (how === "end" && orbit) {
+            createOrbit({ target: map, from: finalCamera, scheduler: rafScheduler, interrupts });
+          }
+        },
+      }).start();
     });
   });
   // maxBounds se descoloca con la cámara inclinada: se ajusta solo el centro al terminar.
