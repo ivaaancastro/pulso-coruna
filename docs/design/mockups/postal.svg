@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" role="img" aria-label="Boceto de la postal nocturna: península con la Torre de Hércules, bahía, buses, barcos y avión">
+  <title>Pulso A Coruña, postal (boceto esquemático, no es captura real)</title>
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b2236"/>
+      <stop offset="1" stop-color="#06131f"/>
+    </linearGradient>
+    <radialGradient id="halo"><stop offset="0" stop-color="#ffc23d" stop-opacity=".45"/><stop offset="1" stop-color="#ffc23d" stop-opacity="0"/></radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f5f1e4" stop-opacity=".35"/><stop offset="1" stop-color="#f5f1e4" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="390" height="844" fill="#05080e"/>
+  <rect y="0" width="390" height="844" fill="url(#sea)"/>
+  <!-- península -->
+  <path d="M0 520 L90 470 L150 400 L170 330 L200 300 L230 330 L250 420 L300 520 L390 560 L390 844 L0 844 Z" fill="#0a0f19" stroke="#1e3a55" stroke-width="1.5"/>
+  <!-- edificios -->
+  <g fill="#1a2438">
+    <rect x="120" y="560" width="26" height="14"/><rect x="154" y="545" width="18" height="22"/>
+    <rect x="186" y="570" width="30" height="12"/><rect x="226" y="548" width="20" height="26"/>
+    <rect x="70" y="600" width="34" height="14"/><rect x="262" y="590" width="28" height="16"/>
+    <rect x="140" y="620" width="40" height="12"/><rect x="204" y="615" width="26" height="18"/>
+  </g>
+  <!-- Torre y haz -->
+  <rect x="195" y="286" width="10" height="28" fill="#1a2438"/>
+  <path d="M200 290 L390 250 L390 330 Z" fill="url(#beam)"/>
+  <circle cx="200" cy="288" r="3" fill="#f5f1e4"/>
+  <!-- buses -->
+  <g stroke="#ffc23d" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9">
+    <path d="M70 640 C110 610 150 620 190 600" stroke-opacity=".35"/>
+    <path d="M190 600 C220 590 250 600 285 596"/>
+    <path d="M120 580 L160 560" />
+  </g>
+  <circle cx="285" cy="596" r="14" fill="url(#halo)"/><circle cx="285" cy="596" r="3" fill="#ffc23d"/>
+  <circle cx="160" cy="560" r="3" fill="#ffc23d"/>
+  <!-- bicis -->
+  <g fill="none" stroke="#6be8a4" stroke-width="1.5"><circle cx="100" cy="580" r="4"/><circle cx="215" cy="545" r="4"/><circle cx="170" cy="640" r="4"/></g>
+  <!-- barcos -->
+  <g fill="#ff7a59"><path d="M310 380 l6 12 h-12 z"/><path d="M60 330 l5 10 h-10 z" transform="rotate(30 60 330)"/></g>
+  <!-- avión -->
+  <g stroke="#f5f1e4" stroke-width="1.2"><path d="M330 120 h14 M337 113 v14"/><path d="M337 120 L290 150" stroke-opacity=".3"/></g>
+  <!-- UI -->
+  <text x="24" y="100" fill="#e8eef7" font-family="system-ui, sans-serif" font-size="64" font-weight="300" style="font-variant-numeric: tabular-nums">23:47</text>
+  <text x="24" y="128" fill="#7a88a4" font-family="system-ui, sans-serif" font-size="13">Pulso 62</text>
+  <rect x="95" y="780" width="200" height="40" rx="20" fill="#0c1220" stroke="#5a6a88"/>
+  <text x="195" y="805" fill="#e8eef7" font-family="system-ui, sans-serif" font-size="13" text-anchor="middle">Ahora · Reproducir · Escuchar</text>
+</svg>
