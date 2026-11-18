@@ -1,0 +1,38 @@
+.pwa-notice {
+  position: fixed;
+  left: 50%;
+  /* por encima de la barra inferior del shell (selector de modo) */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 12px;
+  background: var(--pulso-surface-overlay);
+  border: 1px solid var(--pulso-border-hairline);
+  border-radius: 8px;
+  color: var(--pulso-text-muted);
+  font-size: 14px;
+}
+
+.pwa-notice[hidden] {
+  display: none;
+}
+
+.pwa-notice__action {
+  min-height: 44px;
+  padding: 0 8px;
+  background: none;
+  border: 0;
+  color: var(--pulso-text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pwa-notice__action[hidden] {
+  display: none;
+}
