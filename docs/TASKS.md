@@ -86,5 +86,6 @@ No se cierra un hito sin su puerta (ver `docs/ROADMAP.md`).
 
 - [x] Código M2.1–M2.7 en `develop`; CI (`check`, `perf`) verde.
 - [x] `perf-budget` y `design-review` pasados por los agentes en emulación; sin medir en móvil real.
-- [ ] Demo de 15 s grabada (humano; guion en `docs/demos/M2.md`, añadir enlace).
-- [ ] Revisión humana final y prueba en móvil real (incluye comprobar que la esquina oscura de la intro ya no aparece).
+- [x] Demo de 15 s grabada (`docs/demos/M2.mp4`, toma funcional con WebGL por software; regrabar en móvil real para portfolio).
+- [x] Esquina oscura de la intro comprobada en móvil emulado: ya no aparece.
+- [ ] Revisión humana final y prueba en móvil real.
