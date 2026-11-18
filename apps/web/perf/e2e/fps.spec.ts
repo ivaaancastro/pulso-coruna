@@ -41,6 +41,28 @@ test(`fps (${profile}): media >= ${limits.avgMin}, p5 >= ${limits.p5Min}`, async
     expect(firstFrame, "primer fotograma del mapa").toBeLessThan(limits.mapFirstFrameMaxMs);
   }
 
+  // M2.3: el vuelo de intro dura < 4 s; los fps se miden sobre la cámara final (tras `map:intro-end`,
+  // `-interrupted` o `-skipped`) para que el presupuesto no dependa de la coreografía.
+  if (hasMap) {
+    await page.waitForFunction(
+      () =>
+        ["map:intro-end", "map:intro-interrupted", "map:intro-skipped"].some(
+          (name) => performance.getEntriesByName(name).length > 0,
+        ),
+      null,
+      { timeout: 10_000 },
+    );
+    const intro = await page.evaluate(() => {
+      const at = (name: string) => performance.getEntriesByName(name)[0]?.startTime;
+      return { start: at("map:intro-start"), end: at("map:intro-end") };
+    });
+    if (intro.start !== undefined && intro.end !== undefined) {
+      const ms = Math.round(intro.end - intro.start);
+      test.info().annotations.push({ type: "map:intro", description: `${ms} ms` });
+      expect(ms, "duración de la intro").toBeLessThan(4_000 + 500);
+    }
+  }
+
   const result = await page.evaluate(async (durationMs) => {
     const deltas: number[] = [];
     await new Promise<void>((resolve) => {
