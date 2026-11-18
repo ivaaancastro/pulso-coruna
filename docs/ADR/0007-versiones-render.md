@@ -5,11 +5,11 @@
 
 ## Contexto
 
-Hay que fijar mapa y capas antes de M2. Context7 dio «Invalid API key»; se verificó con `npm view`/`npm pack` (sin leer docs web: WebFetch falló), así que la integración se apoya en el conocimiento de la API, no en doc consultada.
+Hay que fijar mapa y capas antes de M2. Versiones y pesos se midieron con `npm view`/`npm pack`; la integración se contrastó después con la documentación vía Context7 (2026-11-18).
 
 ## Decisión
 
-`maplibre-gl` 5.24.1 (rama 5, exacta) y `deck.gl` 9.4.1: `@deck.gl/core`, `layers` y `mapbox` 9.4.1 exactas, sin el paquete paraguas. `@deck.gl/mapbox` no declara peer de maplibre-gl (solo `core`/`luma.gl` ~9.4), compatible. Integración: `MapboxOverlay` con `interleaved: false` (canvas propio, aislado del estilo); `interleaved: true` solo si M2 exige oclusión con edificios 3D. Peso gzip: maplibre 5.24.1 = 276 KB medidos (`dist/maplibre-gl.js`); deck.gl sin medir (estimado 100–150 KB tree-shaken), total estimado ~380–430 KB frente a < 450 KB: margen estrecho, se medirá en M2 con `perf-budget`.
+`maplibre-gl` 5.24.1 (rama 5, exacta) y `deck.gl` 9.4.1: `@deck.gl/core`, `layers` y `maplibre` 9.4.1 exactas, sin el paquete paraguas. Se usa `MapLibreOverlay` de `@deck.gl/maplibre` (el paquete propio para MapLibre, no `@deck.gl/mapbox`); sus peers aceptan `maplibre-gl` ^4.5 || ^5 || ^6 más `core`/`luma.gl` ~9.4. Integración `interleaved: false` (canvas propio, aislado del estilo); `interleaved: true` con `beforeId` solo si M2 exige oclusión con edificios 3D. Peso gzip: maplibre 5.24.1 = 276 KB medidos (`dist/maplibre-gl.js`); deck.gl sin medir (estimado 100–150 KB tree-shaken), total estimado ~380–430 KB frente a < 450 KB: margen estrecho, se medirá en M2 con `perf-budget`.
 
 ## Alternativas
 
