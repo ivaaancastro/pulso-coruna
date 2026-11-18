@@ -31,7 +31,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M3 — La grabadora
 
-- [ ] M3.1 Adaptador GTFS
+- [x] M3.1 Adaptador GTFS
 - [x] M3.2 Adaptador BiciCoruña
 - [x] M3.3 Adaptador MeteoGalicia
 - [x] M3.4 Adaptador iTranvías o plan B
