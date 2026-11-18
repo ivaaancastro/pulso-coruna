@@ -10,13 +10,13 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M1 — Verdad y dirección
 
-- [ ] M1.1 Nota GTFS Compañía de Tranvías
+- [x] M1.1 Nota GTFS Compañía de Tranvías
 - [x] M1.2 Nota iTranvías
 - [ ] M1.3 Notas BiciCoruña y MeteoGalicia
 - [ ] M1.4 Notas mar, aire, barcos, aviones
 - [ ] M1.5 Permiso iTranvías (humano)
 - [ ] M1.6 Dirección de arte (`docs/design/`)
-- [ ] M1.7 ADR de versiones MapLibre / deck.gl
+- [x] M1.7 ADR de versiones MapLibre / deck.gl
 - [ ] M1.8 Datos de tráfico al Concello (humano, opcional)
 
 ## M2 — La postal
