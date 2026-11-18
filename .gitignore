@@ -8,3 +8,6 @@ dist/
 .turbo/
 coverage/
 pgdata/
+.lighthouseci/
+test-results/
+playwright-report/

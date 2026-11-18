@@ -22,6 +22,10 @@ Las versiones de los MCP están fijadas: subirlas es un cambio explícito en amb
 3. Opcional, Context7 con más cuota: clave gratuita en https://context7.com/dashboard → `export CONTEXT7_API_KEY=...` en `~/.zshrc` (nunca en el repo).
 4. En el repo: `claude`, aprueba los MCP del proyecto y comprueba que conectan chrome-devtools y playwright, y que Context7 (global) responde. En opencode: `opencode mcp list`.
 
+## CI de rendimiento (M2.5)
+
+`pnpm perf` (lo mismo que el job `perf` de CI) construye `apps/web` y ejecuta, en orden: `pnpm perf:bundle` (gzip de JS inicial y chunk de mapa contra `apps/web/perf-budget.json`), `pnpm perf:lighthouse` (Lighthouse CI contra `vite preview`, config en `apps/web/perf/lighthouserc.json`, informes en `.lighthouseci/`) y `pnpm perf:e2e` (Playwright: fps y 0 peticiones a terceros). Necesita Chrome estable instalado (`PERF_BROWSER_CHANNEL=chromium` para el Chromium de Playwright). Los fps en CI usan un umbral propio de regresión; `PERF_FPS_PROFILE=gpu pnpm perf:e2e` aplica el presupuesto real (58/50) en un equipo con GPU. Detalle y umbrales: ADR 0011.
+
 ## Conectores de la cuenta que no se usan aquí
 
 Vercel y Supabase pueden aparecer como conectores de claude.ai: no encajan con ADR 0001 (VPS + Timescale propio). No los uses para este proyecto salvo nuevo ADR.

@@ -2,8 +2,8 @@
 @font-face {
   font-family: "Archivo";
   src: url("/fonts/archivo-latin-wdth-normal.woff2") format("woff2");
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
+  font-weight: 300 600;
+  font-stretch: 90% 125%;
   font-style: normal;
   font-display: swap;
 }

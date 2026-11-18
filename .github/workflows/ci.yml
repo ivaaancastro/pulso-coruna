@@ -49,3 +49,29 @@ jobs:
       - run: pnpm -r lint
       - run: pnpm -r test
       - run: pnpm format:check
+
+  # Presupuestos de rendimiento (ADR 0011): bundle gzip, Lighthouse CI, fps y 0 terceros.
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Usa el Chrome estable preinstalado en ubuntu-latest (sin descargar navegadores).
+      - run: pnpm perf:bundle
+      - run: pnpm perf:lighthouse
+      - run: pnpm perf:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-reports
+          path: |
+            .lighthouseci
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
