@@ -7,7 +7,7 @@ import { startScheduler } from "../src/scheduler.js";
 import { bus, fail, fakeAdapter, makeDeps, ok, station, T0, wind } from "./helpers.js";
 import { createTestDb, testDatabaseUrl } from "./test-db.js";
 
-// Se salta limpiamente sin Docker (ver test/global-setup.ts y ADR-0015).
+// Se salta limpiamente sin Docker (ver test/global-setup.ts y ADR-0016).
 describe.skipIf(!testDatabaseUrl)("PostgreSQL + TimescaleDB (integración)", () => {
   let sql: Sql;
   let drop: () => Promise<void>;

@@ -1,4 +1,4 @@
-# ADR-0015: TimescaleDB 2.32 (PG17) y BD efímera de tests con `docker run`
+# ADR-0016: TimescaleDB 2.32 (PG17) y BD efímera de tests con `docker run`
 
 - Fecha: 2026-11-18
 - Estado: aceptada

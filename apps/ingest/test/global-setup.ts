@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import postgres from "postgres";
 
-/** Debe coincidir con ADR-0015. */
+/** Debe coincidir con ADR-0016. */
 export const TIMESCALE_IMAGE = "timescale/timescaledb:2.32.0-pg17";
 
 const docker = (...args: string[]): string =>
