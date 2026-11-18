@@ -2,6 +2,6 @@
 
 A Coruña como organismo vivo: buses, bicis, viento, mareas, barcos, aire y aviones en un mapa 3D, con máquina del tiempo y modo sonoro.
 
-Estado: esqueleto del proyecto. Empieza por `docs/TASKS.md` (Fase 0) y `docs/prompts/first-task-T1.1.md`.
+Estado: esqueleto del proyecto. Plan en `docs/ROADMAP.md` (hitos M0–M8); checklist en `docs/TASKS.md`.
 
 Flujo de ramas y SDD: ver [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
