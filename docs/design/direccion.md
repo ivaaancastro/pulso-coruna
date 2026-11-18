@@ -1,6 +1,6 @@
 # Dirección de arte: «Faro»
 
-> Estado: **propuesta, pendiente de aprobación humana** (M1.6). Nada de esto es definitivo hasta que lo apruebe el humano. Moodboard: `moodboard.md`. Valores listos para CSS: `tokens.md`. Frames de referencia: `mockups/postal.svg`.
+> Estado: **aprobada por el humano (2026-11-18)** (M1.6). Vigente desde la aprobación. Moodboard: `moodboard.md`. Valores listos para CSS: `tokens.md`. Frames de referencia: `mockups/postal.svg`.
 
 ## Idea
 

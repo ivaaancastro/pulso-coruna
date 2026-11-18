@@ -1,6 +1,6 @@
 # Moodboard
 
-> Estado: **propuesta, pendiente de aprobación humana** (M1.6).
+> Estado: **aprobada por el humano (2026-11-18)** (M1.6).
 
 Doce referencias públicas, descritas con palabras. No se copia ninguna imagen al repositorio. Cada una dice qué se toma y qué se descarta.
 

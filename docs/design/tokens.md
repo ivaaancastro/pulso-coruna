@@ -1,6 +1,6 @@
 # Tokens de diseño
 
-> Estado: **propuesta, pendiente de aprobación humana** (M1.6). M2.4 los traslada a CSS (`:root`) y a un módulo TS para las capas de deck.gl. Justificación en `direccion.md`.
+> Estado: **aprobada por el humano (2026-11-18)** (M1.6). M2.4 los traslada a CSS (`:root`) y a un módulo TS para las capas de deck.gl. Justificación en `direccion.md`.
 
 Convención: nombres `--pulso-*`. Los colores de capa se exportan también como `[r, g, b]` para deck.gl. Tema único (nocturno); no hay modo claro.
 
