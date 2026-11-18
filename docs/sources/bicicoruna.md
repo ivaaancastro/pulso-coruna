@@ -12,13 +12,13 @@ Verificado el 2026-11-18 (UTC) con peticiones reales, sin clave ni cuenta. Es la
 - Recurso «API SmartCity Estacións BiciCoruña» (JSON, «Frecuencia de actualización: Continua» según el catálogo):
   `GET https://csc-api.coruna.eu/api-manager/server/api/v1/estaciones_bicicoruna/getAssets`
 - Sin clave, sin cabeceras especiales; HTTP/2, `content-type: application/json`, ~37 KB para 79 estaciones. Todas las estaciones en una sola petición, sin paginación ni filtros observados.
-- Límites de uso: no localizados. Pendiente de decisión humana si se quiere confirmar con el Concello (no contactado).
+- Límites de uso: no localizados. Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente si se quiere confirmar con el Concello (no contactado).
 
 ## Licencia y atribución
 
 - El catálogo declara la licencia `RISP_AC`: «Condiciones generales documentos reutilizables del Ayuntamiento de A Coruna» (URL declarada: <https://www.coruna.gal/opendata/avisolegal>).
 - **No se ha podido leer el texto**: esa URL redirige (301) a una página genérica del portal del Concello cuyo contenido no es el aviso legal. Atribución requerida: **no localizada**.
-- **Pendiente de decisión humana**: leer el aviso legal real, decidir si el uso (web pública, histórico grabado, portfolio) cumple y qué atribución mostrar. No se asume ninguna.
+- **Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente**: leer el aviso legal real, decidir si el uso (web pública, histórico grabado, portfolio) cumple y qué atribución mostrar. No se asume ninguna.
 
 ## Frecuencia real medida
 
@@ -97,7 +97,7 @@ Si se quieren eléctricas, nombre o estado, hace falta un cambio de contrato (sk
 
 ## Riesgos
 
-- Licencia `RISP_AC` sin texto leído ni atribución definida: pendiente de decisión humana.
+- Licencia `RISP_AC` sin texto leído ni atribución definida: decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.
 - Sin marca de tiempo en el dato: no se puede detectar un dato congelado salvo comparando con la petición anterior.
 - API de «SmartCity» con nombre de host y ruta de gestor de APIs: sin SLA ni documentación localizada; puede cambiar o pedir clave.
 - Invariante de anclajes rota en ~25 % de las estaciones; coordenadas en orden no estándar.

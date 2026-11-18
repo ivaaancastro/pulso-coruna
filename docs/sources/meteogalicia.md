@@ -28,7 +28,7 @@ Parámetros de viento (códigos): `VV_AVG_10m` velocidad media 10 m (m/s), `DV_A
 
 - Las páginas del portal de datos abiertos de la Xunta (Abert@s) para estos servicios, «Estacións meteorolóxicas» (dataset 0114, servicio por estación) y «Datos horarios históricos…» (0689), declaran: **«Licenza: Creative Commons BY SA 4.0»**, «Fonte de datos: Meteogalicia». Fuente: <https://abertos.xunta.gal/catalogo/medio-abiente/-/dataset/0114/estacions-meteoroloxicas>.
 - Las condiciones generales de Abert@s (<https://abertos.xunta.gal/condicions-de-uso-menu>) dicen que, salvo indicación contraria, los datos se publican bajo «Creative Commons Recoñecemento-Compartir Igual 4.0 Internacional (CC-by 4.0)» (la denominación mezcla BY-SA y BY), y piden: no alterar el contenido, no desnaturalizar su sentido, citar la fuente y mencionar la fecha de la última actualización. Fórmula de cita literal: **«Fonte dos datos: Xunta de Galicia»** (con enlace a <https://abertos.xunta.gal>). No se autoriza el uso de logotipos ni marcas.
-- No se ha verificado que el endpoint `mgrss` en sí (distinto de la ficha del catálogo) lleve términos propios. La obligación de «compartir igual» (BY-SA) puede afectar a obras derivadas: **pendiente de decisión humana** (licencia de nuestros datos derivados, atribución exacta, uso de la marca MeteoGalicia). No decidido aquí.
+- No se ha verificado que el endpoint `mgrss` en sí (distinto de la ficha del catálogo) lleve términos propios. La obligación de «compartir igual» (BY-SA) puede afectar a obras derivadas: **decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente** (licencia de nuestros datos derivados, atribución exacta, uso de la marca MeteoGalicia). No decidido aquí.
 
 ## Frecuencia real medida
 
@@ -150,7 +150,7 @@ Detalles: `instanteLecturaUTC` es UTC **sin sufijo `Z`** (hay que añadirlo ante
 
 ## Riesgos
 
-- Licencia CC BY-SA 4.0 declarada en el catálogo (no la elegimos nosotros); atribución, «compartir igual» y marca: pendiente de decisión humana.
+- Licencia CC BY-SA 4.0 declarada en el catálogo (no la elegimos nosotros); atribución, «compartir igual» y marca: decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.
 - 10157 no tiene viento: el criterio «viento en 10157, 14000 y 14003» no se puede cumplir tal cual.
 - Retraso de ~5–7 min y respuestas con instantes que retroceden por caché.
 - Datos con códigos de validación (erróneos/sospechosos) mezclados en la respuesta.
