@@ -6,7 +6,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 - [x] T1.1 Monorepo y herramientas
 - [ ] M0.1 Roadmap y herramientas de agentes
-- [ ] M0.2 `packages/schema` con zod y tests
+- [x] M0.2 `packages/schema` con zod y tests
 
 ## M1 — Verdad y dirección
 

@@ -22,7 +22,7 @@ Adaptadores → ingesta → PostgreSQL/TimescaleDB → API Fastify (REST + WS) �
 
 ## Contratos
 
-Tipos en `packages/schema/src/index.ts`. Endpoints:
+Esquemas zod y tipos (`z.infer`) en `packages/schema/src/` (`layers`, `entity`, `station`, `observation`, `ws`; ADR-0006). Validación estricta: rangos geográficos, `ts` entero positivo epoch ms UTC, números finitos, claves desconocidas rechazadas. Mensajes WS versionados (`v:1`) como unión discriminada por `type`: `snapshot {v,type,ts,layers:{<layer>:items[]}}` y `delta {v,type,ts,layer,upserts[],removes[]}`. Endpoints:
 
 - `GET /api/v1/snapshot?layers=bus,bike`
 - `WS /api/v1/stream` (snapshot al conectar, luego deltas `{v:1,type:"delta",ts,layer,upserts[],removes[]}`)
