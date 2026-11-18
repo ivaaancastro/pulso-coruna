@@ -4,7 +4,7 @@
 - **Web:** <https://portus.puertos.es/> (SPA Vue; sin JavaScript solo muestra un aviso). Servicio descrito en <https://www.puertos.es/servicios/oceanografia>.
 - **API:** no hay API documentada. La propia SPA llama a `https://portus.puertos.es/portussvr/api` (leído en su `app.*.js`). Es una API interna: puede cambiar sin aviso.
 - **Acceso:** sin clave ni cuenta. No se vio límite de peticiones (se hicieron unas 6 al API, separadas ≥5 s). El navegador del producto nunca la llama; solo el adaptador.
-- **Licencia / términos:** no localizada. El portal institucional enlaza «Aviso legal», sin que se haya leído su texto. **Pendiente de decisión humana** (uso, atribución, y si se puede consumir una API interna no documentada). La SPA enlaza manuales «Descargaportus» en `bancodatos.puertos.es`, lo que sugiere un canal oficial de petición de datos: contactar con ellos lo decide el humano.
+- **Licencia / términos:** no localizada. El portal institucional enlaza «Aviso legal», sin que se haya leído su texto. **Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.** Se consume la API interna de su web; si cambia sin aviso, ver riesgos. La SPA enlaza manuales «Descargaportus» en `bancodatos.puertos.es`, lo que sugiere un canal oficial de petición de datos: contactar con ellos lo decide el humano.
 
 ## Endpoints verificados
 
@@ -88,7 +88,7 @@ Predicción de pleamar/bajamar (recortada):
 ## Riesgos
 
 - API interna sin documentar ni garantías; puede romperse o limitar uso.
-- Licencia y atribución sin confirmar (pendiente de decisión humana).
+- Licencia y atribución sin confirmar (decidida por el humano: aceptada con atribución).
 - Zona horaria inferida; valores como texto con `factor`.
 - Falta identificar la boya de oleaje y su muestra.
 - `paramQC: false` en la muestra: no se sabe si significa control de calidad pasado o no.

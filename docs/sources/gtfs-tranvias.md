@@ -22,7 +22,7 @@ El título del feed en MDB indica que procede del NAP (MITMA). La URL original d
 
 ## Licencia / términos de uso
 
-**No localizada.** Ni la ficha de MDB (SPA), ni la portada de la compañía, ni la portada del NAP daban texto de licencia accesible sin registro. **Pendiente de decisión humana**: licencia, atribución y condiciones de redistribución.
+**No localizada.** Ni la ficha de MDB (SPA), ni la portada de la compañía, ni la portada del NAP daban texto de licencia accesible sin registro. **Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.** licencia, atribución y condiciones de redistribución.
 
 ## Frecuencia y vigencia
 

@@ -81,7 +81,7 @@ No requiere cambios en `packages/schema` (`meta` admite `line` y `direction`). A
 
 ## Licencia / términos de uso
 
-**Pendiente de decisión humana.** No se ha localizado licencia ni términos de uso de la API; la web no ofrece una API pública. El permiso se gestiona en M1.5 (contacto por el humano). Atribución requerida: desconocida.
+**Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.** No se ha localizado licencia ni términos de uso de la API; la web no ofrece una API pública. El permiso se gestiona en M1.5 (contacto por el humano). Atribución requerida: desconocida.
 
 ## Riesgos
 
