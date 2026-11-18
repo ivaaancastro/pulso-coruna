@@ -37,3 +37,9 @@ Tests verdes, typecheck sin errores, docs/ADR actualizados si cambia una decisi�
 3. Un git worktree por tarea y agente para paralelizar (`git worktree add ../pulso-T1.4 -b feat/T1.4`).
 4. Revisión cruzada: lo que escribe un agente lo revisa el otro.
 5. ADR de ≤10 líneas por decisión técnica relevante.
+
+## Herramientas (MCP y skills)
+- Antes de escribir código que dependa de MapLibre, deck.gl, Fastify o Timescale, consulta Context7 (versiones fijadas en los ADR).
+- Rendimiento: chrome-devtools (trazas). Pruebas visuales del mapa: Playwright en modo visión (canvas/WebGL no tiene árbol de accesibilidad).
+- Skills del proyecto en `.claude/skills/` (también las lee opencode): `new-adapter`, `source-note`, `contract-change`. Subagente `reviewer` para revisar antes de cerrar.
+- Detalle y puesta en marcha: `docs/TOOLING.md`.
