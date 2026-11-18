@@ -1,6 +1,7 @@
 export const es = {
   "app.name": "Pulso A Coruña",
-  "map.label": "Mapa de A Coruña (próximamente)",
+  "map.label": "Mapa 3D de A Coruña: península, bahía y edificios",
+  "map.unavailable": "No se pudo cargar el mapa en este dispositivo",
   "clock.label": "Hora actual en A Coruña",
   "pulse.label": "Índice Pulso",
   "pulse.scale": "de 100",

@@ -41,54 +41,20 @@ body {
   outline-offset: 2px;
 }
 
-/* Placeholder del mapa (M2.2 lo rellena). Solo mar y haz de la Torre, sin datos. */
+/* El mapa (MapLibre) llena todo el viewport; el shell flota encima. */
 #map {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(
-      ellipse 90% 60% at 80% 12%,
-      color-mix(in srgb, var(--pulso-plane) 7%, transparent),
-      transparent 60%
-    ),
-    linear-gradient(
-      180deg,
-      var(--pulso-water) 0%,
-      var(--pulso-water-deep) 70%,
-      var(--pulso-bg) 100%
-    );
+  background: var(--pulso-bg);
 }
 
-/* Haz de la Torre de Hércules (estático; el barrido animado llega con el mapa). */
-#map::after {
-  content: "";
+.map-veil {
   position: absolute;
-  left: 51%;
-  top: 36%;
-  width: 70vmax;
-  height: 18vmax;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--pulso-plane) 22%, transparent),
-    transparent 85%
-  );
-  clip-path: polygon(0 48%, 100% 0, 100% 100%, 0 52%);
-  transform-origin: 0 50%;
-  transform: translateY(-50%) rotate(-12deg);
+  inset: 0 0 auto 0;
+  height: 38%;
   pointer-events: none;
-}
-
-#map::before {
-  content: "";
-  position: absolute;
-  left: 51%;
-  top: 36%;
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
-  border-radius: 50%;
-  background: var(--pulso-plane);
-  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--pulso-plane) 45%, transparent);
+  background: linear-gradient(180deg, var(--pulso-map-veil, var(--pulso-bg)) 0%, transparent 100%);
+  opacity: 0.85;
 }
 
 .shell {

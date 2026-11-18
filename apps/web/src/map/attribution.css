@@ -1,0 +1,40 @@
+/* Atribución (© OpenMapTiles © OpenStreetMap contributors): visible, discreta, tokens Faro. */
+.maplibregl-map {
+  font-family: var(--pulso-font);
+  background: var(--pulso-bg);
+}
+
+.maplibregl-ctrl-bottom-right {
+  /* Alineada con el gutter del shell y por debajo del selector de modo. */
+  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + 2px);
+}
+
+.maplibregl-ctrl.maplibregl-ctrl-attrib {
+  margin: 0;
+  padding: 0 var(--pulso-space-2);
+  background: transparent;
+  color: var(--pulso-text-subtle);
+  font-size: 11px;
+  font-weight: 400;
+  font-stretch: 90%;
+  line-height: 20px;
+  text-shadow:
+    0 0 4px var(--pulso-bg),
+    0 0 8px var(--pulso-bg);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--pulso-text-subtle);
+  text-decoration: none;
+}
+
+.maplibregl-ctrl-attrib a:hover {
+  color: var(--pulso-text);
+  text-decoration: underline;
+}
+
+.maplibregl-ctrl-attrib a:focus-visible {
+  outline: 2px solid var(--pulso-focus);
+  outline-offset: 2px;
+}

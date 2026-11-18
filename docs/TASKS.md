@@ -22,7 +22,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 ## M2 — La postal
 
 - [x] M2.1 PMTiles propios
-- [ ] M2.2 Mapa base con estilo propio
+- [x] M2.2 Mapa base con estilo propio
 - [ ] M2.3 Intro de cámara
 - [x] M2.4 Tokens de diseño y shell de UI
 - [x] M2.5 CI de rendimiento

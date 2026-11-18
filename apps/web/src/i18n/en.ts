@@ -2,7 +2,8 @@ import type { Messages } from "./es";
 
 export const en: Messages = {
   "app.name": "Pulso A Coruña",
-  "map.label": "Map of A Coruña (coming soon)",
+  "map.label": "3D map of A Coruña: peninsula, bay and buildings",
+  "map.unavailable": "The map could not be loaded on this device",
   "clock.label": "Current time in A Coruña",
   "pulse.label": "Pulso index",
   "pulse.scale": "of 100",
