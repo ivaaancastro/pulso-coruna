@@ -35,7 +35,8 @@ const TILES_PATH = "tiles/coruna.pmtiles";
 const GLYPHS_PATH = "glyphs/";
 export const ATTRIBUTION =
   '<a href="https://openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> ' +
-  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>';
+  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a> ' +
+  '<a href="https://www.catastro.hacienda.gob.es/" target="_blank" rel="noopener">© Dirección General del Catastro (Ministerio de Hacienda)</a>';
 
 /** Península de A Coruña: bahía al este y Orzán al oeste, Torre de Hércules al fondo. */
 const CAMERA = {
@@ -48,7 +49,7 @@ const CAMERA = {
 /** bbox de las teselas (infra/tiles/build.sh). */
 const BOUNDS: [[number, number], [number, number]] = [
   [-8.58, 43.27],
-  [-8.25, 43.45],
+  [-8.25, 43.52],
 ];
 
 let protocolRegistered = false;
