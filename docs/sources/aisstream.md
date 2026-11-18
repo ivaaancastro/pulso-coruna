@@ -6,7 +6,7 @@
 - **Navegador:** conexión directa desde el navegador no permitida («Direct browser connections are not permitted»). Encaja con la regla del proyecto: solo conecta el servidor.
 - **Protocolo:** tras abrir, enviar en ≤ 3 s una suscripción JSON: `APIKey`, `BoundingBoxes` (pares de esquinas `[lat, lon]`), opcional `FiltersShipMMSI` (≤ 200) y `FilterMessageTypes`. Reenviar reemplaza la suscripción (máx. 1 por segundo). Responde `SubscriptionConfirmation`. Mensajes: tramas binarias con JSON UTF-8. Se recomienda `permessage-deflate`.
 - **Límites (documentación):** 3 conexiones suscritas por cuenta y 3 abiertas por IP; si no se lee rápido se descartan mensajes; desde septiembre de 2026 las conexiones sin compresión tienen límite de ancho de banda; **sin SLA ni reenvío** («no SLA or uptime guarantee, and events are not durably replayed»). Reconectar con backoff exponencial.
-- **Licencia / términos:** no localizada. `/privacy`, `/terms` y `/tos` devolvieron 404; el pie enlaza «Privacy» y «Support», no leídos. La portada dice «for free». **Pendiente de decisión humana** (uso, redistribución, atribución, y si un producto público con reproducción histórica es admisible).
+- **Licencia / términos:** no localizada. `/privacy`, `/terms` y `/tos` devolvieron 404; el pie enlaza «Privacy» y «Support», no leídos. La portada dice «for free». **Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.** (uso, redistribución, atribución, y si un producto público con reproducción histórica es admisible).
 - **Frecuencia:** orientada a eventos (cada barco emite según velocidad/estado); **no medida**.
 
 ## Zona A Coruña (propuesta)

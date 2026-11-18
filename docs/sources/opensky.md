@@ -6,7 +6,7 @@
 - **Límites anónimos (docs):** solo el estado más reciente (`time` se ignora); resolución temporal de 10 s; **400 créditos al día**, cuota independiente por endpoint (`/states`, `/tracks`, `/flights`), renovación diaria, por IP. Coste de `/states/all` según el área del bbox (grados²): ≤ 25 → 1 crédito; 25–100 → 2; 100–400 → 3; > 400 o global → 4. Agotado: HTTP 429 con `X-Rate-Limit-Retry-After-Seconds`.
 - **Verificado:** `x-rate-limit-remaining` pasó de 399 a 398 en dos peticiones consecutivas con bbox pequeño (1 crédito cada una).
 - **Presupuesto:** 400 peticiones/día ≈ una cada 216 s sostenida las 24 h. Una cada 5 min (288/día) cabe con margen, y obliga a interpolar posiciones (rumbo y velocidad vienen en el dato). Una cuenta gratuita (4 000/día según la tabla de la documentación) sería la mejora; decisión humana.
-- **Licencia / términos:** no localizada. La página de términos (`/about/terms-of-use`) devolvió **403** a una petición automatizada y la documentación REST consultada no contiene texto de licencia. **Pendiente de decisión humana** (uso, atribución, almacenamiento y reproducción histórica). Recordar que OpenSky podría limitar usos comerciales (no verificado).
+- **Licencia / términos:** no localizada. La página de términos (`/about/terms-of-use`) devolvió **403** a una petición automatizada y la documentación REST consultada no contiene texto de licencia. **Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente.** (uso, atribución, almacenamiento y reproducción histórica). Recordar que OpenSky podría limitar usos comerciales (no verificado).
 
 ## Bbox de A Coruña
 
@@ -102,7 +102,7 @@ Resolución de 10 s para anónimos; en la muestra `time_position` iba 0–80 s p
 ## Riesgos
 
 - Cuota diaria baja y por IP; con 429 el adaptador debe espaciar y degradar.
-- Términos de uso no localizados: pendiente de decisión humana.
+- Términos de uso no localizados: Decidida por el humano (2026-11-18): aceptada, uso con atribución a la fuente..
 - Cobertura a baja altura y sobre el mar irregular; la capa puede estar vacía.
 - API sin SLA; el modelo de límites y autenticación ha cambiado antes (ahora OAuth2): releer la documentación.
 - Son datos de aeronaves, no de personas; aun así, no identificar propietarios.

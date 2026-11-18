@@ -14,10 +14,10 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M1.2 Nota iTranvías
 - [ ] M1.3 Notas BiciCoruña y MeteoGalicia
 - [x] M1.4 Notas mar, aire, barcos, aviones
-- [ ] M1.5 Permiso iTranvías (humano)
+- [x] M1.5 Permiso iTranvías (humano; decisión: usar la API tal cual)
 - [x] M1.6 Dirección de arte (aprobada por el humano)
 - [x] M1.7 ADR de versiones MapLibre / deck.gl
-- [ ] M1.8 Datos de tráfico al Concello (humano, opcional)
+- [x] M1.8 Datos de tráfico al Concello (humano, opcional; decisión: usar los datos o API que proporcionan)
 
 ## M2 — La postal
 
