@@ -140,6 +140,8 @@ function decodeTile(b, onFeature) {
           if (vf === 1) val = vs.toString("utf8");
           else if (vf === 2) val = vs.readFloatLE(0);
           else if (vf === 3) val = vs.readDoubleLE(0);
+          else if (vf === 6)
+            val = (vv >>> 1) ^ -(vv & 1); // sint_value (zigzag): Planetiler codifica así los enteros
           else val = vv;
         });
         values.push(val);
@@ -173,6 +175,7 @@ function decodeTile(b, onFeature) {
   });
 }
 
+const DEFAULT_HEIGHT = 5;
 const meta = JSON.parse(
   unz(buf.subarray(h.metaOff, h.metaOff + h.metaLen), h.internalComp).toString("utf8"),
 );
@@ -235,6 +238,11 @@ console.log(
 );
 console.log(
   `  alturas más frecuentes (m: anillos): ${top.map(([k, v]) => `${k}: ${v}`).join(", ")}`,
+);
+// OpenMapTiles pone render_height = 5 m cuando OSM no trae height ni building:levels.
+const byDefault = heights.get(DEFAULT_HEIGHT) ?? 0;
+console.log(
+  `  altura por defecto (${DEFAULT_HEIGHT} m, no real): ${byDefault} anillos (${((100 * byDefault) / Math.max(1, z14.ringsWithHeight)).toFixed(1)} %); resto ≈ real: ${((100 * (z14.ringsWithHeight - byDefault)) / Math.max(1, z14.ringsWithHeight)).toFixed(1)} %`,
 );
 
 const required = [

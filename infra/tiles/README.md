@@ -52,7 +52,7 @@ Zoom máximo 14 (más allá, sobremuestreo en cliente). Atributos relevantes par
 
 Notas de calidad medidas:
 
-- Los edificios llegan **agrupados**: una feature por combinación de atributos (altura, altura mínima, color), como multipolígono. En z14 hay ~94 000 polígonos con `render_height` (100 %; OMT rellena un valor por defecto cuando OSM no trae altura ni niveles, así que no implica altura real en todos). Alturas frecuentes: 10, 8, 44, 16, 38 m. Unos 4 000 polígonos tienen `render_min_height > 0` (voladizos, pasarelas).
+- Los edificios llegan **agrupados**: una feature por combinación de atributos (altura, altura mínima, color), como multipolígono. En z14 hay ~94 000 polígonos con `render_height` (100 %; OMT rellena un valor por defecto cuando OSM no trae altura ni niveles, así que no implica altura real en todos). Alturas frecuentes: 5 m (valor por defecto de OpenMapTiles cuando OSM no trae `height` ni `building:levels`; ≈ 45 % de los polígonos), 4, 22, 8, 19 m. Ver `docs/sources/catastro-edificios.md` (M2.7) para la cobertura real y las fuentes de alturas. Unos 4 000 polígonos tienen `render_min_height > 0` (voladizos, pasarelas).
 - `fill-extrusion-height` = `["get","render_height"]`, `fill-extrusion-base` = `["get","render_min_height"]`; descartar `hide_3d` si aparece.
 - Los nombres vienen en `name` (idioma local: gallego/castellano según OSM) más `name:*`; las capas de etiquetas llevan muchos `name:*` que el estilo no necesita. Si hace falta bajar peso, se pueden filtrar en M2.2 sin regenerar.
 
