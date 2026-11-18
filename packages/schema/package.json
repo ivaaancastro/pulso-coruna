@@ -1,6 +1,15 @@
 {
-  "name": "@pulso/schema", "version": "0.0.0", "private": true, "type": "module",
+  "name": "@pulso/schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
   "main": "src/index.ts",
-  "scripts": { "test": "echo \"TODO T1.2\"", "typecheck": "tsc --noEmit", "lint": "echo ok" },
-  "devDependencies": { "typescript": "^5.6.0" }
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
 }
