@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Solo develop puede abrir PR hacia main (flujo de release).
+  branch-policy:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "::error::Las PR hacia main solo pueden venir de develop (origen: ${{ github.head_ref }})"
+            exit 1
+          fi
+
+  branch-name:
+    if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if ! echo "${{ github.head_ref }}" | grep -Eq '^(feat|fix|docs|chore|refactor|test|ci)/[A-Za-z0-9._-]+$'; then
+            echo "::error::Nombre de rama inválido: ${{ github.head_ref }} (usa tipo/ID-slug)"
+            exit 1
+          fi
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm -r lint
+      - run: pnpm -r test
+      - run: pnpm format:check
