@@ -5,16 +5,16 @@
 
 ## Contexto
 
-El contrato (Entity, StationStatus, Observation, mensajes WS) debe validarse en runtime en adaptadores, API y web, y mantener los tipos en sincronía.
+El contrato (Entity, StationStatus, Observation, mensajes WS) se valida en runtime y los tipos se derivan con `z.infer`.
 
 ## Decisión
 
-Añadir `zod` 4.6.7 (versión exacta, estable `latest` en npm; Context7 no disponible, API comprobada en tests) a `@pulso/schema`. Tipos derivados con `z.infer`. Objetos `z.strictObject` (la unión de elementos WS no descarta claves). Mensajes WS con `z.discriminatedUnion('type')` y `v: z.literal(1)`.
+`zod` 4.6.7 exacta (Context7 no disponible; verificada con npm y tests). `z.strictObject`; WS v1 con `z.discriminatedUnion('type')`; `ts` entero epoch ms > 1e11 (rechaza segundos). Capa→tipo: bus/ship/plane/train→Entity, bike→StationStatus, weather/air/sea→Observation, validado en snapshot y delta. Identidad: `id`; Observation `stationId:metric` (la usan los `removes`).
 
 ## Alternativas
 
-Valibot, TypeBox, tipos TS sin validación runtime.
+Valibot, TypeBox o solo tipos TS: descartadas por falta de validación runtime o menor ecosistema.
 
 ## Consecuencias
 
-Una dependencia más (única); claves desconocidas rechazadas, así que ampliar el contrato exige cambio de schema (skill `contract-change`). `ts` solo se valida como entero positivo: no se distingue segundos de ms.
+Una dependencia; claves desconocidas rechazadas, así que ampliar el contrato exige subir `v`.

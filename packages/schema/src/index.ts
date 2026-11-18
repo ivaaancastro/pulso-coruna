@@ -1,8 +1,8 @@
-export * from './layers.js';
-export * from './entity.js';
-export * from './station.js';
-export * from './observation.js';
-export * from './ws.js';
+export * from "./layers.js";
+export * from "./entity.js";
+export * from "./station.js";
+export * from "./observation.js";
+export * from "./ws.js";
 
 export interface Adapter<T> {
   id: string;

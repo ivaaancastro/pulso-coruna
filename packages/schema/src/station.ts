@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TimestampSchema } from "./layers.js";
 
-/** Estaciones de bicis. */
+/** Estaciones de bicis. Identidad: `id`. */
 export const StationStatusSchema = z.strictObject({
   id: z.string().min(1),
   layer: z.literal("bike"),

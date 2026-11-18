@@ -4,12 +4,14 @@ import {
   EntitySchema,
   LayerIdSchema,
   ObservationSchema,
+  observationKey,
   SnapshotMessageSchema,
   StationStatusSchema,
   WsMessageSchema,
 } from "./index.js";
 
 const TS = 1_760_000_000_000;
+const TS_SECONDS = 1_760_000_000;
 const entity = { id: "bus-1", layer: "bus", lon: -8.4, lat: 43.37, ts: TS };
 const station = { id: "s1", layer: "bike", lon: -8.4, lat: 43.37, bikes: 3, docks: 7, ts: TS };
 const obs = {
@@ -29,6 +31,15 @@ describe("LayerId", () => {
 });
 
 describe("EntitySchema", () => {
+  it("acepta límites geográficos", () => {
+    for (const [lat, lon] of [
+      [90, 180],
+      [-90, -180],
+    ] as const) {
+      expect(EntitySchema.safeParse({ ...entity, lat, lon }).success).toBe(true);
+      expect(StationStatusSchema.safeParse({ ...station, lat, lon }).success).toBe(true);
+    }
+  });
   it("acepta válido mínimo y completo", () => {
     expect(EntitySchema.safeParse(entity).success).toBe(true);
     expect(
@@ -46,6 +57,9 @@ describe("EntitySchema", () => {
     ["speed negativa", { speed: -0.1 }],
     ["ts no entero", { ts: TS + 0.5 }],
     ["ts cero", { ts: 0 }],
+    ["ts en segundos", { ts: TS_SECONDS }],
+    ["layer weather (no móvil)", { layer: "weather" }],
+    ["layer bike (es estación)", { layer: "bike" }],
     ["ts negativo", { ts: -5 }],
     ["lat NaN", { lat: NaN }],
     ["lon Infinity", { lon: Infinity }],
@@ -66,18 +80,23 @@ describe("StationStatusSchema", () => {
     ["docks decimal", { docks: 1.5 }],
     ["bikes NaN", { bikes: NaN }],
     ["ts no entero", { ts: 1.5 }],
+    ["ts en segundos", { ts: TS_SECONDS }],
   ])("rechaza %s", (_n, patch) => {
     expect(StationStatusSchema.safeParse({ ...station, ...patch }).success).toBe(false);
   });
 });
 
 describe("ObservationSchema", () => {
+  it("acepta unit vacío", () => {
+    expect(ObservationSchema.safeParse({ ...obs, unit: "" }).success).toBe(true);
+  });
   it("acepta válido (también valores negativos)", () => {
     expect(ObservationSchema.safeParse(obs).success).toBe(true);
     expect(ObservationSchema.safeParse({ ...obs, layer: "sea", value: -0.4 }).success).toBe(true);
   });
   it.each([
     ["layer incorrecto", { layer: "bus" }],
+    ["ts en segundos", { ts: TS_SECONDS }],
     ["value NaN", { value: NaN }],
     ["value Infinity", { value: Infinity }],
     ["value -Infinity", { value: -Infinity }],
@@ -123,6 +142,25 @@ describe("mensajes WS v1", () => {
     expect(WsMessageSchema.safeParse({ ...delta, type: "ping" }).success).toBe(false);
     expect(WsMessageSchema.safeParse({ ...delta, layer: "metro" }).success).toBe(false);
     expect(WsMessageSchema.safeParse({ ...snapshot, layers: { metro: [] } }).success).toBe(false);
+  });
+  it("rechaza elementos de capa cruzada", () => {
+    const bad = (m: unknown) => expect(WsMessageSchema.safeParse(m).success).toBe(false);
+    bad({ ...delta, upserts: [obs] });
+    bad({ ...delta, upserts: [station] });
+    bad({ ...delta, layer: "bike", upserts: [entity] });
+    bad({ ...snapshot, layers: { bus: [obs] } });
+    bad({ ...snapshot, layers: { weather: [entity] } });
+    expect(WsMessageSchema.safeParse({ ...delta, layer: "sea", upserts: [obs] }).success).toBe(
+      true,
+    );
+  });
+  it("ida y vuelta JSON de un delta con meta numérica", () => {
+    const d = { ...delta, upserts: [{ ...entity, meta: { line: "L1", occupancy: 0.5 } }] };
+    const back = WsMessageSchema.parse(JSON.parse(JSON.stringify(WsMessageSchema.parse(d))));
+    expect(back).toEqual(d);
+  });
+  it("la clave de observación es stationId:metric", () => {
+    expect(observationKey(obs)).toBe("10157:wind_speed");
   });
   it("rechaza elementos inválidos y removes vacíos", () => {
     expect(
