@@ -11,3 +11,6 @@ pgdata/
 
 # Teselas generadas (M2.2): se copian con pnpm --filter @pulso/web tiles:copy
 apps/web/public/tiles/*.pmtiles
+.lighthouseci/
+test-results/
+playwright-report/

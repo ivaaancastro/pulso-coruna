@@ -15,4 +15,7 @@ export const gl: Messages = {
   "mode.soon": "En breve",
   "mode.unavailable": "{mode} estará dispoñible en breve.",
   "mode.selected": "Modo {mode} activo.",
+  "pwa.update": "Hai unha versión nova.",
+  "pwa.update.action": "Actualizar",
+  "pwa.offline": "Sen conexión. Móstrase o gardado.",
 };

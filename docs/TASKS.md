@@ -25,8 +25,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M2.2 Mapa base con estilo propio
 - [ ] M2.3 Intro de cámara
 - [x] M2.4 Tokens de diseño y shell de UI
-- [ ] M2.5 CI de rendimiento
-- [ ] M2.6 PWA instalable
+- [x] M2.5 CI de rendimiento
+- [x] M2.6 PWA instalable
 
 ## M3 — La grabadora
 

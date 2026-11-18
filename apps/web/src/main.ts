@@ -60,3 +60,8 @@ import("./map/map")
     console.error("[map] no se pudo iniciar", error);
     map.setAttribute("aria-label", t("map.unavailable"));
   });
+
+// PWA: solo en build de producción y en carga diferida (no suma al JS inicial).
+if (import.meta.env.PROD) {
+  void import("./pwa/register").then((m) => m.registerServiceWorker(t));
+}

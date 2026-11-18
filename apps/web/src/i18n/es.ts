@@ -13,6 +13,9 @@ export const es = {
   "mode.soon": "Próximamente",
   "mode.unavailable": "{mode} estará disponible próximamente.",
   "mode.selected": "Modo {mode} activo.",
+  "pwa.update": "Hay una versión nueva.",
+  "pwa.update.action": "Actualizar",
+  "pwa.offline": "Sin conexión. Se muestra lo guardado.",
 } as const;
 
 export type MessageKey = keyof typeof es;

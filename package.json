@@ -8,7 +8,11 @@
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "perf": "pnpm perf:bundle && pnpm perf:lighthouse && pnpm perf:e2e",
+    "perf:bundle": "pnpm --filter @pulso/web build && node apps/web/perf/check-bundle.mjs",
+    "perf:lighthouse": "lhci autorun --config=apps/web/perf/lighthouserc.json",
+    "perf:e2e": "playwright test -c apps/web/perf/playwright.config.ts"
   },
   "engines": {
     "node": ">=20"
@@ -16,9 +20,12 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@lhci/cli": "0.16.1",
+    "@playwright/test": "1.65.1",
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.10.1",
+    "tslib": "2.9.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.73.0",
     "vitest": "^5.1.0"

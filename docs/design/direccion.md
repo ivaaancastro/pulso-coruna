@@ -96,7 +96,7 @@ Licencia y fuente (a verificar en el momento de descargar en M2.4, no he podido 
 - Licencia: SIL Open Font License, Version 1.1 («This Font Software is licensed under the SIL Open Font License, Version 1.1.»). Texto completo: <https://openfontlicense.org> (`OFL.txt` del repositorio).
 - Copyright (según el repositorio): «Copyright 2019 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)».
 - Fuente: <https://github.com/Omnibus-Type/Archivo> y <https://fonts.google.com/specimen/Archivo>.
-- Autoalojada: se descargará el `.woff2` variable en M2.4 (no se añade al repo en esta tarea). Subset latín (U+0020–007E, U+00A0–00FF, U+2013–2014, U+2019, U+2212) en un solo fichero. Objetivo ≤ 40 KB. El navegador nunca llama a Google Fonts (regla de 0 peticiones a terceros). El texto de la OFL va en `apps/web/public/fonts/OFL.txt`.
+- Autoalojada: se descargará el `.woff2` variable en M2.4 (no se añade al repo en esta tarea). Subset latín (U+0020–007E, U+00A0–00FF, U+2013–2014, U+2019, U+2212) en un solo fichero. Objetivo ≤ 40 KB (cumplido en M2.5: 39,8 KB, ejes acotados a wght 300–600 y wdth 90–125; ver `apps/web/scripts/subset-font.sh`). El navegador nunca llama a Google Fonts (regla de 0 peticiones a terceros). El texto de la OFL va en `apps/web/public/fonts/OFL.txt`.
 - Fallback: `system-ui, sans-serif` con `font-display: swap`; la hora se renderiza con el fallback sin saltos porque el contenedor tiene ancho fijo en `ch`.
 - Comprobar en M2.4: que la fuente incluye la característica `tnum` en el subset (si no, se mantiene en el subset); si falla, alternativa: Sora o Inter (también OFL).
 

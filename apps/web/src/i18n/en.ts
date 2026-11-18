@@ -15,4 +15,7 @@ export const en: Messages = {
   "mode.soon": "Coming soon",
   "mode.unavailable": "{mode} is coming soon.",
   "mode.selected": "{mode} mode active.",
+  "pwa.update": "A new version is available.",
+  "pwa.update.action": "Update",
+  "pwa.offline": "Offline. Showing saved content.",
 };
