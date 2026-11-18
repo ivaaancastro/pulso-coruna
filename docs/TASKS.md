@@ -81,3 +81,10 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 ## Puertas de calidad
 
 No se cierra un hito sin su puerta (ver `docs/ROADMAP.md`).
+
+### Estado de la puerta M2
+
+- [x] Código M2.1–M2.7 en `develop`; CI (`check`, `perf`) verde.
+- [x] `perf-budget` y `design-review` pasados por los agentes en emulación; sin medir en móvil real.
+- [ ] Demo de 15 s grabada (humano; guion en `docs/demos/M2.md`, añadir enlace).
+- [ ] Revisión humana final y prueba en móvil real (incluye comprobar que la esquina oscura de la intro ya no aparece).
