@@ -49,16 +49,16 @@ Repo, CI y herramientas listos.
 
 Saber qué datos existen de verdad y cómo se va a ver el producto. Fuentes y diseño en paralelo.
 
-| ID   | Tarea                                           | Criterio de aceptación                                                                            |
-| ---- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| M1.1 | Nota GTFS Compañía de Tranvías                  | `docs/sources/gtfs-tranvias.md` (skill `source-note`); GTFS validado                              |
-| M1.2 | Nota iTranvías                                  | Respuesta de ejemplo, frecuencia medida, riesgos; licencia «pendiente de decisión humana»         |
-| M1.3 | Notas BiciCoruña y MeteoGalicia                 | BiciCoruña: ¿disponibilidad en vivo y licencia? MeteoGalicia: estaciones 10157, 14000 y 14003     |
-| M1.4 | Notas mar, aire, barcos, aviones                | Portus, Calidade do Aire, aisstream, OpenSky; REData solo como contexto regional                  |
-| M1.5 | Permiso iTranvías (humano)                      | Correo enviado; respuesta archivada o plan B decidido                                             |
-| M1.6 | Dirección de arte                               | `docs/design/`: moodboard, paleta nocturna, tipografía, movimiento, intro; aprobada por el humano |
-| M1.7 | ADR de versiones de render                      | MapLibre GL (5 o 6) y deck.gl 9.x fijados tras consultar Context7                                 |
-| M1.8 | Datos de tráfico al Concello (humano, opcional) | Solicitud enviada; mientras, congestión estimada con velocidad de buses y etiquetada              |
+| ID   | Tarea                                           | Criterio de aceptación                                                                                     |
+| ---- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| M1.1 | Nota GTFS Compañía de Tranvías                  | `docs/sources/gtfs-tranvias.md` (skill `source-note`); GTFS validado                                       |
+| M1.2 | Nota iTranvías                                  | Respuesta de ejemplo, frecuencia medida, riesgos; licencia «pendiente de decisión humana»                  |
+| M1.3 | Notas BiciCoruña y MeteoGalicia                 | BiciCoruña: ¿disponibilidad en vivo y licencia? MeteoGalicia: estaciones 10157 (sin viento), 14000 y 14003 |
+| M1.4 | Notas mar, aire, barcos, aviones                | Portus, Calidade do Aire, aisstream, OpenSky; REData solo como contexto regional                           |
+| M1.5 | Permiso iTranvías (humano)                      | Correo enviado; respuesta archivada o plan B decidido                                                      |
+| M1.6 | Dirección de arte                               | `docs/design/`: moodboard, paleta nocturna, tipografía, movimiento, intro; aprobada por el humano          |
+| M1.7 | ADR de versiones de render                      | MapLibre GL (5 o 6) y deck.gl 9.x fijados tras consultar Context7                                          |
+| M1.8 | Datos de tráfico al Concello (humano, opcional) | Solicitud enviada; mientras, congestión estimada con velocidad de buses y etiquetada                       |
 
 **Demo:** frames de referencia (mockups) de la postal y la intro.
 

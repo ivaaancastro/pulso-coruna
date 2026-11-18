@@ -12,7 +12,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 - [x] M1.1 Nota GTFS Compañía de Tranvías
 - [x] M1.2 Nota iTranvías
-- [ ] M1.3 Notas BiciCoruña y MeteoGalicia
+- [x] M1.3 Notas BiciCoruña y MeteoGalicia
 - [x] M1.4 Notas mar, aire, barcos, aviones
 - [x] M1.5 Permiso iTranvías (humano; decisión: usar la API tal cual)
 - [x] M1.6 Dirección de arte (aprobada por el humano)
