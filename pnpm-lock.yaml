@@ -41,6 +41,9 @@ importers:
 
   apps/ingest:
     dependencies:
+      '@pulso/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@pulso/schema':
         specifier: workspace:*
         version: link:../../packages/schema

@@ -11,6 +11,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@pulso/adapters": "workspace:*",
     "@pulso/schema": "workspace:*",
     "postgres": "4.1.1"
   },
