@@ -1,7 +1,7 @@
 import { backoffDelay } from "./backoff.js";
 import type { IngestConfig } from "./config.js";
 import { type CycleOutcome, nextHealth } from "./health.js";
-import type { Clock, IngestAdapter, Logger, Store } from "./types.js";
+import type { Clock, IngestAdapter, Logger, Store, ValidRows } from "./types.js";
 import { countRows, validateRows } from "./validate.js";
 
 export interface CycleDeps {
@@ -62,6 +62,42 @@ function attemptOnce(
 }
 
 /**
+ * Escribe el lote reintentando con espera creciente si la BD falla. Devuelve las filas nuevas, o
+ * `{ error }` si se agotan los intentos (el lote se pierde, pero las fuentes de instantánea lo
+ * repiten en el siguiente ciclo; no se culpa a la fuente), o `"aborted"` si se detuvo.
+ */
+async function writeWithRetry(
+  rows: ValidRows,
+  sourceId: string,
+  stop: AbortSignal,
+  { store, clock, logger, config, random }: CycleDeps,
+): Promise<number | "aborted" | { error: string }> {
+  let last = "";
+  for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
+    try {
+      return await store.write(rows);
+    } catch (e) {
+      last = describe(e);
+      logger.error("fallo de almacenamiento (BD), no de la fuente", {
+        source: sourceId,
+        attempt,
+        error: last,
+      });
+      if (attempt < config.maxAttempts) {
+        const wait = backoffDelay(
+          attempt,
+          { baseMs: config.backoffBaseMs, maxMs: config.backoffMaxMs },
+          random,
+        );
+        await clock.sleep(wait, stop);
+        if (stop.aborted) return "aborted";
+      }
+    }
+  }
+  return { error: last };
+}
+
+/**
  * Un ciclo completo de un adaptador: hasta `maxAttempts` intentos con espera creciente, validación,
  * escritura y actualización de `source_health`. Devuelve `null` solo si se detuvo durante el ciclo.
  */
@@ -116,7 +152,15 @@ export async function runCycle(
         firstError,
       });
     }
-    const written = countRows(valid) > 0 ? await store.write(valid) : 0;
+    // La fuente ya respondió bien: un fallo de la BD no es un fallo de la fuente.
+    let written = 0;
+    let storageError: string | undefined;
+    if (countRows(valid) > 0) {
+      const w = await writeWithRetry(valid, adapter.id, stop, deps);
+      if (w === "aborted") return null;
+      if (typeof w === "number") written = w;
+      else storageError = w.error;
+    }
     outcome = {
       ...base,
       at: clock.now(),
@@ -124,6 +168,7 @@ export async function runCycle(
       latencyMs,
       rowsWritten: written,
       rowsRejected: rejected,
+      ...(storageError === undefined ? {} : { storageError }),
     };
   } catch (e) {
     logger.error("ciclo fallido", { source: adapter.id, error: describe(e) });

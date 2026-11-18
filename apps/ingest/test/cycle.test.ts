@@ -97,4 +97,37 @@ describe("runCycle: reintentos con espera creciente", () => {
     expect(await p).toBeNull();
     expect(store.health.size).toBe(0);
   });
+
+  it("un fallo de la BD no degrada la fuente: reintenta la escritura con backoff", async () => {
+    const { clock, store, deps } = makeDeps();
+    let attempts = 0;
+    const realWrite = store.write.bind(store);
+    store.write = async (rows) => {
+      if (++attempts < 3) throw new Error("conexión perdida");
+      return realWrite(rows);
+    };
+    const adapter = fakeAdapter({ script: [ok([station("s1")])] });
+    const p = start(adapter, new AbortController().signal, deps);
+    await clock.advance(1_000 + 2_000);
+    expect(await p).toMatchObject({ ok: true, rowsWritten: 1 });
+    expect(attempts).toBe(3);
+    expect(adapter.calls).toBe(1); // no se vuelve a pedir a la fuente
+    expect(store.health.get("fake")).toMatchObject({ status: "ok", consecutiveFailures: 0 });
+  });
+
+  it("si la BD sigue caída, la fuente sigue ok y el error de BD se informa aparte", async () => {
+    const { clock, store, deps } = makeDeps();
+    store.write = async () => {
+      throw new Error("BD caída");
+    };
+    const adapter = fakeAdapter({ script: [ok([station("s1")])] });
+    const p = start(adapter, new AbortController().signal, deps);
+    await clock.advance(10_000);
+    expect(await p).toMatchObject({ ok: true, rowsWritten: 0, storageError: "BD caída" });
+    expect(store.health.get("fake")).toMatchObject({
+      status: "ok",
+      consecutiveFailures: 0,
+      lastError: null,
+    });
+  });
 });

@@ -1,8 +1,35 @@
 import postgres, { type Sql } from "postgres";
 import type { SourceHealth, Store, ValidRows } from "../types.js";
 
-export const connect = (databaseUrl: string): Sql =>
-  postgres(databaseUrl, { max: 4, onnotice: () => {} });
+export interface ConnectOptions {
+  connectTimeoutS?: number;
+  idleTimeoutS?: number;
+  maxLifetimeS?: number;
+  statementTimeoutMs?: number;
+}
+
+export const connect = (databaseUrl: string, o: ConnectOptions = {}): Sql =>
+  postgres(databaseUrl, {
+    max: 4,
+    onnotice: () => {},
+    connect_timeout: o.connectTimeoutS ?? 10,
+    idle_timeout: o.idleTimeoutS ?? 30,
+    max_lifetime: o.maxLifetimeS ?? 1800,
+    connection: { statement_timeout: o.statementTimeoutMs ?? 15_000 },
+  });
+
+/** Corta en el cliente una operación que no responde (además del statement_timeout del servidor). */
+async function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timeout de BD en ${what} (${ms} ms)`)), ms);
+  });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Filas por INSERT: con 8 columnas queda muy por debajo del límite de 65 535 parámetros. */
 const BATCH = 1000;
@@ -32,9 +59,17 @@ interface HealthRow {
 }
 
 export class PgStore implements Store {
-  constructor(private readonly sql: Sql) {}
+  /** `timeoutMs`: tope por operación (write/getHealth/saveHealth); algo mayor que statement_timeout. */
+  constructor(
+    private readonly sql: Sql,
+    private readonly timeoutMs = 20_000,
+  ) {}
 
-  async write(rows: ValidRows): Promise<number> {
+  write(rows: ValidRows): Promise<number> {
+    return withTimeout(this.writeNow(rows), this.timeoutMs, "write");
+  }
+
+  private async writeNow(rows: ValidRows): Promise<number> {
     const { sql } = this;
     return sql.begin(async (tx) => {
       let inserted = 0;
@@ -53,7 +88,15 @@ export class PgStore implements Store {
           .count;
       }
       for (const batch of chunks(rows.stations)) {
-        const values = batch.map((s) => ({ ...s, ts: toDate(s.ts) }));
+        const values = batch.map((s) => ({
+          id: s.id,
+          ts: toDate(s.ts),
+          layer: s.layer,
+          lon: s.lon,
+          lat: s.lat,
+          bikes: s.bikes,
+          docks: s.docks,
+        }));
         inserted += (
           await tx`insert into station_status ${tx(values)} on conflict (id, ts) do nothing`
         ).count;
@@ -75,7 +118,11 @@ export class PgStore implements Store {
     });
   }
 
-  async getHealth(sourceId: string): Promise<SourceHealth | null> {
+  getHealth(sourceId: string): Promise<SourceHealth | null> {
+    return withTimeout(this.getHealthNow(sourceId), this.timeoutMs, "getHealth");
+  }
+
+  private async getHealthNow(sourceId: string): Promise<SourceHealth | null> {
     const [r] = await this.sql<
       HealthRow[]
     >`select * from source_health where source_id = ${sourceId}`;
@@ -96,7 +143,11 @@ export class PgStore implements Store {
     };
   }
 
-  async saveHealth(h: SourceHealth): Promise<void> {
+  saveHealth(h: SourceHealth): Promise<void> {
+    return withTimeout(this.saveHealthNow(h), this.timeoutMs, "saveHealth");
+  }
+
+  private async saveHealthNow(h: SourceHealth): Promise<void> {
     const ms = (n: number | null): Date | null => (n === null ? null : toDate(n));
     await this.sql`
       insert into source_health (
@@ -117,7 +168,7 @@ export class PgStore implements Store {
         consecutive_failures = excluded.consecutive_failures,
         last_latency_ms = excluded.last_latency_ms,
         rows_written_last = excluded.rows_written_last,
-        rows_written_total = excluded.rows_written_total,
+        rows_written_total = source_health.rows_written_total + excluded.rows_written_last,
         rows_rejected_last = excluded.rows_rejected_last,
         updated_at = excluded.updated_at`;
   }

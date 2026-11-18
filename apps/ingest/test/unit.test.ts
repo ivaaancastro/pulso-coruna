@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { backoffDelay } from "../src/backoff.js";
+import { migrateWithRetry } from "../src/db/migrate.js";
+import { silentLogger } from "../src/clock.js";
 import { loadConfig } from "../src/config.js";
 import { nextHealth, statusFor } from "../src/health.js";
 import { validateRows } from "../src/validate.js";
+import { FakeClock } from "./fake-clock.js";
 import { bus, station, wind } from "./helpers.js";
+import type { Sql } from "postgres";
 
 describe("backoffDelay", () => {
   const opts = { baseMs: 1000, maxMs: 10_000 };
@@ -91,5 +95,44 @@ describe("validateRows", () => {
     expect(r.valid.observations).toHaveLength(1);
     expect(r.rejected).toBe(5);
     expect(r.firstError).toBeTruthy();
+  });
+});
+
+describe("migrateWithRetry", () => {
+  const opts = (run: () => Promise<string[]>, clock: FakeClock, attempts = 4) => ({
+    attempts,
+    backoff: { baseMs: 1000, maxMs: 30_000 },
+    clock,
+    logger: silentLogger,
+    run,
+  });
+  const sql = {} as Sql;
+
+  it("reintenta con espera creciente hasta que la BD responde", async () => {
+    const clock = new FakeClock();
+    let calls = 0;
+    const p = migrateWithRetry(
+      sql,
+      opts(async () => {
+        if (++calls < 3) throw new Error("ECONNREFUSED");
+        return ["0001_tables.sql"];
+      }, clock),
+    );
+    await clock.advance(30_000);
+    expect(await p).toEqual(["0001_tables.sql"]);
+    expect(calls).toBe(3);
+  });
+
+  it("relanza el error si se agotan los intentos", async () => {
+    const clock = new FakeClock();
+    const p = migrateWithRetry(
+      sql,
+      opts(async () => {
+        throw new Error("sin BD");
+      }, clock),
+    );
+    const assertion = expect(p).rejects.toThrow("sin BD");
+    await clock.advance(120_000);
+    await assertion;
   });
 });

@@ -9,6 +9,8 @@ export interface CycleOutcome {
   rowsWritten: number;
   rowsRejected: number;
   error?: string;
+  /** Fallo de la BD (no de la fuente): no degrada source_health. */
+  storageError?: string;
 }
 
 export function statusFor(consecutiveFailures: number, downAfter: number): HealthStatus {
