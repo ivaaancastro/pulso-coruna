@@ -58,6 +58,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
   - [x] M5.1a Adaptador mar (Portus, nivel del mar)
   - [x] M5.1b aire (Open-Meteo/CAMS, modelo)
 - [ ] M5.2 Capas web
+  - [x] M5.2c Capa de aire: halo de modelo con etiqueta «modelo» y tarjeta (`docs/specs/M5.2c-capa-aire.md`)
 - [ ] M5.3 Tarjetas de detalle
 
 ## M6 — Máquina del tiempo

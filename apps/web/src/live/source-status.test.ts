@@ -95,6 +95,9 @@ describe("layerStatus", () => {
     expect(SOURCE_THRESHOLDS.bus.nodataMs).toBe(2 * 60_000);
     expect(SOURCE_THRESHOLDS.bike.nodataMs).toBe(5 * 60_000);
     expect(SOURCE_THRESHOLDS.weather.nodataMs).toBe(30 * 60_000);
+    // aire: dato horario con ts = inicio de hora y petición cada 15 min (desfase normal ≈ 75 min)
+    expect(SOURCE_THRESHOLDS.air.delayedMs).toBeGreaterThan(75 * 60_000);
+    expect(SOURCE_THRESHOLDS.air.nodataMs).toBe(4 * 3_600_000);
   });
 });
 
