@@ -53,6 +53,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 ## M5 — La marea
 
 - [ ] M5.1 Adaptadores mar, aire, barcos, aviones
+  - [x] M5.1c Adaptador de barcos (aisstream; fixtures sintéticas, validar con tráfico real)
 - [ ] M5.2 Capas web
 - [ ] M5.3 Tarjetas de detalle
 

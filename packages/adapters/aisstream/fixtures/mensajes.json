@@ -1,0 +1,174 @@
+{
+  "_nota": "SINTÉTICA, según docs (https://aisstream.io/documentation). No es una captura real: no había clave de API. MMSI y nombres inventados (MMSI 2xx = prefijo de España ficticio). Validar con tráfico real cuando el humano cree la clave (docs/specs/M5.1c-adaptador-barcos.md).",
+  "positionReport": {
+    "MessageType": "PositionReport",
+    "MetaData": {
+      "MMSI": 224123456,
+      "MMSI_String": 224123456,
+      "ShipName": "EJEMPLO UNO    ",
+      "latitude": 43.3702,
+      "longitude": -8.3905,
+      "time_utc": "2026-11-18 10:15:30.123456789 +0000 UTC"
+    },
+    "Message": {
+      "PositionReport": {
+        "Cog": 86.7,
+        "Latitude": 43.3702,
+        "Longitude": -8.3905,
+        "MessageID": 1,
+        "NavigationalStatus": 0,
+        "Sog": 12.4,
+        "TrueHeading": 87,
+        "UserID": 224123456,
+        "Valid": true
+      }
+    }
+  },
+  "positionNoDisponible": {
+    "MessageType": "PositionReport",
+    "MetaData": {
+      "MMSI": 224765432,
+      "ShipName": "EJEMPLO DOS",
+      "latitude": 43.3601,
+      "longitude": -8.4102,
+      "time_utc": "2026-11-18 10:15:31.000000000 +0000 UTC"
+    },
+    "Message": {
+      "PositionReport": {
+        "Cog": 360,
+        "Latitude": 43.3601,
+        "Longitude": -8.4102,
+        "MessageID": 3,
+        "NavigationalStatus": 5,
+        "Sog": 102.3,
+        "TrueHeading": 511,
+        "UserID": 224765432,
+        "Valid": true
+      }
+    }
+  },
+  "sinRumboConCog": {
+    "MessageType": "PositionReport",
+    "MetaData": {
+      "MMSI": 224555000,
+      "ShipName": "EJEMPLO TRES",
+      "latitude": 43.38,
+      "longitude": -8.36,
+      "time_utc": "2026-11-18 10:15:32.000000000 +0000 UTC"
+    },
+    "Message": {
+      "PositionReport": {
+        "Cog": 211.4,
+        "Latitude": 43.38,
+        "Longitude": -8.36,
+        "MessageID": 1,
+        "NavigationalStatus": 0,
+        "Sog": 6.0,
+        "TrueHeading": 511,
+        "UserID": 224555000,
+        "Valid": true
+      }
+    }
+  },
+  "classB": {
+    "MessageType": "StandardClassBPositionReport",
+    "MetaData": {
+      "MMSI": 224999111,
+      "ShipName": "VELERO CUATRO",
+      "latitude": 43.3555,
+      "longitude": -8.3801,
+      "time_utc": "2026-11-18 10:15:33.500000000 +0000 UTC"
+    },
+    "Message": {
+      "StandardClassBPositionReport": {
+        "Cog": 45.0,
+        "Latitude": 43.3555,
+        "Longitude": -8.3801,
+        "MessageID": 18,
+        "Sog": 4.2,
+        "TrueHeading": 44,
+        "UserID": 224999111,
+        "Valid": true
+      }
+    }
+  },
+  "extendedClassB": {
+    "MessageType": "ExtendedClassBPositionReport",
+    "MetaData": {
+      "MMSI": 224888222,
+      "ShipName": "PESQUERO CINCO",
+      "latitude": 43.4,
+      "longitude": -8.45,
+      "time_utc": "2026-11-18 10:15:34.000000000 +0000 UTC"
+    },
+    "Message": {
+      "ExtendedClassBPositionReport": {
+        "Cog": 270.0,
+        "Latitude": 43.4,
+        "Longitude": -8.45,
+        "MessageID": 19,
+        "Name": "PESQUERO CINCO",
+        "Sog": 3.1,
+        "TrueHeading": 268,
+        "Type": 30,
+        "UserID": 224888222,
+        "Valid": true
+      }
+    }
+  },
+  "shipStaticData": {
+    "MessageType": "ShipStaticData",
+    "MetaData": {
+      "MMSI": 224123456,
+      "ShipName": "EJEMPLO UNO@@@@@@@@",
+      "latitude": 43.3702,
+      "longitude": -8.3905,
+      "time_utc": "2026-11-18 10:15:40.000000000 +0000 UTC"
+    },
+    "Message": {
+      "ShipStaticData": {
+        "MessageID": 5,
+        "Name": "EJEMPLO UNO@@@@@@@@",
+        "Type": 70,
+        "UserID": 224123456,
+        "Valid": true
+      }
+    }
+  },
+  "fueraDeZona": {
+    "MessageType": "PositionReport",
+    "MetaData": {
+      "MMSI": 224000001,
+      "ShipName": "LEJOS",
+      "time_utc": "2026-11-18 10:15:30.000000000 +0000 UTC"
+    },
+    "Message": {
+      "PositionReport": {
+        "Cog": 10,
+        "Latitude": 40.0,
+        "Longitude": -3.7,
+        "MessageID": 1,
+        "Sog": 5,
+        "TrueHeading": 10,
+        "UserID": 224000001,
+        "Valid": true
+      }
+    }
+  },
+  "posicionNoDisponible": {
+    "MessageType": "PositionReport",
+    "MetaData": { "MMSI": 224000002, "time_utc": "2026-11-18 10:15:30.000000000 +0000 UTC" },
+    "Message": {
+      "PositionReport": {
+        "Cog": 10,
+        "Latitude": 91,
+        "Longitude": 181,
+        "MessageID": 1,
+        "Sog": 5,
+        "TrueHeading": 10,
+        "UserID": 224000002,
+        "Valid": true
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@ Producción mínima: `docker compose` con TimescaleDB, la ingesta, un backup dia
 - Comprar o elegir el dominio y crear el registro DNS.
 - Generar y guardar las claves (`POSTGRES_PASSWORD`, `AISSTREAM_API_KEY`, `OPENSKY_*`…).
 - Activar iTranvías (`ITRANVIAS_ENABLED=true`) solo cuando el permiso (M1.5) esté confirmado.
+- Crear la clave de aisstream.io (cuenta con GitHub) y fijar `SHIP_ID_SALT` (`openssl rand -hex 24`, no cambiarla después: cambiaría los ids de barco). Sin ambas, la capa de barcos queda desactivada y la ingesta avisa en el log.
 - Si se quiere copia de seguridad fuera del VPS y dónde.
 
 ## Requisitos del VPS
@@ -47,6 +48,10 @@ docker compose exec db psql -U pulso -d pulso -c "SELECT * FROM source_health"
 Con `registry.ts` sin adaptadores la ingesta arranca y migra pero no graba nada (`sources: []` en el log). «Primer día grabado» = dejarla 24 h con los adaptadores cableados y revisar `health.sh` (las filas deben crecer y `rows_written_total` subir en cada fuente).
 
 Logs: `docker compose logs -f ingest` (JSON, rotados a 3×10 MB).
+
+## Barcos (aisstream, M5.1c)
+
+En `infra/deploy/.env` pon `AISSTREAM_API_KEY` y `SHIP_ID_SALT` y reinicia `ingest`. La ingesta mantiene **una** conexión WebSocket saliente a `stream.aisstream.io` (límite de la cuenta: 3) y vuelca un lote cada 15 s. En el arranque, el log dice `barcos (aisstream) desactivados` si falta algo. El MMSI no se guarda ni se expone: el `id` es un hash con sal. Comprobación: `infra/deploy/scripts/health.sh` muestra la fuente `aisstream`. Spec: `docs/specs/M5.1c-adaptador-barcos.md`.
 
 ## Actualizar
 
