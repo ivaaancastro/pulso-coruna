@@ -2,6 +2,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { createLiveClient, type LiveClient } from "./client";
 import { resolveStreamUrl } from "./config";
 import { resolveHealthUrl } from "./health";
+import { parsePerfOverride, startAutoQuality, type AutoQuality } from "./quality/auto-quality";
 import { hasLiveLayers, loadLiveLayers } from "./layer-registry";
 import { createSourceMonitor } from "./source-monitor";
 import { createStatusLabel } from "./status-label";
@@ -82,14 +83,28 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
   monitor.start();
   client.start();
 
+  const dev = import.meta.env.DEV;
+  const quality = startAutoQuality({
+    definitions,
+    motion,
+    forced: dev ? parsePerfOverride(opts.search) : null,
+    onChange: (level, fps) => {
+      window.dispatchEvent(new CustomEvent("pulso:quality", { detail: { level, fps } }));
+      if (dev) console.debug(`[live] calidad ${level} (${Math.round(fps)} fps)`);
+    },
+  });
+
   if (import.meta.env.DEV) {
     (window as unknown as { __pulsoLive?: LiveClient }).__pulsoLive = client;
+    (window as unknown as { __pulsoQuality?: AutoQuality }).__pulsoQuality = quality;
   }
   return {
     client,
     destroy() {
       monitor.stop();
       label.destroy();
+      quality.destroy();
+      if (dev) delete (window as unknown as { __pulsoQuality?: AutoQuality }).__pulsoQuality;
       client.stop();
       overlay.destroy();
     },

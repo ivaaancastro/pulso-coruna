@@ -315,6 +315,8 @@ const bus: LiveLayerDefinition = {
     if (state === "nodata" && selectedId !== null) select(null);
   },
   createLayers: createBusLayers,
+  // M4.7: los niveles high/medium/low coinciden con las calidades de las estelas.
+  setQualityLevel: (level) => busTrailConfig.setQuality(level),
 };
 
 export default bus;
