@@ -109,7 +109,7 @@ function select(id: string | null): void {
   if (changed) invalidate?.();
 }
 
-function syncCard(ctx: LiveLayerContext, shown: readonly Shown[]): void {
+function syncCard(at: number, shown: readonly Shown[]): void {
   if (selectedId === null) return;
   const item = shown.find((s) => s.info.id === selectedId);
   if (!item) {
@@ -120,10 +120,7 @@ function syncCard(ctx: LiveLayerContext, shown: readonly Shown[]): void {
   if (!view || !translate || !locale) return;
   const announce = announcedId !== selectedId;
   announcedId = selectedId;
-  view.show(
-    formatPlaneCard(item.info, item.est, ctx.now, translate, INTL_LOCALE[locale]),
-    announce,
-  );
+  view.show(formatPlaneCard(item.info, item.est, at, translate, INTL_LOCALE[locale]), announce);
 }
 
 function shownPlanes(ctx: LiveLayerContext, at: number): Shown[] {
@@ -153,7 +150,7 @@ function createPlaneLayers(ctx: LiveLayerContext): Layer[] {
     planes.map((p) => p.info),
     at,
   );
-  syncCard(ctx, planes);
+  syncCard(at, planes);
 
   const segments: TrailSegment[] = [];
   for (const p of planes) {

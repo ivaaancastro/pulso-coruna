@@ -23,6 +23,8 @@ export const metersToFeet = (m: number): number => m * FT_PER_M;
 export const msToKmh = (v: number): number => v * KMH_PER_MS;
 export const msToKnots = (v: number): number => v * KN_PER_MS;
 
+const formats = new Map<string, Intl.NumberFormat>();
+
 /** `intl`: etiqueta BCP 47 (`INTL_LOCALE`). `now`: reloj de la app. */
 export function formatPlaneCard(
   info: PlaneInfo,
@@ -31,7 +33,11 @@ export function formatPlaneCard(
   t: Translate,
   intl: string,
 ): PlaneCardContent {
-  const nf = new Intl.NumberFormat(intl, { maximumFractionDigits: 0 });
+  let nf = formats.get(intl);
+  if (!nf) {
+    nf = new Intl.NumberFormat(intl, { maximumFractionDigits: 0 });
+    formats.set(intl, nf);
+  }
   const rows: PlaneCardContent["rows"] = [];
   if (info.onGround) {
     rows.push({ label: t("plane.card.altitude"), value: t("plane.card.onGround") });
