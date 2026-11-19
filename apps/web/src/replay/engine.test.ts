@@ -153,6 +153,16 @@ describe("ReplayEngine: móviles", () => {
     expect(gone?.idsVersion).toBeGreaterThan(a?.idsVersion ?? 0);
   });
 
+  it("tras un reinicio (retroceso) los ids vuelven a viajar en el fotograma", () => {
+    const engine = new ReplayEngine();
+    engine.setActive(buildActive(walker, null));
+    engine.tick(T(30_000), BOTH);
+    expect(engine.tick(T(31_000), BOTH).frames[0]?.ids).toBeNull();
+    const back = engine.tick(T(12_000), BOTH);
+    expect(back.reset).toBe(true);
+    expect(back.frames[0]?.ids).toEqual(["bus:1"]);
+  });
+
   it("no emite fotograma si el instante no cambia (pausa) y sí si cambia la ventana", () => {
     const engine = new ReplayEngine();
     engine.setActive(buildActive(walker, null));

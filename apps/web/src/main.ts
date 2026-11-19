@@ -65,8 +65,17 @@ const modes = createModeSelector(t, (mode) => {
     if (mode === "replay") {
       const controller = await loadReplay();
       if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
-      if (controller) controller.enter();
-      else {
+      try {
+        controller?.enter();
+      } catch (error) {
+        console.error("[replay] no se pudo entrar", error);
+        controller?.exit();
+        replay = null;
+        modes.select("view");
+        modes.status.textContent = t("replay.unavailable");
+        return;
+      }
+      if (!controller) {
         modes.select("view");
         modes.status.textContent = t("replay.unavailable");
       }

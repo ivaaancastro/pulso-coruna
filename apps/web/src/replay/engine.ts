@@ -78,6 +78,8 @@ export class ReplayEngine {
     if (reset) {
       this.pendingReset = false;
       this.emitted.clear();
+      // El espejo vació sus fotogramas: los `ids` deben volver a viajar en el siguiente.
+      this.ids.clear();
     }
     this.lastNow = now;
 

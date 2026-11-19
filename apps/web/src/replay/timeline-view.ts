@@ -146,6 +146,7 @@ export function createTimelineView(opts: TimelineViewOptions): TimelineView {
     button.setAttribute("role", "radio");
     button.setAttribute("aria-label", t("replay.speed.option", { n: String(speed) }));
     button.textContent = `${speed}×`;
+    button.dataset["speed"] = String(speed);
     button.addEventListener("click", () => handlers.onSpeed(speed));
     speedButtons.set(speed, button);
     speeds.append(button);
@@ -326,6 +327,7 @@ export function createTimelineView(opts: TimelineViewOptions): TimelineView {
       root.dataset["loading"] = String(kind === "loading");
     },
     destroy() {
+      endDrag();
       ro?.disconnect();
       root.remove();
     },

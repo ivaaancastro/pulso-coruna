@@ -261,13 +261,12 @@ export function createReplayController(opts: ReplayControllerOptions): ReplayCon
       limitSet = limitNow();
       clock.setBounds(day, limitSet);
     }
-    active = true;
     status = IDLE_STATUS;
     loadingSince = null;
     ended = false;
     clock.setStalled(false);
 
-    const worker = opts.createWorker();
+    const worker = opts.createWorker(); // si falla, no queda a medio entrar
     client = createLiveClient({
       worker,
       url: opts.replayUrl,
@@ -276,6 +275,7 @@ export function createReplayController(opts: ReplayControllerOptions): ReplayCon
       reducedTickMs: 250,
       onOutput,
     });
+    active = true;
     // El reloj de la app pasa a ser el de reproducción antes de que las capas vuelvan a leer.
     override(() => clock.read());
     client.start();
