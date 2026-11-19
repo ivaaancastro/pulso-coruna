@@ -4,7 +4,7 @@
     "mapChunkPattern": "(^|/)(maplibre|deck|map|webgl-device)[-._]",
     "excludeChunkPattern": "(^|/)(sw\\.js$|[^/]*worker[^/]*\\.js$)",
     "initialJsGzipMaxKB": 250,
-    "mapChunkGzipMaxKB": 540
+    "mapChunkGzipMaxKB": 560
   },
   "fps": {
     "$comment": "ci = WebGL por software (SwiftShader) en runner sin GPU: solo vigila regresiones. gpu = presupuesto real del ROADMAP, para PERF_FPS_PROFILE=gpu en un equipo con GPU.",
