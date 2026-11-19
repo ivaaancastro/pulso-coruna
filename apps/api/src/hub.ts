@@ -36,6 +36,9 @@ export class StreamHub {
   private readonly clients = new Set<ClientSink>();
   private timer: NodeJS.Timeout | undefined;
   private running = false;
+  private polling = false;
+  /** Sube cada vez que se descarta el estado: un sondeo en vuelo de una generación anterior se ignora. */
+  private generation = 0;
   private readonly now: () => number;
 
   constructor(
@@ -65,13 +68,19 @@ export class StreamHub {
       this.idleCheck();
       throw e;
     }
-    // Si el cliente se fue mientras esperaba, no se le envía nada.
+    // Si `stop()` o un cierre ya lo sacaron del hub mientras esperaba, no se le envía nada.
     if (!this.clients.has(client) || !this.state) return () => {};
     // (`detach` no hace falta en ese caso: ya no está registrado)
     const items = Object.fromEntries(
       LAYER_IDS.map((l) => [l, stateItems((this.state as Record<LayerId, LayerState>)[l])]),
     ) as Record<LayerId, LayerItem[]>;
-    client.send(JSON.stringify(snapshotMessage(this.now(), [...client.layers], items)));
+    try {
+      client.send(JSON.stringify(snapshotMessage(this.now(), [...client.layers], items)));
+    } catch (e) {
+      this.clients.delete(client);
+      this.idleCheck();
+      throw e;
+    }
     this.schedule();
     return () => {
       this.clients.delete(client);
@@ -101,7 +110,9 @@ export class StreamHub {
       await this.ensureState();
       return;
     }
+    const gen = this.generation;
     const latest = await this.source.latest(0);
+    if (gen !== this.generation) return; // el estado se descartó mientras tanto
     this.apply(latest);
   }
 
@@ -138,16 +149,16 @@ export class StreamHub {
   }
 
   private schedule(): void {
-    if (this.o.pollMs <= 0 || this.timer || !this.running) return;
+    if (this.o.pollMs <= 0 || this.timer || this.polling || !this.running) return;
     const tick = (): void => {
       this.timer = undefined;
       if (!this.running) return;
+      this.polling = true;
       this.poll()
         .catch((e: unknown) => this.o.log?.warn({ err: String(e) }, "sondeo de la BD fallido"))
         .finally(() => {
-          if (this.running && this.clients.size > 0) {
-            this.timer = setTimeout(tick, this.o.pollMs);
-          }
+          this.polling = false;
+          if (this.clients.size > 0) this.schedule();
         });
     };
     this.timer = setTimeout(tick, this.o.pollMs);
@@ -157,6 +168,7 @@ export class StreamHub {
   private idleCheck(): void {
     if (this.clients.size > 0) return;
     this.running = false;
+    this.generation++;
     if (this.timer) clearTimeout(this.timer);
     this.timer = undefined;
     this.state = undefined;

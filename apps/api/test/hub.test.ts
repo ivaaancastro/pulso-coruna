@@ -127,4 +127,43 @@ describe("StreamHub", () => {
     expect(slow.dropped).toBeDefined();
     expect(h.size).toBe(0);
   });
+
+  it("un sondeo en vuelo no se aplica a un estado nuevo tras quedarse sin clientes", async () => {
+    const src = new FakeSource();
+    src.layers.bus = [bus("b1")];
+    const h = hub(src);
+    const a = new Sink(all);
+    const detachA = await h.attach(a);
+    // sondeo lento: devuelve datos antiguos cuando ya hay otro estado
+    let release: () => void = () => {};
+    const realLatest = src.latest.bind(src);
+    src.latest = async () => {
+      const old = await realLatest();
+      await new Promise<void>((r) => (release = r));
+      return old;
+    };
+    const pending = h.poll();
+    detachA();
+    src.latest = realLatest;
+    src.layers.bus = [bus("b1", -8.9)];
+    const b = new Sink(all);
+    await h.attach(b);
+    release();
+    await pending;
+    expect(b.sent).toHaveLength(1); // ningún delta con datos viejos
+  });
+
+  it("con temporizador solo hay una cadena de sondeos aunque entren clientes durante uno", async () => {
+    const src = new FakeSource();
+    const h = new StreamHub(src, { pollMs: 20, maxBufferedBytes: 1000 });
+    await h.attach(new Sink(all));
+    await new Promise((r) => setTimeout(r, 30));
+    await h.attach(new Sink(all));
+    await h.attach(new Sink(all));
+    const before = src.latestCalls;
+    await new Promise((r) => setTimeout(r, 200));
+    // una cadena a 20 ms ≈ 10 sondeos; dos o tres cadenas serían >= 20
+    expect(src.latestCalls - before).toBeLessThanOrEqual(12);
+    h.stop();
+  });
 });
