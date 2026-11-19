@@ -124,4 +124,7 @@ export const gl: Messages = {
   "replay.coarse": "Datos antigos: unha mostra por minuto.",
   "replay.ended": "Fin dos datos dispoñibles.",
   "replay.unavailable": "O histórico non está dispoñible agora.",
+  "share.label": "Compartir ligazón a esta vista",
+  "share.copied": "Ligazón copiada.",
+  "share.failed": "Non se puido copiar a ligazón.",
 };

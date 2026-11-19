@@ -24,6 +24,11 @@ export interface PulsoMapOptions {
   /** Tecla `?t=` fijada: no se reevalúa la luz cada minuto. */
   fixedTime?: boolean;
   onFirstFrame?: () => void;
+  /**
+   * Cámara pedida por un enlace compartido (M6.4): el mapa nace ya ahí y se salta la intro (quien
+   * recibe un enlace quiere ver esa vista, no un vuelo). Sin ella, la intro de siempre.
+   */
+  camera?: Camera;
 }
 
 export interface PulsoMap {
@@ -99,12 +104,14 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
   const narrow = opts.container.clientWidth < 700;
 
   // Intro (M2.3): una vez por carga. Con reduced-motion o ?intro=0 (dev) el mapa nace en la cámara final.
-  const decision = decideIntro({
-    search: window.location.search,
-    dev: import.meta.env.DEV,
-    reducedMotion: reducedQuery.matches,
-  });
-  const finalCamera: Camera = {
+  const decision: ReturnType<typeof decideIntro> = opts.camera
+    ? { play: false, reason: "disabled" }
+    : decideIntro({
+        search: window.location.search,
+        dev: import.meta.env.DEV,
+        reducedMotion: reducedQuery.matches,
+      });
+  const finalCamera: Camera = opts.camera ?? {
     center: CAMERA.center,
     zoom: narrow ? CAMERA.zoomNarrow : CAMERA.zoom,
     pitch: CAMERA.pitch,

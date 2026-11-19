@@ -7,6 +7,7 @@ import { createTranslator, detectLocale } from "./i18n";
 import type { LiveHandle } from "./live/start";
 import type { ReplayController } from "./replay/controller";
 import type { PulsoMap } from "./map/map";
+import type { ShareState } from "./share/url-state";
 import { createBaseNow, createNow, parseTimeOverride } from "./time/now";
 
 const locale = detectLocale(window.location.search, navigator.languages);
@@ -33,6 +34,7 @@ const pulse = createPulseIndex(t);
 // Modo Reproducir (M6.3): chunk diferido; se carga la primera vez que se elige. Cambiar de modo no
 // recarga la escena: solo cambia de dónde leen las capas y qué hora usan (ver `replay/controller.ts`).
 let replay: Promise<ReplayController | null> | null = null;
+let replayController: ReplayController | null = null;
 let pulsoMap: PulsoMap | null = null;
 let settleLive: (handle: LiveHandle | null) => void = () => undefined;
 const liveReady = new Promise<LiveHandle | null>((resolve) => (settleLive = resolve));
@@ -52,12 +54,37 @@ function loadReplay(): Promise<ReplayController | null> {
           })
         : null,
     )
+    .then((controller) => (replayController = controller))
     .catch((error: unknown) => {
       console.error("[replay] no se pudo iniciar", error);
       replay = null;
       return null;
     });
   return replay;
+}
+
+// URL compartible (M6.4): el módulo es un chunk diferido y solo se descarga si hay hash (el estado
+// se lee antes de crear el mapa para nacer ya en la cámara del enlace) o tras el primer fotograma.
+const sharedState: Promise<ShareState | null> =
+  window.location.hash.length > 1
+    ? import("./share/url-state")
+        .then((m) =>
+          m.parseShareHash(window.location.hash, createBaseNow(window.location.search)()),
+        )
+        .catch(() => null)
+    : Promise.resolve(null);
+
+/** Abre Reproducir en el instante y la velocidad del enlace; en pausa salvo que pida `p=1`. */
+async function restoreReplay(state: ShareState): Promise<void> {
+  if (!modes.select("replay")) return;
+  const controller = await loadReplay();
+  if (!controller || modes.getMode() !== "replay") return;
+  controller.applyState({
+    mode: "replay",
+    ...(state.t !== undefined ? { t: state.t } : {}),
+    ...(state.speed !== undefined ? { speed: state.speed } : {}),
+    playing: state.play === true,
+  });
 }
 
 const modes = createModeSelector(t, (mode) => {
@@ -105,16 +132,40 @@ veil.setAttribute("aria-hidden", "true");
 app.append(map, veil, shell);
 clock.start(now);
 
-import("./map/map")
-  .then(({ createPulsoMap }) => {
+Promise.all([import("./map/map"), sharedState])
+  .then(([{ createPulsoMap }, shared]) => {
+    const cam = shared?.camera;
     pulsoMap = createPulsoMap({
       container: map,
       now,
+      ...(cam
+        ? {
+            camera: {
+              center: [cam.lon, cam.lat] as [number, number],
+              zoom: cam.zoom,
+              pitch: cam.pitch,
+              bearing: cam.bearing,
+            },
+          }
+        : {}),
       fixedTime: import.meta.env.DEV && parseTimeOverride(window.location.search) !== null,
       // Datos en vivo (worker + deck.gl) tras el primer fotograma, para no competir con la carga.
       onFirstFrame: () => {
         const target = pulsoMap?.map;
         if (!target) return;
+        void import("./share/start")
+          .then((m) =>
+            m.startShare({
+              map: target,
+              host: shell,
+              t,
+              initial: shared ?? { mode: "view" },
+              getMode: modes.getMode,
+              getReplay: () => replayController,
+              restoreReplay,
+            }),
+          )
+          .catch((error: unknown) => console.error("[share] no se pudo iniciar", error));
         void import("./live/start")
           .then((m) => m.startLive({ map: target, now, search: window.location.search }))
           .then(settleLive)

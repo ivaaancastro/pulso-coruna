@@ -124,4 +124,7 @@ export const en: Messages = {
   "replay.coarse": "Older data: one sample per minute.",
   "replay.ended": "End of the available data.",
   "replay.unavailable": "The history isn't available right now.",
+  "share.label": "Share a link to this view",
+  "share.copied": "Link copied.",
+  "share.failed": "Couldn't copy the link.",
 };

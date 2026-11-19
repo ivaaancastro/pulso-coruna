@@ -67,11 +67,12 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 ## M6 — Máquina del tiempo
 
 - [x] M6.1 Retención (`docs/specs/M6.1-retencion.md`, ADR-0024)
-- [ ] M6.2 `/api/v1/replay`
-  - [x] M6.2 API: ventanas de 5 min en MessagePack con estado inicial, `raw`/`1m` y caché (`docs/specs/M6.2-api-replay.md`, ADR-0025); pendiente del lado cliente: precarga de la siguiente ventana (M6.3)
-- [ ] M6.3 Línea temporal
+- [x] M6.2 `/api/v1/replay`
+  - [x] M6.2 API: ventanas de 5 min en MessagePack con estado inicial, `raw`/`1m` y caché (`docs/specs/M6.2-api-replay.md`, ADR-0025); la precarga de la siguiente ventana, del lado cliente, llegó con M6.3
+- [x] M6.3 Línea temporal
   - [x] M6.3 Modo Reproducir: reloj 1×/60×/600×, selector de día, cursor accesible, worker de histórico y mock (`docs/specs/M6.3-linea-temporal.md`)
-- [ ] M6.4 URL compartible
+- [x] M6.4 URL compartible
+  - [x] M6.4 Estado en el hash (`#v=1&c=…&m=r&t=…&s=…`), restauración de cámara/modo/instante, botón Compartir enlace (es/en/gl); capas reservadas hasta que exista selector (`docs/specs/M6.4-url-compartible.md`)
 
 ## M7 — Escuchar y Pulso
 
