@@ -1,4 +1,4 @@
-# ADR-0021: `@deck.gl/geo-layers` 9.4.1 para las estelas de bus (TripsLayer)
+# ADR-0022: `@deck.gl/geo-layers` 9.4.1 para las estelas de bus (TripsLayer)
 
 - Fecha: 2026-11-19
 - Estado: aceptada (pendiente de revisión humana, como toda dependencia nueva)

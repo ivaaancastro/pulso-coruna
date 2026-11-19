@@ -1,4 +1,9 @@
 import { bicicorunaAdapter } from "@pulso/adapters/bicicoruna";
+import {
+  createScheduleEstimatesAdapter,
+  scheduleEstimatesConfigFromEnv,
+  scheduleEstimatesEnabled,
+} from "@pulso/adapters/gtfs";
 import { createItranviasAdapter, itranviasConfigFromEnv } from "@pulso/adapters/itranvias";
 import { meteogaliciaAdapter } from "@pulso/adapters/meteogalicia";
 import type { IngestAdapter } from "./types.js";
@@ -6,14 +11,18 @@ import type { IngestAdapter } from "./types.js";
 /**
  * Único punto de cableado de adaptadores reales. `id` debe ser único: es la clave de `source_health`.
  *
- * - GTFS (M3.1) no está aquí: es un feed estático (`GtfsFeed`), no filas de series temporales.
- *   Lo consumirá la API o la simulación «horario» (plan B de M3.4).
+ * - GTFS (M3.1) no es una fuente en sí (feed estático, `GtfsFeed`), pero alimenta `bus-schedule`
+ *   (M4.3a): posiciones de bus ESTIMADAS por horario (ids `sched:*`, `meta.estimated = 1`),
+ *   activa por defecto; se apaga con `SCHEDULE_ESTIMATES_ENABLED=false`.
  * - iTranvías solo se registra con `ITRANVIAS_ENABLED=true` (permiso del operador sin confirmar).
  */
 export function buildAdapters(env: Record<string, string | undefined>): IngestAdapter[] {
   const adapters: IngestAdapter[] = [bicicorunaAdapter, meteogaliciaAdapter];
   const itranvias = itranviasConfigFromEnv(env);
   if (itranvias.enabled) adapters.push(createItranviasAdapter(itranvias));
+  if (scheduleEstimatesEnabled(env)) {
+    adapters.push(createScheduleEstimatesAdapter(scheduleEstimatesConfigFromEnv(env)));
+  }
   return adapters;
 }
 

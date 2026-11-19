@@ -4,7 +4,6 @@ import { LayerPipeline } from "./layer-pipeline";
 import {
   hasLiveLayers,
   listLiveLayers,
-  loadLiveLayers,
   registerLiveLayer,
   resetLiveLayers,
   type LiveLayerDefinition,
@@ -43,16 +42,12 @@ describe("registro de capas", () => {
     expect(hasLiveLayers()).toBe(true);
   });
 
-  it("las capas descubiertas en layers/*.layer.ts se cargan una vez, con id y fuentes válidos", async () => {
-    // Con capas en el árbol hay algo que arrancar; sin ellas, `hasLiveLayers` sería false.
+  it("descubre las capas de layers/*.layer.ts sin registrar nada a mano", () => {
+    // Con `layers/*.layer.ts` presentes (bici, bus, viento…) hay algo que arrancar. No se cargan
+    // aquí: arrastrarían deck.gl entero al test (lo cubre `bike.layer.test.ts` para la de bici).
+    expect(listLiveLayers()).toEqual([]);
     expect(hasLiveLayers()).toBe(true);
-    const first = await loadLiveLayers();
-    const second = await loadLiveLayers();
-    expect(first.length).toBeGreaterThan(0);
-    expect(second).toHaveLength(first.length);
-    expect(new Set(first.map((d) => d.id)).size).toBe(first.length);
-    for (const d of first) expect(d.sources.length).toBeGreaterThan(0);
-  }, 30_000); // la primera carga transforma deck.gl
+  });
 });
 
 describe("LayerPipeline", () => {
@@ -115,35 +110,5 @@ describe("LayerPipeline", () => {
     p.notify({ kind: "items", layer: "sea" });
     expect(p.collect().map((l) => l.id)).toEqual(["mala", "bus"]);
     expect(errors).toEqual(["mala"]);
-  });
-
-  it("invalidate recrea solo esa capa y pide un fotograma", () => {
-    const calls: string[] = [];
-    let ask = 0;
-    let invalidate: (() => void) | undefined;
-    const sel: LiveLayerDefinition = {
-      id: "sel",
-      sources: ["bus"],
-      createLayers: (ctx) => {
-        calls.push("sel");
-        invalidate = ctx.invalidate;
-        return [fakeLayer("sel")];
-      },
-    };
-    const p = new LayerPipeline({
-      definitions: [sel, def("bici", ["bike"], calls)],
-      store: new LiveStore(),
-      now: () => 1,
-      reducedMotion: () => true,
-      requestRender: () => ask++,
-    });
-    p.collect();
-    calls.length = 0;
-    p.collect();
-    expect(calls).toEqual([]); // sin cambios, caché
-    invalidate?.();
-    expect(ask).toBe(1);
-    p.collect();
-    expect(calls).toEqual(["sel"]);
   });
 });
