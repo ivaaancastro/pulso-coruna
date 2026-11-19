@@ -9,7 +9,7 @@ export const gl: Messages = {
   "pulse.scale": "de 100",
   "pulse.placeholder": "Valor de mostra, sen datos reais",
   "mode.label": "Modo de visualización",
-  "mode.view": "Ver",
+  "mode.view": "Agora",
   "mode.replay": "Reproducir",
   "mode.listen": "Escoitar",
   "mode.soon": "En breve",

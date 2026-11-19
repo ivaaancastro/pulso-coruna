@@ -75,7 +75,7 @@ describe("sincronía del hash", () => {
     sync.stop();
   });
 
-  it("al volver a Ver, el hash pierde m/t/s", () => {
+  it("al volver a Ahora, el hash pierde m/t/s", () => {
     const { sync, loc, set } = setup();
     set({ mode: "replay", t: Date.parse("2026-11-18T10:30:00Z"), speed: 60 });
     sync.flush();

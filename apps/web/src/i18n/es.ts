@@ -7,7 +7,7 @@ export const es = {
   "pulse.scale": "de 100",
   "pulse.placeholder": "Valor de muestra, sin datos reales",
   "mode.label": "Modo de visualización",
-  "mode.view": "Ver",
+  "mode.view": "Ahora",
   "mode.replay": "Reproducir",
   "mode.listen": "Escuchar",
   "mode.soon": "Próximamente",

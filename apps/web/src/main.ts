@@ -5,7 +5,7 @@ import { createModeSelector } from "./components/mode-selector";
 import { createPulseIndex } from "./components/pulse-index";
 import { createTranslator, detectLocale } from "./i18n";
 import type { LiveHandle } from "./live/start";
-import type { ReplayController } from "./replay/controller";
+import type { ReplayController, ReplayState } from "./replay/controller";
 import type { PulsoMap } from "./map/map";
 import type { ShareState } from "./share/url-state";
 import { createBaseNow, createNow, parseTimeOverride } from "./time/now";
@@ -74,35 +74,31 @@ const sharedState: Promise<ShareState | null> =
         .catch(() => null)
     : Promise.resolve(null);
 
+/** Estado del enlace que `modes.select("replay")` debe aplicar al entrar (así no se pide antes «hace 1 h»). */
+let pendingReplayState: Partial<ReplayState> | null = null;
+
 /** Abre Reproducir en el instante y la velocidad del enlace; en pausa salvo que pida `p=1`. */
 async function restoreReplay(state: ShareState): Promise<void> {
-  if (!modes.select("replay")) return;
-  const controller = await loadReplay();
-  if (!controller || modes.getMode() !== "replay") return;
-  // La continuación de `modes.select` (que ya llamó a `enter()`) corre antes que esta: mismo `loadReplay()`.
-  try {
-    controller.applyState({
-      mode: "replay",
-      ...(state.t !== undefined ? { t: state.t } : {}),
-      ...(state.speed !== undefined ? { speed: state.speed } : {}),
-      playing: state.play === true,
-    });
-  } catch (error) {
-    console.error("[replay] no se pudo restaurar el enlace", error);
-    controller.exit();
-    replay = null;
-    modes.select("view");
-    modes.status.textContent = t("replay.unavailable");
-  }
+  pendingReplayState = {
+    mode: "replay",
+    ...(state.t !== undefined ? { t: state.t } : {}),
+    ...(state.speed !== undefined ? { speed: state.speed } : {}),
+    playing: state.play === true,
+  };
+  // La entrada real la hace la continuación de `modes.select` (mismo `loadReplay()`), con ese estado.
+  if (!modes.select("replay")) pendingReplayState = null;
 }
 
 const modes = createModeSelector(t, (mode) => {
   void (async () => {
     if (mode === "replay") {
       const controller = await loadReplay();
+      const pending = pendingReplayState;
+      pendingReplayState = null;
       if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
       try {
-        controller?.enter();
+        if (pending) controller?.applyState(pending);
+        else controller?.enter();
       } catch (error) {
         console.error("[replay] no se pudo entrar", error);
         controller?.exit();

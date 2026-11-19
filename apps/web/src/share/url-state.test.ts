@@ -135,7 +135,7 @@ describe("URL compartible: valores inválidos y hostiles", () => {
     expect(parse("#v=1&t=2026-11-18T10:30Z&s=60&p=1")).toEqual({ mode: "view" });
   });
 
-  it("modos desconocidos o reservados (Escuchar) caen a Ver", () => {
+  it("modos desconocidos o reservados (Escuchar) caen a Ahora", () => {
     expect(parse("#v=1&m=e")).toEqual({ mode: "view" });
     expect(parse("#v=1&m=javascript:alert(1)")).toEqual({ mode: "view" });
   });
