@@ -47,6 +47,9 @@ importers:
       '@fastify/websocket':
         specifier: 11.3.7
         version: 11.3.7
+      '@msgpack/msgpack':
+        specifier: 3.1.3
+        version: 3.1.3
       '@pulso/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -923,6 +926,10 @@ packages:
 
   '@math.gl/web-mercator@4.1.1':
     resolution: {integrity: sha512-hQ2wDN2aso9qqG3q2QJLRr3262EHxg+DtSiFQRfVnqIC3wPsVxDHboKtthC2tRBO6iOZRCu/1vnfQr/4hdLYHA==}
+
+  '@msgpack/msgpack@3.1.3':
+    resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
+    engines: {node: '>= 18'}
 
   '@napi-rs/wasm-runtime@1.2.6':
     resolution: {integrity: sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw==}
@@ -4250,6 +4257,8 @@ snapshots:
   '@math.gl/web-mercator@4.1.1':
     dependencies:
       '@math.gl/core': 4.1.1
+
+  '@msgpack/msgpack@3.1.3': {}
 
   '@napi-rs/wasm-runtime@1.2.6(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)':
     dependencies:
