@@ -81,11 +81,20 @@ describe("shipInfo (privacidad)", () => {
     }
   });
 
+  it("sin tipo AIS tampoco se muestra el nombre (podría ser una embarcación de recreo)", () => {
+    expect(shipInfo(ship("x", { meta: { name: "MARIA DEL CARMEN" } })).name).toBeUndefined();
+    expect(shipInfo(ship("x", { meta: { name: "MARIA DEL CARMEN", shipType: 99 } })).name).toBe(
+      "MARIA DEL CARMEN",
+    );
+  });
+
   it("recorta nombres larguísimos y tolera meta ausente o tipo en texto", () => {
     expect(shipInfo(ship("x", { meta: { name: "A".repeat(80), shipType: "70" } }))).toMatchObject({
       kind: "cargo",
     });
-    expect(shipInfo(ship("x", { meta: { name: "A".repeat(80) } })).name).toHaveLength(40);
+    expect(shipInfo(ship("x", { meta: { name: "A".repeat(80), shipType: 70 } })).name).toHaveLength(
+      40,
+    );
     expect(shipInfo(ship("x"))).toMatchObject({ kind: "other", name: undefined });
   });
 });

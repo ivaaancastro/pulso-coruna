@@ -65,15 +65,16 @@ function cleanName(value: string | number | undefined): string | undefined {
 }
 
 /**
- * Lee un barco. Privacidad: en recreo (36 vela, 37 recreo) el nombre puede identificar a una
- * persona, así que no sale del módulo (decisión por defecto de M5.2b; la cambia el humano).
+ * Lee un barco. Privacidad (decisión humana): el nombre solo sale si el tipo AIS es conocido y no es
+ * recreo (36 vela, 37 recreo); sin tipo o en recreo puede identificar a una persona y no sale del módulo.
  */
 export function shipInfo(entity: Entity): ShipInfo {
   const meta = entity.meta ?? {};
-  const kind = shipKind(int(meta[SHIP_META.shipType]));
+  const type = int(meta[SHIP_META.shipType]);
+  const kind = shipKind(type);
   return {
     kind,
-    name: kind === "pleasure" ? undefined : cleanName(meta[SHIP_META.name]),
+    name: type === undefined || kind === "pleasure" ? undefined : cleanName(meta[SHIP_META.name]),
     speed: entity.speed,
     heading: entity.heading,
     navStatus: int(meta[SHIP_META.navStatus]),

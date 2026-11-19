@@ -15,23 +15,30 @@ export interface Thresholds {
   delayedMs: number;
   /** Edad a partir de la cual se considera sin datos, ms. */
   nodataMs: number;
+  /**
+   * Capa que está vacía de forma normal (aviones sobre A Coruña): vacía, no se considera retrasada
+   * ni sin datos (no hay nada que atenuar ni que avisar). Con elementos, los umbrales aplican.
+   */
+  sparse?: boolean;
 }
 
 const MIN = 60_000;
 
 /**
  * Única tabla de umbrales. Ingesta (docs/specs/M3.5, M4.1): bus 20 s, bici 60 s, meteo 5 min; la
- * API marca `degraded` a 3× el intervalo y `down` a 9×. Barcos (AIS, M5.1c): emiten de forma
- * esporádica y el colector purga a los 10 min; valores provisionales hasta ver tráfico real.
+ * API marca `degraded` a 3× el intervalo y `down` a 9×. Aire (M5.2c): dato horario de modelo con `ts` = inicio de la
+ * hora, pedido cada 15 min (desfase normal ≈ 75 min). Barcos (AIS, M5.1c): emiten de forma esporádica y el
+ * colector purga a los 10 min; valores provisionales hasta ver tráfico real.
  */
 export const SOURCE_THRESHOLDS: Readonly<Record<LayerId, Thresholds>> = {
   bus: { delayedMs: MIN, nodataMs: 2 * MIN },
   bike: { delayedMs: 3 * MIN, nodataMs: 5 * MIN },
   weather: { delayedMs: 15 * MIN, nodataMs: 30 * MIN },
-  air: { delayedMs: 90 * MIN, nodataMs: 180 * MIN },
+  air: { delayedMs: 120 * MIN, nodataMs: 240 * MIN },
   sea: { delayedMs: 30 * MIN, nodataMs: 90 * MIN },
   ship: { delayedMs: 3 * MIN, nodataMs: 10 * MIN },
-  plane: { delayedMs: MIN, nodataMs: 2 * MIN },
+  // OpenSky anónimo: una petición cada 5 min (M5.1d); la capa está vacía muchas horas.
+  plane: { delayedMs: 8 * MIN, nodataMs: 15 * MIN, sparse: true },
   train: { delayedMs: MIN, nodataMs: 2 * MIN },
 };
 
@@ -54,6 +61,8 @@ export interface StatusInput {
   /** `layers.<capa>.lastDataAt` de `/api/v1/health`, solo para saber «desde cuándo». */
   healthLastDataAt?: number | null;
   thresholds: Thresholds;
+  /** La capa no tiene elementos ahora mismo (solo cuenta con `thresholds.sparse`). */
+  empty?: boolean;
 }
 
 export interface LayerStatus {
@@ -79,6 +88,8 @@ export function layerStatus(input: StatusInput): LayerStatus {
 
   // Antes del primer snapshot no sabemos nada: ni se atenúa ni se alarma.
   if (!freshness && lastDataAt === null) return { state: "live", lastDataAt: null };
+  // Capa escasa y vacía: es lo normal, no hay nada que atenuar ni que avisar.
+  if (thresholds.sparse && input.empty) return { state: "live", lastDataAt };
   // «Sin datos» manda sobre la desconexión: no se reabren tarjetas de datos que ya eran viejos.
   if (fromStore === null) return { state: "nodata", lastDataAt };
   const age = Math.max(0, now - fromStore);
