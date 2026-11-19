@@ -1,4 +1,4 @@
-# ADR-0018: datos en vivo del frontend (worker, deck.gl y dependencias)
+# ADR-0020: datos en vivo del frontend (worker, deck.gl y dependencias)
 
 - Fecha: 2026-11-19
 - Estado: aceptada
