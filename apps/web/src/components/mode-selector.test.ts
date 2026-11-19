@@ -33,16 +33,28 @@ describe("selector de modo", () => {
     expect(option("replay").getAttribute("aria-checked")).toBe("false");
   });
 
-  it("Reproducir y Escuchar están marcados como próximamente y no cambian el modo", () => {
+  it("Escuchar sigue como próximamente y no cambia el modo; Reproducir ya está disponible", () => {
     const { selector, onChange, option } = setup();
-    for (const mode of ["replay", "listen"]) {
-      expect(option(mode).getAttribute("aria-disabled")).toBe("true");
-      expect(option(mode).textContent).toContain("Próximamente");
-      option(mode).click();
-    }
+    expect(option("replay").getAttribute("aria-disabled")).toBeNull();
+    expect(option("replay").textContent).not.toContain("Próximamente");
+    expect(option("listen").getAttribute("aria-disabled")).toBe("true");
+    expect(option("listen").textContent).toContain("Próximamente");
+    option("listen").click();
     expect(selector.getMode()).toBe("view");
     expect(onChange).not.toHaveBeenCalled();
     expect(selector.status.textContent).toBe("Escuchar estará disponible próximamente.");
+  });
+
+  it("Reproducir cambia el modo, avisa y se puede volver a Ver", () => {
+    const { selector, onChange, option } = setup();
+    option("replay").click();
+    expect(selector.getMode()).toBe("replay");
+    expect(onChange).toHaveBeenLastCalledWith("replay");
+    expect(option("replay").getAttribute("aria-checked")).toBe("true");
+    expect(selector.status.textContent).toBe("Modo Reproducir activo.");
+    expect(selector.select("view")).toBe(true);
+    expect(onChange).toHaveBeenLastCalledWith("view");
+    expect(option("view").getAttribute("aria-checked")).toBe("true");
   });
 
   it("roving tabindex: solo un radio en el orden de tabulación", () => {

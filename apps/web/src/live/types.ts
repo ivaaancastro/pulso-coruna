@@ -1,4 +1,5 @@
 import type { LayerId, LayerItem } from "@pulso/schema";
+import type { ReplayStatus } from "../replay/types";
 
 /** Estado de la conexión WebSocket con nuestra API. */
 export type ConnectionState = "idle" | "connecting" | "open" | "reconnecting" | "closed";
@@ -54,4 +55,8 @@ export type WorkerOutput =
   | { type: "status"; state: ConnectionState; attempt: number }
   | ({ type: "items" } & ItemsEvent)
   | { type: "frames"; frames: MobileFrame[] }
-  | { type: "rejected"; total: number };
+  | { type: "rejected"; total: number }
+  /** Solo reproducción (M6.3): el instante retrocedió o saltó; el espejo debe vaciarse antes de los `items`. */
+  | { type: "reset" }
+  /** Solo reproducción (M6.3): estado de carga de la ventana del instante actual. */
+  | { type: "replay"; status: ReplayStatus };

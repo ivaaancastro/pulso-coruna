@@ -107,6 +107,21 @@ export const es = {
   "status.live": "{layer}: datos al día",
   "status.reconnecting": "Reconectando…",
   "status.reconnected": "Conexión restablecida",
+  "replay.label": "Línea temporal",
+  "replay.play": "Reproducir",
+  "replay.pause": "Pausar",
+  "replay.day": "Día",
+  "replay.today": "Hoy",
+  "replay.speed": "Velocidad de reproducción",
+  "replay.speed.option": "Velocidad {n}×",
+  "replay.slider": "Hora del día",
+  "replay.loading": "Cargando datos…",
+  "replay.nodata": "Sin datos grabados para este instante.",
+  "replay.error.network": "Sin conexión con el histórico. Reintentando…",
+  "replay.error.server": "El histórico no responde. Reintentando…",
+  "replay.coarse": "Datos antiguos: una muestra por minuto.",
+  "replay.ended": "Fin de los datos disponibles.",
+  "replay.unavailable": "El histórico no está disponible ahora.",
 } as const;
 
 export type MessageKey = keyof typeof es;

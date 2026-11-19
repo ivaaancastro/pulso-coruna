@@ -2,7 +2,7 @@ import { MapLibreOverlay } from "@deck.gl/maplibre";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { LayerPipeline } from "./layer-pipeline";
 import type { LiveLayerDefinition } from "./layer-registry";
-import type { LiveStore } from "./live-store";
+import type { StoreSource } from "./switchable-store";
 import type { SourceMonitor } from "./source-monitor";
 
 /**
@@ -11,7 +11,8 @@ import type { SourceMonitor } from "./source-monitor";
  */
 export interface LiveOverlayOptions {
   map: MapLibreMap;
-  store: LiveStore;
+  /** Lo que se dibuja: el almacén en vivo o, en Reproducir, el del histórico (`SwitchableStore`). */
+  store: StoreSource;
   definitions: readonly LiveLayerDefinition[];
   now: () => number;
   reducedMotion: () => boolean;

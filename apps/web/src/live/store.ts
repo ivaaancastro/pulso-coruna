@@ -53,6 +53,12 @@ export class LayerStore {
     return kept;
   }
 
+  /** Olvida todo, incluida la frescura (reproducción: el instante retrocedió o saltó). */
+  reset(): void {
+    this.data.clear();
+    this.fresh.clear();
+  }
+
   /** Vacía una capa sin tocar su frescura (la capa no vino en el snapshot). */
   clear(layer: LayerId): void {
     this.data.get(layer)?.clear();

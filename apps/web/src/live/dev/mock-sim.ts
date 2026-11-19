@@ -27,7 +27,7 @@ export function createRng(seed: number): () => number {
 type LonLat = readonly [number, number];
 
 /** Trazados inventados sobre la península (no son líneas reales). */
-const ROUTES: Record<string, readonly LonLat[]> = {
+export const ROUTES: Record<string, readonly LonLat[]> = {
   S1: [
     [-8.4105, 43.3703],
     [-8.4056, 43.3669],
@@ -51,9 +51,9 @@ const ROUTES: Record<string, readonly LonLat[]> = {
     [-8.3985, 43.3623],
   ],
 };
-const ROUTE_IDS = Object.keys(ROUTES);
+export const ROUTE_IDS = Object.keys(ROUTES);
 
-const STATIONS: readonly LonLat[] = [
+export const STATIONS: readonly LonLat[] = [
   [-8.4066, 43.3711], [-8.4048, 43.3693], [-8.4012, 43.3698], [-8.4094, 43.3687],
   [-8.4137, 43.3702], [-8.4182, 43.3707], [-8.4211, 43.3731], [-8.4162, 43.3767],
   [-8.4103, 43.3739], [-8.4065, 43.3755], [-8.4023, 43.3722], [-8.3987, 43.3668],
@@ -61,7 +61,7 @@ const STATIONS: readonly LonLat[] = [
 ]; // prettier-ignore
 
 /** Rutas inventadas de barcos: de la bocana al puerto (no son derrotas reales). */
-const SHIP_ROUTES: readonly (readonly LonLat[])[] = [
+export const SHIP_ROUTES: readonly (readonly LonLat[])[] = [
   [
     [-8.3505, 43.3748],
     [-8.3647, 43.3679],
@@ -85,7 +85,7 @@ const SHIP_ROUTES: readonly (readonly LonLat[])[] = [
 ];
 
 /** Barcos ficticios: tipo AIS, nombre, nudos y estado (los amarrados no se mueven). */
-const SHIP_SPECS: readonly {
+export const SHIP_SPECS: readonly {
   type?: number;
   name?: string;
   knots: number;
@@ -108,7 +108,7 @@ const SHIP_SPECS: readonly {
   { type: 31, name: "MOCK TOW", knots: 0, moored: [-8.3797, 43.3649], heading: 200 },
 ];
 /** Alvedro (LCG) y aviones ficticios: uno aterriza, otro cruza (no son vuelos reales). */
-const ALVEDRO: LonLat = [-8.3772, 43.3021];
+export const ALVEDRO: LonLat = [-8.3772, 43.3021];
 
 interface SimPlane {
   id: string;
@@ -127,7 +127,7 @@ interface SimPlane {
   groundedUpdates: number;
 }
 
-function offset(origin: LonLat, headingDeg: number, meters: number): LonLat {
+export function offset(origin: LonLat, headingDeg: number, meters: number): LonLat {
   const rad = (headingDeg * Math.PI) / 180;
   return [
     origin[0] + (Math.sin(rad) * meters) / (M_LAT * Math.cos((origin[1] * Math.PI) / 180)),
@@ -168,10 +168,10 @@ function makePlanes(): SimPlane[] {
   ];
 }
 
-const WEATHER_STATIONS = ["mock-w1", "mock-w2", "mock-w3"] as const;
+export const WEATHER_STATIONS = ["mock-w1", "mock-w2", "mock-w3"] as const;
 /** Como en producción, el sufijo `:model` marca un dato de modelo (una sola celda para toda la ciudad). */
-const AIR_STATION = "mock:coruna:model";
-const HOUR_MS = 3_600_000;
+export const AIR_STATION = "mock:coruna:model";
+export const HOUR_MS = 3_600_000;
 
 interface Bus {
   id: string;
@@ -205,14 +205,14 @@ interface Ship {
   nextReport: number;
 }
 
-const KNOT = 0.514444;
+export const KNOT = 0.514444;
 /** Tiempo atracado y fuera de escena (solo para que la demo no se quede vacía), ms. */
 const DWELL_MS = 45_000;
 const AWAY_MS = 20_000;
 
 const M_LAT = 111_320;
 
-function routeGeometry(route: readonly LonLat[]): { lengths: number[]; total: number } {
+export function routeGeometry(route: readonly LonLat[]): { lengths: number[]; total: number } {
   const lengths: number[] = [];
   let total = 0;
   for (let i = 1; i < route.length; i++) {
@@ -227,7 +227,7 @@ function routeGeometry(route: readonly LonLat[]): { lengths: number[]; total: nu
   return { lengths, total };
 }
 
-function pointAt(bus: Pick<Bus, "route" | "lengths" | "total" | "s">): {
+export function pointAt(bus: Pick<Bus, "route" | "lengths" | "total" | "s">): {
   lon: number;
   lat: number;
   heading: number;
