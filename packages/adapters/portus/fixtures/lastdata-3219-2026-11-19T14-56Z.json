@@ -1,0 +1,17 @@
+{
+  "fecha": "2026-11-19 14:56:00.0",
+  "datos": [
+    {
+      "id": 27,
+      "nombreParametro": "Nivel del mar",
+      "nombreColumna": "nivel",
+      "paramEseoo": "SeaLevel",
+      "valor": "2535",
+      "factor": 1000.0,
+      "unidad": "m",
+      "paramQC": false,
+      "variable": "SEA_LEVEL",
+      "averia": false
+    }
+  ]
+}
