@@ -5,6 +5,7 @@ PWA de Pulso A Coruña (Vite + TypeScript, sin framework). M2.4: tokens de dise�
 ```bash
 pnpm --filter @pulso/web tiles:copy   # una vez: copia infra/tiles/.work/coruna.pmtiles a public/tiles/
 pnpm --filter @pulso/web dev          # http://localhost:5173
+pnpm --filter @pulso/web dev:mock     # igual, con stream WS simulado en /api/v1/stream (solo dev; PULSO_MOCK_BUSES=n)
 pnpm --filter @pulso/web test
 pnpm perf                         # desde la raíz: bundle + Lighthouse CI + fps/terceros (docs/TOOLING.md, ADR 0011)
 ```
