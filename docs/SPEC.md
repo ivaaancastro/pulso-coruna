@@ -22,11 +22,11 @@ Adaptadores → ingesta → PostgreSQL/TimescaleDB → API Fastify (REST + WS) �
 
 ## Contratos
 
-Esquemas zod y tipos (`z.infer`) en `packages/schema/src/` (`layers`, `entity`, `station`, `observation`, `ws`; ADR-0006). Validación estricta: rangos geográficos, `ts` entero epoch ms UTC > 1e11 (los segundos se rechazan), números finitos, claves desconocidas rechazadas. Capa→tipo: `bus|ship|plane|train`→Entity, `bike`→StationStatus, `weather|air|sea`→Observation; snapshot y delta validan que cada elemento corresponda a su capa. Identidad: Entity y StationStatus por `id`; Observation por `stationId:metric` (`observationKey`; los `removes` de observaciones usan esa clave). Mensajes WS versionados (`v:1`) como unión discriminada por `type`: `snapshot {v,type,ts,layers:{<layer>:items[]}}` y `delta {v,type,ts,layer,upserts[],removes[]}`. El cliente usa `v` para compatibilidad: cualquier campo nuevo o cambio incompatible sube `v`. Endpoints:
+Esquemas zod y tipos (`z.infer`) en `packages/schema/src/` (`layers`, `entity`, `station`, `observation`, `ws`, `replay`; ADR-0006). Validación estricta: rangos geográficos, `ts` entero epoch ms UTC > 1e11 (los segundos se rechazan), números finitos, claves desconocidas rechazadas. Capa→tipo: `bus|ship|plane|train`→Entity, `bike`→StationStatus, `weather|air|sea`→Observation; snapshot y delta validan que cada elemento corresponda a su capa. Identidad: Entity y StationStatus por `id`; Observation por `stationId:metric` (`observationKey`; los `removes` de observaciones usan esa clave). Mensajes WS versionados (`v:1`) como unión discriminada por `type`: `snapshot {v,type,ts,layers:{<layer>:items[]}}` y `delta {v,type,ts,layer,upserts[],removes[]}`. El cliente usa `v` para compatibilidad: cualquier campo nuevo o cambio incompatible sube `v`. Endpoints:
 
 - `GET /api/v1/snapshot?layers=bus,bike`
 - `WS /api/v1/stream` (snapshot al conectar, luego deltas `{v:1,type:"delta",ts,layer,upserts[],removes[]}`)
-- `GET /api/v1/replay?from=&to=&layers=` (ventanas 5 min, MessagePack)
+- `GET /api/v1/replay?from=&to=&layers=` (ventana ≤ 5 min, `application/msgpack`; `ReplayWindowSchema` `v:1` columnar con estado inicial, `resolution: "raw"|"1m"`; `docs/specs/M6.2-api-replay.md`)
 - `GET /api/v1/health`
 - `GET /api/v1/pulse?from=&to=`
 

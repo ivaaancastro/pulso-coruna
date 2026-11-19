@@ -109,7 +109,7 @@ curl -k "https://localhost/api/v1/snapshot?layers=bike"
 docker compose -f infra/deploy/docker-compose.yml logs -f api
 ```
 
-Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/src/config.ts`): `API_WS_MAX_PER_IP` (10), `API_POLL_MS` (2000), `API_WS_PING_MS` (30000), `API_CORS_ORIGINS` (`*`), `API_MAX_AGE_*_MS` (cuánto tiempo sigue «viva» una lectura: 5 min móviles, 1 h bicis, 6 h observaciones), `API_HEALTH_STALE_FACTOR` (3). `API_TRUST_PROXY=true` ya lo fija compose: la API toma la IP real de `X-Forwarded-For` que pone Caddy; **no** lo actives si la API queda expuesta sin proxy.
+Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/src/config.ts`): `API_WS_MAX_PER_IP` (10), `API_POLL_MS` (2000), `API_WS_PING_MS` (30000), `API_CORS_ORIGINS` (`*`), `API_MAX_AGE_*_MS` (cuánto tiempo sigue «viva» una lectura: 5 min móviles, 1 h bicis, 6 h observaciones), `API_HEALTH_STALE_FACTOR` (3), y para `GET /api/v1/replay` (M6.2): `API_REPLAY_MAX_AGE_DAYS` (365), `API_REPLAY_RAW_DAYS` (30), `API_REPLAY_MAX_ROWS`, `API_REPLAY_MAX_BYTES` (4 MiB), `API_REPLAY_MAX_PER_IP` (4), `API_REPLAY_CACHE_BYTES` (32 MiB). `API_TRUST_PROXY=true` ya lo fija compose: la API toma la IP real de `X-Forwarded-For` que pone Caddy; **no** lo actives si la API queda expuesta sin proxy.
 
 Con iTranvías apagada la capa `bus` sale vacía (`[]`) y `health.layers.bus.lastDataAt` es `null`: es lo esperado, no un fallo.
 

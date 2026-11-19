@@ -20,6 +20,20 @@ export interface ApiConfig {
   /** Una fuente se marca `degraded` si no hay lectura en `factor × intervalo` y `down` en `3 × factor`. */
   healthStaleFactor: number;
   healthCacheMs: number;
+  /** Antigüedad máxima (días) del `from` de un replay. Más allá se responde 400. */
+  replayMaxAgeDays: number;
+  /** Hasta cuántos días atrás hay datos brutos; antes se lee la tabla de 1 muestra/min (M6.1). */
+  replayRawDays: number;
+  /** Filas máximas leídas por tabla y ventana; superado → 413 (se pide menos capas). */
+  replayMaxRows: number;
+  /** Tamaño máximo (bytes) de la respuesta MessagePack; superado → 413. */
+  replayMaxBytes: number;
+  /** Peticiones de replay simultáneas por IP (cabecera de coste: cada una toca la BD). */
+  replayMaxPerIp: number;
+  /** Lecturas de replay simultáneas en total (comparten el pool de BD con el directo). */
+  replayMaxGlobal: number;
+  /** Caché en memoria (bytes) de ventanas pasadas ya codificadas; 0 la desactiva. */
+  replayCacheBytes: number;
   dbConnectTimeoutS: number;
   dbIdleTimeoutS: number;
   dbMaxLifetimeS: number;
@@ -74,6 +88,13 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     wsMaxBufferedBytes: int(env, "API_WS_MAX_BUFFERED_BYTES", 4 * 1024 * 1024),
     healthStaleFactor: int(env, "API_HEALTH_STALE_FACTOR", 3),
     healthCacheMs: int(env, "API_HEALTH_CACHE_MS", 5_000, 0),
+    replayMaxAgeDays: int(env, "API_REPLAY_MAX_AGE_DAYS", 365),
+    replayRawDays: int(env, "API_REPLAY_RAW_DAYS", 30),
+    replayMaxRows: int(env, "API_REPLAY_MAX_ROWS", 200_000, 100),
+    replayMaxBytes: int(env, "API_REPLAY_MAX_BYTES", 4 * 1024 * 1024, 1024),
+    replayMaxPerIp: int(env, "API_REPLAY_MAX_PER_IP", 4),
+    replayMaxGlobal: int(env, "API_REPLAY_MAX_GLOBAL", 2),
+    replayCacheBytes: int(env, "API_REPLAY_CACHE_BYTES", 32 * 1024 * 1024, 0),
     dbConnectTimeoutS: int(env, "DB_CONNECT_TIMEOUT_S", 10),
     dbIdleTimeoutS: int(env, "DB_IDLE_TIMEOUT_S", 30),
     dbMaxLifetimeS: int(env, "DB_MAX_LIFETIME_S", 1800),

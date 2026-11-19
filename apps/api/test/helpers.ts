@@ -3,6 +3,14 @@ import { LAYER_IDS } from "@pulso/schema";
 import type { ApiConfig } from "../src/config.js";
 import { loadConfig } from "../src/config.js";
 import type { DataSource, Latest, SourceHealthRow } from "../src/db.js";
+import {
+  emptyReplayRows,
+  type ObservationSample,
+  type PositionSample,
+  type ReplayQuery,
+  type ReplayRows,
+  type StationSample,
+} from "../src/replay-db.js";
 
 export const T0 = 1_760_000_000_000;
 
@@ -53,6 +61,53 @@ export class FakeSource implements DataSource {
   failing = false;
   latestCalls = 0;
   ts = T0;
+  /** Histórico en memoria para `replay` (mismo criterio que la SQL: `[from,to)` + último anterior dentro del lookback). */
+  history: {
+    positions: PositionSample[];
+    stations: StationSample[];
+    observations: ObservationSample[];
+  } = { positions: [], stations: [], observations: [] };
+  replayCalls: ReplayQuery[] = [];
+  /** Fuerza `truncated` en la respuesta de `replay`. */
+  truncate = false;
+
+  replay(q: ReplayQuery): Promise<ReplayRows> {
+    this.replayCalls.push(q);
+    if (this.failing) return Promise.reject(new Error("BD caída"));
+    const out = emptyReplayRows(q.resolution);
+    out.truncated = this.truncate;
+    const inWin = (ts: number): boolean => ts >= q.from && ts < q.to;
+    const lastBefore = <T extends { ts: number }>(
+      rows: T[],
+      id: (r: T) => string,
+      lookback: number,
+    ): T[] => {
+      const best = new Map<string, T>();
+      for (const r of rows) {
+        if (r.ts >= q.from || r.ts < q.from - lookback) continue;
+        const k = id(r);
+        const cur = best.get(k);
+        if (!cur || r.ts > cur.ts) best.set(k, r);
+      }
+      return [...best.values()];
+    };
+    const wantPos = (l: LayerId): boolean => q.layers.includes(l);
+    const pos = this.history.positions.filter((r) => wantPos(r.layer));
+    out.positions.rows = pos.filter((r) => inWin(r.ts));
+    out.positions.init = lastBefore(pos, (r) => r.id, q.lookbackMs.entity);
+    if (q.layers.includes("bike")) {
+      out.stations.rows = this.history.stations.filter((r) => inWin(r.ts));
+      out.stations.init = lastBefore(this.history.stations, (r) => r.id, q.lookbackMs.station);
+    }
+    const obs = this.history.observations.filter((r) => wantPos(r.layer));
+    out.observations.rows = obs.filter((r) => inWin(r.ts));
+    out.observations.init = lastBefore(
+      obs,
+      (r) => `${r.stationId}:${r.metric}`,
+      q.lookbackMs.observation,
+    );
+    return Promise.resolve(out);
+  }
 
   latest(): Promise<Latest> {
     this.latestCalls++;

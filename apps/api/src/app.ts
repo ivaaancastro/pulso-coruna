@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
+import { encode } from "@msgpack/msgpack";
 import type { LayerId } from "@pulso/schema";
 import Fastify, { type FastifyInstance } from "fastify";
 import type { WebSocket } from "ws";
@@ -9,6 +10,20 @@ import { buildHealth, type HealthReport } from "./health.js";
 import { StreamHub } from "./hub.js";
 import { ConnectionLimiter } from "./limiter.js";
 import { parseLayers, snapshotMessage } from "./protocol.js";
+import {
+  type EncodedReplay,
+  ReplayCache,
+  buildReplayWindow,
+  etagMatches,
+  isAlignedWindow,
+  isEmptyWindow,
+  parseReplayParams,
+  replayCacheControl,
+  replayEtag,
+  replayCutoff,
+  replayResolution,
+  REPLAY_SETTLE_MS,
+} from "./replay.js";
 
 export interface BuiltApi {
   app: FastifyInstance;
@@ -63,6 +78,112 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
       return snapshotMessage(latest.ts, parsed.layers, latest.layers);
     } catch (e) {
       req.log.error({ err: e }, "snapshot: BD no disponible");
+      return reply
+        .code(503)
+        .header("Retry-After", "5")
+        .send({ error: "unavailable", message: "base de datos no disponible" });
+    }
+  });
+
+  // --- GET /api/v1/replay?from=&to=&layers=  (MessagePack, ventana ≤ 5 min; ver docs/specs/M6.2) ---
+  const GLOBAL = "\u0000global"; // clave del tope global dentro del mismo limitador
+  const replayLimiter = new ConnectionLimiter(config.replayMaxPerIp);
+  const replayGlobal = new ConnectionLimiter(config.replayMaxGlobal);
+  const replayCache = new ReplayCache(config.replayCacheBytes);
+  const replayInflight = new Map<string, Promise<EncodedReplay | "too_large">>();
+
+  app.get("/api/v1/replay", async (req, reply) => {
+    const now = Date.now();
+    reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
+    const parsed = parseReplayParams(
+      req.query as Record<string, unknown>,
+      now,
+      config.replayMaxAgeDays,
+    );
+    if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
+    const { params } = parsed;
+    const key = `${params.from}:${params.to}:${params.layers.join(",")}`;
+    const settled = params.to <= now - REPLAY_SETTLE_MS;
+    // Solo las ventanas alineadas y asentadas entran en la caché de memoria (acota las claves).
+    const cacheable = settled && isAlignedWindow(params.from, params.to);
+    const send = (v: EncodedReplay) => {
+      reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
+      if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
+      return reply.type("application/msgpack").send(v.body);
+    };
+
+    const hit = cacheable ? replayCache.get(key) : undefined;
+    if (hit) return send(hit);
+
+    // Una consulta por clave a la vez: el cliente que precarga y otro igual comparten trabajo.
+    let work = replayInflight.get(key);
+    if (!work) {
+      // Tope por IP y tope global (el pool de BD se comparte con el directo).
+      if (!replayLimiter.acquire(req.ip)) {
+        return reply
+          .code(429)
+          .header("Retry-After", "2")
+          .send({
+            error: "too_many_requests",
+            message: `máximo ${config.replayMaxPerIp} peticiones de replay simultáneas por IP`,
+          });
+      }
+      if (!replayGlobal.acquire(GLOBAL)) {
+        replayLimiter.release(req.ip);
+        return reply
+          .code(429)
+          .header("Retry-After", "2")
+          .send({ error: "too_many_requests", message: "demasiadas lecturas de replay a la vez" });
+      }
+      const ip = req.ip;
+      const cutoff = replayCutoff(now, config.replayRawDays);
+      const resolution = replayResolution(params.from, cutoff);
+      work = (async (): Promise<EncodedReplay | "too_large"> => {
+        const rows = await source.replay({
+          from: params.from,
+          to: params.to,
+          layers: params.layers,
+          resolution,
+          cutoff,
+          lookbackMs: config.maxAgeMs,
+          maxRows: config.replayMaxRows,
+        });
+        if (rows.truncated) return "too_large";
+        const window = buildReplayWindow(params, rows);
+        const raw = encode(window);
+        const body = Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
+        if (body.length > config.replayMaxBytes) return "too_large";
+        const done: EncodedReplay = {
+          body,
+          etag: replayEtag(body),
+          cacheControl: replayCacheControl({
+            from: params.from,
+            to: params.to,
+            now,
+            resolution,
+            empty: isEmptyWindow(window),
+          }),
+        };
+        if (cacheable && !isEmptyWindow(window)) replayCache.set(key, done);
+        return done;
+      })().finally(() => {
+        replayLimiter.release(ip);
+        replayGlobal.release(GLOBAL);
+        replayInflight.delete(key);
+      });
+      replayInflight.set(key, work);
+    }
+    try {
+      const result = await work;
+      if (result === "too_large") {
+        return reply.code(413).send({
+          error: "too_large",
+          message: "la ventana es demasiado grande: pide menos capas",
+        });
+      }
+      return send(result);
+    } catch (e) {
+      req.log.error({ err: e }, "replay: BD no disponible");
       return reply
         .code(503)
         .header("Retry-After", "5")

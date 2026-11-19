@@ -8,6 +8,7 @@ import {
 } from "@pulso/schema";
 import postgres, { type Sql } from "postgres";
 import type { ApiConfig } from "./config.js";
+import { readReplayRows, type ReplayQuery, type ReplayRows } from "./replay-db.js";
 
 /** Último estado conocido de cada capa (todas presentes; sin datos = lista vacía). */
 export interface Latest {
@@ -35,6 +36,8 @@ export interface DataSource {
   sourceHealth(): Promise<SourceHealthRow[]>;
   /** Marca de la última lectura de cada capa (ventana de 24 h); sin entrada = sin datos. */
   layerFreshness(): Promise<Partial<Record<LayerId, number>>>;
+  /** Histórico de una ventana (M6.2): filas de la tabla bruta o de la de 1 min según `q.resolution`. */
+  replay(q: ReplayQuery): Promise<ReplayRows>;
   /** Latencia (ms) de un `select 1`; lanza si la BD no responde. */
   ping(): Promise<number>;
   close(): Promise<void>;
@@ -223,6 +226,10 @@ export class PgDataSource implements DataSource {
       if (!(r.layer in out) || ms > (out[r.layer] ?? 0)) out[r.layer] = ms;
     }
     return out;
+  }
+
+  replay(q: ReplayQuery): Promise<ReplayRows> {
+    return readReplayRows(this.sql, q);
   }
 
   async ping(): Promise<number> {

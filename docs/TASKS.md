@@ -68,6 +68,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 - [x] M6.1 Retención (`docs/specs/M6.1-retencion.md`, ADR-0024)
 - [ ] M6.2 `/api/v1/replay`
+  - [x] M6.2 API: ventanas de 5 min en MessagePack con estado inicial, `raw`/`1m` y caché (`docs/specs/M6.2-api-replay.md`, ADR-0025); pendiente del lado cliente: precarga de la siguiente ventana (M6.3)
 - [ ] M6.3 Línea temporal
 - [ ] M6.4 URL compartible
 
