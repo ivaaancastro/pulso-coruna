@@ -118,6 +118,15 @@ export interface MockWorldOptions {
   bikeIntervalMs?: number;
   /** Cada cuánto emite el viento, ms. */
   weatherIntervalMs?: number;
+  /** Cada cuánto emite el nivel del mar (la fuente real, cada ~5 min; aquí más rápido), ms. */
+  seaIntervalMs?: number;
+}
+
+const HOUR_MS = 3_600_000;
+/** Marea semidiurna ficticia: periodo lunar de 12,42 h, nivel medio 2,3 m, amplitud 1,5 m. */
+export function mockTideLevel(ts: number): number {
+  const phase = (2 * Math.PI * ts) / (12.42 * HOUR_MS);
+  return Math.round((2.3 + 1.5 * Math.sin(phase)) * 1000) / 1000;
 }
 
 /** Mundo simulado con el mismo contrato que la API (`snapshot` y luego `delta`). */
@@ -131,8 +140,8 @@ export class MockWorld {
     capacity: number;
     bikes: number;
   }[];
-  private readonly intervals: { bus: number; bike: number; weather: number };
-  private nextDue = { bus: 0, bike: 0, weather: 0 };
+  private readonly intervals: { bus: number; bike: number; weather: number; sea: number };
+  private nextDue = { bus: 0, bike: 0, weather: 0, sea: 0 };
   private lastStep = 0;
   private wind = { speed: 4, dir: 220 };
 
@@ -142,6 +151,7 @@ export class MockWorld {
       bus: opts.busIntervalMs ?? 5000,
       bike: opts.bikeIntervalMs ?? 15_000,
       weather: opts.weatherIntervalMs ?? 30_000,
+      sea: opts.seaIntervalMs ?? 60_000,
     };
     const count = opts.buses ?? 60;
     for (let i = 0; i < count; i++) {
@@ -225,12 +235,27 @@ export class MockWorld {
     ]);
   }
 
+  /** Mismo `stationId` que el mareógrafo real: solo existe en desarrollo (este simulador). */
+  private seaObservations(ts: number): Observation[] {
+    return [
+      {
+        stationId: "portus:3219",
+        layer: "sea",
+        metric: "tide_level",
+        value: mockTideLevel(ts),
+        unit: "m",
+        ts,
+      },
+    ];
+  }
+
   snapshot(now: number): SnapshotMessage {
     this.lastStep = now;
     this.nextDue = {
       bus: now + this.intervals.bus,
       bike: now + this.intervals.bike,
       weather: now + this.intervals.weather,
+      sea: now + this.intervals.sea,
     };
     return {
       v: 1,
@@ -240,6 +265,7 @@ export class MockWorld {
         bus: this.buses.filter((b) => b.active).map((b) => this.busEntity(b, now)),
         bike: this.stations.map((s) => this.bikeStatus(s, now)),
         weather: this.windObservations(now),
+        sea: this.seaObservations(now),
       },
     };
   }
@@ -292,6 +318,17 @@ export class MockWorld {
         ts: now,
         layer: "weather",
         upserts: this.windObservations(now),
+        removes: [],
+      });
+    }
+    if (now >= this.nextDue.sea) {
+      this.nextDue.sea = now + this.intervals.sea;
+      out.push({
+        v: 1,
+        type: "delta",
+        ts: now,
+        layer: "sea",
+        upserts: this.seaObservations(now),
         removes: [],
       });
     }

@@ -40,6 +40,16 @@ export const wind = (stationId: string, over: Partial<Observation> = {}): Observ
   ...over,
 });
 
+export const tide = (value: number, ts = T0, over: Partial<Observation> = {}): Observation => ({
+  stationId: "portus:3219",
+  layer: "sea",
+  metric: "tide_level",
+  value,
+  unit: "m",
+  ts,
+  ...over,
+});
+
 export const snapshot = (layers: SnapshotMessage["layers"], ts = T0): SnapshotMessage => ({
   v: 1,
   type: "snapshot",

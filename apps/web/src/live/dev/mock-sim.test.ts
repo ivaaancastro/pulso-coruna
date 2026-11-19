@@ -21,7 +21,8 @@ describe("MockWorld", () => {
         layers.add(d.layer);
       }
     }
-    expect([...layers].sort()).toEqual(["bike", "bus", "weather"]);
+    expect([...layers].sort()).toEqual(["bike", "bus", "sea", "weather"]);
+    expect(snap.layers.sea?.[0]).toMatchObject({ stationId: "portus:3219", metric: "tide_level" });
   });
 
   it("los datos simulados se identifican como tales", () => {
