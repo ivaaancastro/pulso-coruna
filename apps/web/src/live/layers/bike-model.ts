@@ -106,7 +106,8 @@ export function ringData(
       selected: item.id === selectedId,
     });
   }
-  return out;
+  // Orden estable por id: deck.gl interpola atributos por posición, no por id.
+  return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
 export interface TransitionSpec {

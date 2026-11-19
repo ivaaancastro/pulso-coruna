@@ -69,7 +69,7 @@ const bike: LiveLayerDefinition = {
     const common = { radiusUnits: "pixels", lineWidthUnits: "pixels", billboard: true } as const;
     const color = (d: RingDatum) => withAlpha(BIKE_RGB, d.alpha / 255);
 
-    const layers = [
+    return [
       // Aro: grosor = estado (fino vacía, grueso llena); no depende solo del color.
       new ScatterplotLayer<RingDatum>({
         ...common,
@@ -124,7 +124,6 @@ const bike: LiveLayerDefinition = {
         onClick: onPick,
       }),
     ];
-    return layers;
   },
 };
 
