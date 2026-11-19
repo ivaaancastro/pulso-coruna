@@ -6,7 +6,7 @@ import type { LiveLayerContext, LiveLayerDefinition } from "../layer-registry";
 import type { LiveFrame } from "../live-store";
 import { formatBusCard } from "./bus/card";
 import { createBusCard, type BusCardView } from "./bus/card-view";
-import { colorForLine, hexToRgb, type Rgb } from "./bus/line-color";
+import { colorForLine, FOCUS_COLOR, type Rgb } from "./bus/line-color";
 import { BUS_META, busInfo } from "./bus/meta";
 import { busTrailConfig } from "./bus/trail-config";
 import { EMPTY_TRAILS, TrailHistory } from "./bus/trails";
@@ -18,8 +18,6 @@ import { EMPTY_TRAILS, TrailHistory } from "./bus/trails";
  * posiciones reales y con estimadas por horario (`meta.estimated`, ver `bus/meta.ts`).
  */
 
-/** `--pulso-focus` (tokens.md): aro del bus seleccionado. */
-const FOCUS: Rgb = hexToRgb("#f5f1e4");
 const HALO_ALPHA = 18;
 /** Por encima, sin halo (direccion.md: ≤ 2000 instancias). */
 const HALO_MAX = 2000;
@@ -45,6 +43,7 @@ let card: BusCardView | null = null;
 let translate: Translate | null = null;
 let atlas: string | null | undefined;
 let lastReduced = false;
+let announcedId: string | null = null;
 let invalidate: (() => void) | null = null;
 
 /** Flecha apuntando al norte, en máscara (se tiñe con el color de la línea). */
@@ -84,7 +83,10 @@ function getCard(): BusCardView | null {
 function select(id: string | null): void {
   const changed = selectedId !== id;
   selectedId = id;
-  if (id === null) card?.hide();
+  if (id === null) {
+    card?.hide();
+    announcedId = null;
+  }
   if (changed) invalidate?.();
 }
 
@@ -106,8 +108,10 @@ function syncCard(ctx: LiveLayerContext): void {
   }
   const view = getCard();
   if (!view || !translate) return;
+  const announce = announcedId !== selectedId;
+  announcedId = selectedId;
   const info = busInfo(entity);
-  view.show(formatBusCard(info, translate), colorForLine(info.line), !view.visible);
+  view.show(formatBusCard(info, translate), colorForLine(info.line), announce);
 }
 
 const colorCache = new Map<string, Rgb>();
@@ -135,8 +139,14 @@ function attributes(ctx: LiveLayerContext, frame: LiveFrame): Attrs {
   const angles = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const [r, g, b] = lineColor(asBus(items.get(frame.ids[i] as string))?.meta?.[BUS_META.line]);
-    colors.set([r, g, b, 255], 4 * i);
-    halo.set([r, g, b, HALO_ALPHA], 4 * i);
+    colors[4 * i] = r;
+    colors[4 * i + 1] = g;
+    colors[4 * i + 2] = b;
+    colors[4 * i + 3] = 255;
+    halo[4 * i] = r;
+    halo[4 * i + 1] = g;
+    halo[4 * i + 2] = b;
+    halo[4 * i + 3] = HALO_ALPHA;
     angles[i] = -(frame.headings[i] as number); // deck.gl gira en sentido antihorario
   }
   return { colors, halo, angles };
@@ -243,7 +253,8 @@ function createBusLayers(ctx: LiveLayerContext) {
         billboard: false,
         sizeUnits: "pixels",
         getSize: ICON_PX,
-        pickable: false,
+        pickable: frame.count > HALO_MAX,
+        onClick: onPick,
         updateTriggers: { getColor: [frame.idsVersion, fresh] },
       }),
     );
@@ -286,7 +297,7 @@ function createBusLayers(ctx: LiveLayerContext) {
         getRadius: HALO_PX - 4,
         lineWidthUnits: "pixels",
         getLineWidth: 2,
-        getLineColor: [...FOCUS, 255],
+        getLineColor: [...FOCUS_COLOR, 255],
         pickable: false,
       }),
     );

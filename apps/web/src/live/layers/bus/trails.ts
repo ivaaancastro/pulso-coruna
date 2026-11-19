@@ -103,19 +103,18 @@ export class TrailHistory {
       }
       e.seen = epoch;
       const last = e.t.length - 1;
-      const hasLast = last >= e.start;
-      if (!hasLast) {
+      if (last < e.start) {
         e.t.push(now);
         e.x.push(lon);
         e.y.push(lat);
-      } else if (now - (e.t[last] as number) >= settings.sampleMs) {
+      } else {
         const d = meters(e.x[last] as number, e.y[last] as number, lon, lat);
         if (d > MAX_JUMP_M) {
           e.t = [now];
           e.x = [lon];
           e.y = [lat];
           e.start = 0;
-        } else if (d >= settings.minStepM) {
+        } else if (now - (e.t[last] as number) >= settings.sampleMs && d >= settings.minStepM) {
           e.t.push(now);
           e.x.push(lon);
           e.y.push(lat);
@@ -162,7 +161,7 @@ export class TrailHistory {
       const e = this.entries.get(ids[i] as string);
       if (!e) continue;
       const kept = e.t.length - firstValid(e);
-      if (kept >= 1) {
+      if (kept >= 2) {
         vertices += kept + 1;
         paths++;
       }
@@ -181,7 +180,7 @@ export class TrailHistory {
       const e = this.entries.get(ids[i] as string);
       if (!e) continue;
       const s = firstValid(e);
-      if (e.t.length - s < 1) continue;
+      if (e.t.length - s < 2) continue;
       const [r, g, b] = colorOf(i);
       const rgba = ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
       startIndices[p++] = v;

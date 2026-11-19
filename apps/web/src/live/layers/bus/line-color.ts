@@ -102,3 +102,6 @@ export function colorForLine(line: string | undefined): Rgb {
   if (line === undefined || line.trim() === "") return BUS_FALLBACK_COLOR;
   return BUS_PALETTE[lineSlot(line)] ?? BUS_FALLBACK_COLOR;
 }
+
+/** `--pulso-focus` (tokens.md): aro del bus seleccionado. Un test lo compara con `tokens.css`. */
+export const FOCUS_COLOR: Rgb = hexToRgb("#f5f1e4");

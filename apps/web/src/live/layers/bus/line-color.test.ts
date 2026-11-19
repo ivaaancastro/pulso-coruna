@@ -5,6 +5,7 @@ import {
   BUS_FALLBACK_COLOR,
   BUS_PALETTE,
   BUS_TOKEN,
+  FOCUS_COLOR,
   colorForLine,
   deriveBusPalette,
   hexToRgb,
@@ -64,6 +65,7 @@ describe("color por línea", () => {
   it("el token base coincide con tokens.css y la primera variante es el propio token", () => {
     expect(BUS_TOKEN).toBe(token("bus"));
     expect(BUS_PALETTE[0]).toEqual(hexToRgb(token("bus")));
+    expect(hexToRgb(token("focus"))).toEqual(FOCUS_COLOR);
     expect(BUS_FALLBACK_COLOR).toEqual(hexToRgb(token("bus")));
   });
 
