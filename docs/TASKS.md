@@ -44,7 +44,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M4.2 Cliente WS + interpolación en worker
 - [ ] M4.3 Capa bus
 - [ ] M4.4 Capa bici
-- [ ] M4.5 Viento con partículas
+- [x] M4.5 Viento con partículas
 - [ ] M4.6 Estados de fuente caída
 - [ ] M4.7 Degradación automática
 
