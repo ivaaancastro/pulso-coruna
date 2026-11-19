@@ -70,6 +70,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [ ] M6.2 `/api/v1/replay`
   - [x] M6.2 API: ventanas de 5 min en MessagePack con estado inicial, `raw`/`1m` y caché (`docs/specs/M6.2-api-replay.md`, ADR-0025); pendiente del lado cliente: precarga de la siguiente ventana (M6.3)
 - [ ] M6.3 Línea temporal
+  - [x] M6.3 Modo Reproducir: reloj 1×/60×/600×, selector de día, cursor accesible, worker de histórico y mock (`docs/specs/M6.3-linea-temporal.md`)
 - [ ] M6.4 URL compartible
 
 ## M7 — Escuchar y Pulso

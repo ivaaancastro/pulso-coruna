@@ -4,7 +4,10 @@ import { createClock } from "./components/clock";
 import { createModeSelector } from "./components/mode-selector";
 import { createPulseIndex } from "./components/pulse-index";
 import { createTranslator, detectLocale } from "./i18n";
-import { createNow, parseTimeOverride } from "./time/now";
+import type { LiveHandle } from "./live/start";
+import type { ReplayController } from "./replay/controller";
+import type { PulsoMap } from "./map/map";
+import { createBaseNow, createNow, parseTimeOverride } from "./time/now";
 
 const locale = detectLocale(window.location.search, navigator.languages);
 const t = createTranslator(locale);
@@ -26,7 +29,61 @@ map.setAttribute("aria-label", t("map.label"));
 
 const clock = createClock(t, locale);
 const pulse = createPulseIndex(t);
-const modes = createModeSelector(t);
+
+// Modo Reproducir (M6.3): chunk diferido; se carga la primera vez que se elige. Cambiar de modo no
+// recarga la escena: solo cambia de dónde leen las capas y qué hora usan (ver `replay/controller.ts`).
+let replay: Promise<ReplayController | null> | null = null;
+let pulsoMap: PulsoMap | null = null;
+let settleLive: (handle: LiveHandle | null) => void = () => undefined;
+const liveReady = new Promise<LiveHandle | null>((resolve) => (settleLive = resolve));
+
+function loadReplay(): Promise<ReplayController | null> {
+  replay ??= Promise.all([import("./replay/start"), liveReady])
+    .then(([m, live]) =>
+      live
+        ? m.startReplay({
+            live,
+            baseNow: createBaseNow(window.location.search),
+            showTime: (ms) => clock.render(ms),
+            refreshPalette: () => pulsoMap?.refreshPalette(),
+            host: bottom,
+            before: modes.element,
+            search: window.location.search,
+          })
+        : null,
+    )
+    .catch((error: unknown) => {
+      console.error("[replay] no se pudo iniciar", error);
+      replay = null;
+      return null;
+    });
+  return replay;
+}
+
+const modes = createModeSelector(t, (mode) => {
+  void (async () => {
+    if (mode === "replay") {
+      const controller = await loadReplay();
+      if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
+      try {
+        controller?.enter();
+      } catch (error) {
+        console.error("[replay] no se pudo entrar", error);
+        controller?.exit();
+        replay = null;
+        modes.select("view");
+        modes.status.textContent = t("replay.unavailable");
+        return;
+      }
+      if (!controller) {
+        modes.select("view");
+        modes.status.textContent = t("replay.unavailable");
+      }
+    } else if (replay) {
+      (await replay)?.exit();
+    }
+  })();
+});
 
 const top = document.createElement("header");
 top.className = "shell__top";
@@ -50,22 +107,28 @@ clock.start(now);
 
 import("./map/map")
   .then(({ createPulsoMap }) => {
-    const pulsoMap = createPulsoMap({
+    pulsoMap = createPulsoMap({
       container: map,
       now,
       fixedTime: import.meta.env.DEV && parseTimeOverride(window.location.search) !== null,
       // Datos en vivo (worker + deck.gl) tras el primer fotograma, para no competir con la carga.
       onFirstFrame: () => {
-        const target = pulsoMap.map;
+        const target = pulsoMap?.map;
+        if (!target) return;
         void import("./live/start")
           .then((m) => m.startLive({ map: target, now, search: window.location.search }))
-          .catch((error: unknown) => console.error("[live] no se pudo iniciar", error));
+          .then(settleLive)
+          .catch((error: unknown) => {
+            console.error("[live] no se pudo iniciar", error);
+            settleLive(null);
+          });
       },
     });
   })
   .catch((error: unknown) => {
     console.error("[map] no se pudo iniciar", error);
     map.setAttribute("aria-label", t("map.unavailable"));
+    settleLive(null);
   });
 
 // PWA: solo en build de producción y en carga diferida (no suma al JS inicial).

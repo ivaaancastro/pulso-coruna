@@ -76,6 +76,9 @@
   --pulso-text-icon: 24px; /* glifo del botón cerrar */
   --pulso-card-w: 340px; /* panel de detalle en escritorio */
   --pulso-card-icon: 36px; /* icono de cabecera del panel */
+  --pulso-rail-h: 2px; /* hilo de la barra de tiempo (M6.3) */
+  --pulso-thumb: 20px; /* cursor de la barra de tiempo */
+  --pulso-timeline-h: 0px; /* altura de la barra de tiempo mientras está visible; la fija el modo Reproducir */
   /* borde inferior útil del shell: encima de la atribución y del hueco seguro */
   --pulso-shell-bottom: calc(
     var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + env(safe-area-inset-bottom)

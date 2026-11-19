@@ -3,8 +3,8 @@ import type { MessageKey, Translate } from "../i18n";
 export type Mode = "view" | "replay" | "listen";
 
 export const MODES: readonly Mode[] = ["view", "replay", "listen"];
-/** Solo «Ver» tiene funcionalidad en M2.4. */
-export const AVAILABLE_MODES: ReadonlySet<Mode> = new Set<Mode>(["view"]);
+/** «Ver» (M2.4) y «Reproducir» (M6.3); «Escuchar» llega en M7. */
+export const AVAILABLE_MODES: ReadonlySet<Mode> = new Set<Mode>(["view", "replay"]);
 
 const LABEL_KEY: Record<Mode, MessageKey> = {
   view: "mode.view",

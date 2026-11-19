@@ -25,6 +25,7 @@
     "@deck.gl/geo-layers": "9.4.1",
     "@deck.gl/layers": "9.4.1",
     "@deck.gl/maplibre": "9.4.1",
+    "@msgpack/msgpack": "3.1.3",
     "@pulso/schema": "workspace:*",
     "maplibre-gl": "5.24.1",
     "pmtiles": "4.5.0"

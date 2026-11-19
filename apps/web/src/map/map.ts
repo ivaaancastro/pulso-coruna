@@ -28,6 +28,11 @@ export interface PulsoMapOptions {
 
 export interface PulsoMap {
   map: maplibregl.Map;
+  /**
+   * Reaplica la luz y los colores del mapa para la hora de `now` (M6.3: en Reproducir la hora
+   * es la del histórico y cambia a saltos al arrastrar). No hace nada si la luz no cambió.
+   */
+  refreshPalette(): void;
   destroy(): void;
 }
 
@@ -170,18 +175,19 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
 
   if (import.meta.env.DEV) (window as unknown as { __pulsoMap?: maplibregl.Map }).__pulsoMap = map;
 
+  const refreshPalette = (): void => {
+    const next = paletteAt(opts.now());
+    if (!map.isStyleLoaded() || next.sunElevation === palette.sunElevation) return;
+    applyPalette(map, palette, next);
+    palette = next;
+  };
+
   let timer: ReturnType<typeof setInterval> | undefined;
-  if (!opts.fixedTime) {
-    timer = setInterval(() => {
-      const next = paletteAt(opts.now());
-      if (!map.isStyleLoaded()) return;
-      applyPalette(map, palette, next);
-      palette = next;
-    }, 60_000);
-  }
+  if (!opts.fixedTime) timer = setInterval(refreshPalette, 60_000);
 
   return {
     map,
+    refreshPalette,
     destroy() {
       if (timer) clearInterval(timer);
       map.remove();

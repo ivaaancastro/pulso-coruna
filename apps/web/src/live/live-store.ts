@@ -10,7 +10,9 @@ export interface LiveFrame extends MobileFrame {
 export type LiveChange =
   | { kind: "items"; layer: LayerId }
   | { kind: "frames"; layers: LayerId[] }
-  | { kind: "connection" };
+  | { kind: "connection" }
+  /** Reproducción (M6.3): se vació el espejo entero (el instante retrocedió o saltó). */
+  | { kind: "reset" };
 
 export interface ConnectionInfo {
   state: ConnectionState;
@@ -64,6 +66,13 @@ export class LiveStore implements LiveStoreReader {
       case "rejected":
         this.rejected = out.total;
         return;
+      case "reset":
+        this.store.reset();
+        this.frames.clear();
+        this.emit({ kind: "reset" });
+        return;
+      case "replay":
+        return; // lo atiende quien creó el cliente (`onOutput`)
       case "items":
         if (out.replace) this.store.replace(out.layer, out.upserts, out.receivedAt);
         else this.store.apply(out.layer, out.upserts, out.removes, out.receivedAt);

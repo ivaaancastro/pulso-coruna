@@ -4,7 +4,8 @@ import { resolveStreamUrl } from "./config";
 import { resolveHealthUrl } from "./health";
 import { parsePerfOverride, startAutoQuality, type AutoQuality } from "./quality/auto-quality";
 import { hasLiveLayers, loadLiveLayers } from "./layer-registry";
-import { createSourceMonitor } from "./source-monitor";
+import { createSourceMonitor, type SourceMonitor } from "./source-monitor";
+import { SwitchableStore } from "./switchable-store";
 import { createStatusLabel } from "./status-label";
 import { createTranslator, detectLocale } from "../i18n";
 
@@ -25,6 +26,11 @@ function cssNumber(name: string, fallback: number): number {
 
 export interface LiveHandle {
   client: LiveClient;
+  /** Lo que ven las capas: el almacén en vivo, o el de reproducción mientras dura ese modo. */
+  view: SwitchableStore;
+  monitor: SourceMonitor;
+  /** URL del WebSocket de nuestra API (de ella se deriva la del histórico). */
+  streamUrl: string;
   destroy(): void;
 }
 
@@ -55,9 +61,11 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
     now: opts.now,
     motion,
   });
+  // Lo que ven las capas y el monitor: el almacén en vivo, o el del histórico en Reproducir (M6.3).
+  const view = new SwitchableStore(client.store);
   // Estado de las fuentes (M4.6): el pipeline atenúa las capas y la etiqueta lo cuenta.
   const monitor = createSourceMonitor({
-    store: client.store,
+    store: view,
     layers: [...new Set(definitions.flatMap((d) => d.sources))],
     now: opts.now,
     healthUrl: resolveHealthUrl(url),
@@ -72,7 +80,7 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
   });
   const overlay = attachLiveOverlay({
     map: opts.map,
-    store: client.store,
+    store: view,
     definitions,
     now: opts.now,
     reducedMotion: () => motion.matches,
@@ -100,6 +108,9 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
   }
   return {
     client,
+    view,
+    monitor,
+    streamUrl: url,
     destroy() {
       monitor.stop();
       label.destroy();

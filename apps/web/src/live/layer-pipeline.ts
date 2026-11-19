@@ -64,6 +64,7 @@ export class LayerPipeline {
     for (const d of this.opts.definitions) {
       const affected =
         change.kind === "connection" ||
+        change.kind === "reset" ||
         (change.kind === "items" && d.sources.includes(change.layer)) ||
         (change.kind === "frames" && change.layers.some((l) => d.sources.includes(l)));
       if (affected) this.dirty.add(d.id);

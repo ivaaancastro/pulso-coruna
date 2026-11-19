@@ -1,0 +1,255 @@
+/*
+ * Barra de tiempo del modo Reproducir (M6.3). «Una barra de tiempo fina» (direccion.md): sin tarjeta
+ * ni sombras; los controles repiten la píldora del selector de modo y el cursor es un hilo con un
+ * punto. Solo tokens de docs/design/tokens.md.
+ */
+.timeline {
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  gap: var(--pulso-space-1);
+  margin-bottom: var(--pulso-space-3);
+}
+
+.timeline[hidden] {
+  display: none;
+}
+
+.timeline__row {
+  display: flex;
+  align-items: center;
+  gap: var(--pulso-space-2);
+}
+
+.timeline__play,
+.timeline__select,
+.timeline__speeds {
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-pill);
+  color: var(--pulso-text);
+}
+
+.timeline__play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--pulso-touch);
+  height: var(--pulso-touch);
+  padding: 0;
+  cursor: pointer;
+}
+
+.timeline__play svg {
+  width: var(--pulso-text-icon);
+  height: var(--pulso-text-icon);
+}
+
+.timeline__play:hover,
+.timeline__speed:hover:not([aria-checked="true"]) {
+  background: var(--pulso-surface-overlay);
+}
+
+.timeline__day {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.timeline__select {
+  width: 100%;
+  height: var(--pulso-touch);
+  padding: 0 var(--pulso-space-4);
+  font: inherit;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color-scheme: dark;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.timeline__speeds {
+  flex: none;
+  display: flex;
+  gap: var(--pulso-space-1);
+  padding: var(--pulso-space-1);
+}
+
+.timeline__speed {
+  min-width: var(--pulso-touch);
+  height: calc(var(--pulso-touch) - 2 * var(--pulso-space-1) - 2px);
+  padding: 0 var(--pulso-space-2);
+  font: inherit;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  font-variant-numeric: var(--pulso-tabular);
+  color: var(--pulso-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-pill);
+  cursor: pointer;
+  transition:
+    background-color var(--pulso-dur-base) var(--pulso-ease-out),
+    color var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.timeline__speed[aria-checked="true"] {
+  background: var(--pulso-text);
+  color: var(--pulso-bg);
+}
+
+/* Cursor: hilo de 2 px con un punto; el objetivo táctil es toda la franja de 44 px. */
+.timeline__track {
+  position: relative;
+  height: var(--pulso-touch);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.timeline__rail,
+.timeline__fill,
+.timeline__future {
+  position: absolute;
+  top: calc(50% - var(--pulso-rail-h) / 2);
+  left: 0;
+  width: 100%;
+  height: var(--pulso-rail-h);
+  transform-origin: left center;
+}
+
+.timeline__rail {
+  background: var(--pulso-border-control);
+}
+
+.timeline__fill {
+  background: var(--pulso-text);
+}
+
+/* Lo que aún no ha ocurrido (hoy, después de «ahora»): trazo discontinuo, no solo color. */
+.timeline__future {
+  transform-origin: right center;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pulso-bg) 0 var(--pulso-space-1),
+    transparent var(--pulso-space-1) var(--pulso-space-2)
+  );
+}
+
+.timeline__thumb {
+  position: absolute;
+  top: calc(50% - var(--pulso-thumb) / 2);
+  left: calc(var(--pulso-thumb) / -2);
+  width: var(--pulso-thumb);
+  height: var(--pulso-thumb);
+  background: var(--pulso-text);
+  border: 2px solid var(--pulso-bg);
+  border-radius: var(--pulso-radius-pill);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.timeline__track[data-dragging="true"] .timeline__thumb {
+  outline: 2px solid var(--pulso-text);
+}
+
+/* Marcas de hora cada 6 h, sobre el hilo y legibles sobre el mapa oscuro. */
+.timeline__ticks {
+  position: relative;
+  height: var(--pulso-space-4);
+  margin-top: calc(var(--pulso-space-2) * -1);
+  font-size: var(--pulso-text-micro);
+  font-weight: 500;
+  font-stretch: 90%;
+  font-variant-numeric: var(--pulso-tabular);
+  color: var(--pulso-text-muted);
+  pointer-events: none;
+}
+
+.timeline__tick {
+  position: absolute;
+  left: calc(var(--f) * 100%);
+  transform: translateX(-50%);
+}
+
+.timeline__tick[data-edge="start"] {
+  transform: none;
+}
+
+.timeline__tick[data-edge="end"] {
+  transform: translateX(-100%);
+}
+
+/* Mensaje sobrio bajo la barra: carga, sin datos, error. */
+.timeline__status {
+  margin: 0;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  line-height: 1.3;
+  color: var(--pulso-text-muted);
+}
+
+.timeline__status[hidden] {
+  display: none;
+}
+
+.timeline__status[data-kind="error"] {
+  color: var(--pulso-error);
+}
+
+.timeline__status[data-kind="nodata"] {
+  color: var(--pulso-warn);
+}
+
+/* La marca no depende solo del color: aro hueco para «sin datos», relleno para error. */
+.timeline__status[data-kind="nodata"]::before,
+.timeline__status[data-kind="error"]::before,
+.timeline__status[data-kind="loading"]::before {
+  content: "";
+  display: inline-block;
+  width: var(--pulso-space-2);
+  height: var(--pulso-space-2);
+  margin-right: var(--pulso-space-2);
+  border: 2px solid currentColor;
+  border-radius: var(--pulso-radius-pill);
+}
+
+.timeline__status[data-kind="error"]::before {
+  background: currentColor;
+}
+
+/* Cargando: el hilo se vuelve discontinuo y avanza despacio (quieto con reduced-motion). */
+.timeline[data-loading="true"] .timeline__rail {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pulso-text-subtle) 0 var(--pulso-space-2),
+    var(--pulso-border-control) var(--pulso-space-2) var(--pulso-space-4)
+  );
+  background-size: var(--pulso-space-4) 100%;
+  animation: timeline-load var(--pulso-dur-slow) linear infinite;
+}
+
+@keyframes timeline-load {
+  to {
+    background-position-x: var(--pulso-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline[data-loading="true"] .timeline__rail {
+    animation: none;
+  }
+
+  .timeline__speed {
+    transition: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .timeline {
+    max-width: 720px;
+  }
+}

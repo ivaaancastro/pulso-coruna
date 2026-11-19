@@ -1,3 +1,5 @@
+import { decode } from "@msgpack/msgpack";
+import { ReplayWindowSchema } from "@pulso/schema";
 import { describe, expect, it } from "vitest";
 import { mockLivePlugin } from "../../../vite/mock-live-plugin.mjs";
 
@@ -19,11 +21,13 @@ function fakeSocket() {
 function boot(options: Parameters<typeof mockLivePlugin>[0]) {
   const plugin = mockLivePlugin(options);
   const listeners = new Map<string, Handler>();
+  const routes = new Map<string, Handler>();
   (plugin.configureServer as (s: unknown) => void)({
     httpServer: { on: (e: string, h: Handler) => void listeners.set(e, h) },
+    middlewares: { use: (path: string, h: Handler) => void routes.set(path, h) },
     config: { logger: { info() {} } },
   });
-  return { plugin, upgrade: listeners.get("upgrade") };
+  return { plugin, upgrade: listeners.get("upgrade"), routes };
 }
 
 describe("plugin del stream simulado", () => {
@@ -64,5 +68,34 @@ describe("plugin del stream simulado", () => {
     const sock = fakeSocket();
     upgrade?.({ url: "/", headers: {} }, sock);
     expect(sock.writes).toEqual([]);
+  });
+
+  it("sirve /api/v1/replay en MessagePack válido y rechaza peticiones mal formadas con 400", () => {
+    const { routes } = boot({ enabled: true, buses: 3, tickMs: 60_000 });
+    const route = routes.get("/api/v1/replay") as Handler;
+    const call = (url: string) => {
+      const res = {
+        statusCode: 0,
+        headers: {} as Record<string, string>,
+        body: undefined as Buffer | string | undefined,
+        setHeader(k: string, v: string) {
+          this.headers[k] = v;
+        },
+        end(b: Buffer | string) {
+          this.body = b;
+        },
+      };
+      route({ method: "GET", url }, res, () => undefined);
+      return res;
+    };
+    const from = Math.floor((Date.now() - 3_600_000) / 300_000) * 300_000;
+    const ok = call(`/?from=${from}&to=${from + 300_000}&layers=bus,bike`);
+    expect(ok.statusCode).toBe(200);
+    expect(ok.headers["Content-Type"]).toBe("application/msgpack");
+    const parsed = ReplayWindowSchema.safeParse(decode(ok.body as Buffer));
+    expect(parsed.success).toBe(true);
+    const bad = call("/?from=1&to=2");
+    expect(bad.statusCode).toBe(400);
+    expect(JSON.parse(bad.body as string)).toMatchObject({ error: "bad_request" });
   });
 });

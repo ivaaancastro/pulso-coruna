@@ -32,3 +32,19 @@ export function resolveStreamUrl(
   const scheme = location.protocol === "https:" ? "wss:" : "ws:";
   return `${scheme}//${location.host}${target}`;
 }
+
+/** `/api/v1/replay` de nuestra API a partir de la URL del stream (M6.3); `null` si no se puede derivar. */
+export function resolveReplayUrl(streamUrl: string): string | null {
+  try {
+    const url = new URL(streamUrl);
+    if (url.protocol !== "ws:" && url.protocol !== "wss:") return null;
+    url.protocol = url.protocol === "wss:" ? "https:" : "http:";
+    url.pathname = url.pathname.replace(/\/stream$/, "/replay");
+    if (!url.pathname.endsWith("/replay")) return null;
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}

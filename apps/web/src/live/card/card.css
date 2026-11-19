@@ -9,7 +9,9 @@
   z-index: 2;
   left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
   right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
-  bottom: calc(var(--pulso-shell-bottom) + var(--pulso-dock-h) + var(--pulso-space-3));
+  bottom: calc(
+    var(--pulso-shell-bottom) + var(--pulso-dock-h) + var(--pulso-timeline-h) + var(--pulso-space-3)
+  );
   display: grid;
   gap: var(--pulso-space-3);
   max-height: 55dvh;

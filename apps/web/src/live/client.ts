@@ -32,12 +32,19 @@ export interface LiveClientOptions {
   raf?: (cb: () => void) => () => void;
   /** Cadencia de los ticks con reduced-motion (solo hay fotograma si cambian los datos). */
   reducedTickMs?: number;
+  /** Cada salida del worker, tras aplicarla al almacén (reproducción: estado de carga). */
+  onOutput?: (out: WorkerOutput) => void;
 }
 
 export interface LiveClient {
   store: LiveStore;
   start(): void;
   stop(): void;
+  /**
+   * `false`: deja de pedir fotogramas (modo Reproducir: el directo sigue recibiendo datos en el
+   * worker pero no se dibuja). `true`: los pide de nuevo. El WebSocket no se toca.
+   */
+  setActive(active: boolean): void;
 }
 
 const defaultRaf = (cb: () => void): (() => void) => {
@@ -58,13 +65,14 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pending = false;
   let running = false;
+  let paused = false;
 
   const reduced = (): boolean => opts.motion.matches;
 
   const tick = (): void => {
     cancel = null;
     timer = null;
-    if (!running) return;
+    if (!running || paused) return;
     if (!pending) {
       pending = true;
       opts.worker.postMessage({ type: "tick", now: opts.now() });
@@ -73,7 +81,7 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
   };
 
   const schedule = (): void => {
-    if (!running) return;
+    if (!running || paused) return;
     if (reduced()) timer = setTimeout(tick, reducedTickMs);
     else cancel = raf(tick);
   };
@@ -94,6 +102,7 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
     const out = event.data;
     if (out.type === "frames") pending = false;
     store.apply(out);
+    opts.onOutput?.(out);
   };
 
   return {
@@ -110,6 +119,15 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
       opts.motion.addEventListener("change", onMotionChange);
       online?.addEventListener("online", onOnline);
       schedule();
+    },
+    setActive(active) {
+      if (paused === !active) return;
+      paused = !active;
+      if (paused) {
+        if (cancel) cancel();
+        if (timer) clearTimeout(timer);
+        cancel = timer = null;
+      } else schedule();
     },
     stop() {
       if (!running) return;
