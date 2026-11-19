@@ -310,6 +310,10 @@ const bus: LiveLayerDefinition = {
   sources: ["bus"],
   // Las estelas avanzan con el reloj: un fotograma tras otro (con reduced-motion, solo con datos).
   animated: true,
+  // Sin dato (M4.6): cierra la tarjeta abierta (el pipeline ya hace la capa no seleccionable).
+  onSourceState(state) {
+    if (state === "nodata" && selectedId !== null) select(null);
+  },
   createLayers: createBusLayers,
 };
 

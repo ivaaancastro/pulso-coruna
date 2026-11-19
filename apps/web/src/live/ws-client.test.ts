@@ -132,3 +132,84 @@ describe("createWsClient", () => {
     expect(sockets).toHaveLength(1);
   });
 });
+
+describe("createWsClient: watchdog de silencio y retryNow", () => {
+  function withWatchdog(silenceMs = 100_000) {
+    const timers = manualTimers();
+    const sockets: FakeSocket[] = [];
+    const states: [ConnectionState, number][] = [];
+    const client = createWsClient({
+      url: "ws://x/api/v1/stream",
+      createSocket: (url) => {
+        const s = new FakeSocket(url);
+        sockets.push(s);
+        return s;
+      },
+      onMessage: () => {},
+      onState: (s, a) => states.push([s, a]),
+      random: () => 1,
+      setTimer: timers.setTimer,
+      clearTimer: timers.clearTimer,
+      silenceMs,
+    });
+    return { client, timers, sockets, states };
+  }
+
+  it("sin mensajes durante silenceMs cierra el socket y reconecta con espera", () => {
+    const { client, timers, sockets, states } = withWatchdog();
+    client.connect();
+    sockets[0]?.open();
+    expect(timers.pending).toBe(1); // el watchdog
+    expect(timers.run()).toBe(100_000);
+    expect(sockets[0]?.closed).toBe(true);
+    expect(states.at(-1)?.[0]).toBe("reconnecting");
+    expect(timers.run()).toBe(1000); // reintento
+    expect(sockets).toHaveLength(2);
+  });
+
+  it("cada mensaje rearma el watchdog (hay un único temporizador)", () => {
+    const { client, timers, sockets } = withWatchdog();
+    client.connect();
+    sockets[0]?.open();
+    for (let i = 0; i < 5; i++) sockets[0]?.receive("x");
+    expect(timers.pending).toBe(1);
+    expect(sockets[0]?.closed).toBe(false);
+  });
+
+  it("un cierre normal retira el watchdog; close() también", () => {
+    const { client, timers, sockets } = withWatchdog();
+    client.connect();
+    sockets[0]?.open();
+    sockets[0]?.drop();
+    expect(timers.pending).toBe(1); // solo el reintento
+    timers.run();
+    client.close();
+    expect(timers.pending).toBe(0);
+  });
+
+  it("retryNow descarta el socket actual aunque parezca abierto y reconecta ya", () => {
+    const { client, timers, sockets } = withWatchdog();
+    client.connect();
+    sockets[0]?.open();
+    sockets[0]?.receive("x");
+    client.retryNow();
+    expect(sockets[0]?.closed).toBe(true);
+    expect(sockets).toHaveLength(2);
+    expect(timers.pending).toBe(1); // watchdog del nuevo socket
+    sockets[0]?.receive("tardío"); // el viejo ya no cuenta
+    sockets[0]?.drop();
+    expect(sockets).toHaveLength(2);
+  });
+
+  it("retryNow salta la espera de un reintento pendiente y no hace nada tras close()", () => {
+    const { client, timers, sockets } = withWatchdog();
+    client.connect();
+    sockets[0]?.drop();
+    expect(timers.pending).toBe(1);
+    client.retryNow();
+    expect(sockets).toHaveLength(2);
+    client.close();
+    client.retryNow();
+    expect(sockets).toHaveLength(2);
+  });
+});

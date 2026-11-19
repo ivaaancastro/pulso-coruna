@@ -3,6 +3,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { LayerPipeline } from "./layer-pipeline";
 import type { LiveLayerDefinition } from "./layer-registry";
 import type { LiveStore } from "./live-store";
+import type { SourceMonitor } from "./source-monitor";
 
 /**
  * Este módulo es el chunk diferido de deck.gl: solo se importa dinámicamente y solo si hay capas
@@ -14,6 +15,12 @@ export interface LiveOverlayOptions {
   definitions: readonly LiveLayerDefinition[];
   now: () => number;
   reducedMotion: () => boolean;
+  /** Estado de las fuentes (M4.6): atenúa las capas sin dato o con la conexión caída. */
+  monitor?: SourceMonitor;
+  /** `--pulso-layer-muted-opacity`. */
+  mutedOpacity?: number;
+  /** Duración del fundido, ms (`--pulso-dur-slow`). */
+  fadeMs?: number;
   /** Planificador (rAF por defecto). */
   schedule?: (cb: () => void) => void;
 }
@@ -35,6 +42,9 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
     reducedMotion: opts.reducedMotion,
     onError: (id, error) => console.error(`[live] la capa ${id} falló`, error),
     onInvalidate: () => request(),
+    status: opts.monitor ? (d) => opts.monitor?.stateOf(d.sources) ?? "live" : undefined,
+    mutedOpacity: opts.mutedOpacity,
+    fadeMs: opts.fadeMs,
   });
   const animated = opts.definitions.some((d) => d.animated);
 
@@ -50,11 +60,15 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
     if (!alive) return;
     overlay.setProps({ layers: pipeline.collect() });
     // Capas animadas: un fotograma tras otro, salvo con reduced-motion (ahí solo cuando cambian los datos).
-    if (animated && !opts.reducedMotion()) request();
+    if ((animated && !opts.reducedMotion()) || pipeline.isFading) request();
   };
 
   const unsubscribe = opts.store.subscribe((change) => {
     if (pipeline.notify(change)) request();
+  });
+  const unsubscribeStatus = opts.monitor?.subscribe(() => {
+    pipeline.touch();
+    request();
   });
   request();
 
@@ -63,6 +77,7 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
     destroy() {
       alive = false;
       unsubscribe();
+      unsubscribeStatus?.();
       opts.map.removeControl(overlay);
     },
   };

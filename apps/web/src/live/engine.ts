@@ -49,9 +49,10 @@ export class LiveEngine {
           }
           continue;
         }
-        this.store.replace(layer, items, now);
-        this.syncTracks(layer, items, now, true);
-        events.push(this.event(layer, true, items, [], now));
+        // El almacén devuelve lo que queda (un snapshot atrasado no hace retroceder elementos).
+        const kept = this.store.replace(layer, items, now);
+        this.syncTracks(layer, kept, now, true);
+        events.push(this.event(layer, true, kept, [], now));
       }
       return events;
     }

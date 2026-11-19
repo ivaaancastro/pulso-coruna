@@ -85,4 +85,27 @@ describe("worker core", () => {
     handle({ type: "tick", now: T0 + 1 });
     expect(of("frames").at(-1)?.frames[0]?.positions[0]).toBeCloseTo(-8.39, 4);
   });
+
+  it("`online` fuerza la reconexión inmediata (sin esperar el backoff)", () => {
+    const { sockets, handle, timers, of } = setup();
+    const first = sockets[0] as FakeSocket;
+    first.open();
+    first.drop();
+    expect(sockets).toHaveLength(1);
+    handle({ type: "online" });
+    expect(sockets).toHaveLength(2);
+    expect(timers.pending).toBeLessThanOrEqual(1); // solo el watchdog del nuevo socket
+    expect(of("status").at(-1)?.state).toBe("reconnecting");
+  });
+
+  it("un socket semiabierto en silencio se cierra y se reconecta (watchdog de 120 s)", () => {
+    const { sockets, timers } = setup();
+    const first = sockets[0] as FakeSocket;
+    first.open();
+    first.receive(JSON.stringify(snapshot({ bus: [bus("a")] })));
+    expect(timers.run()).toBe(120_000);
+    expect(first.closed).toBe(true);
+    expect(timers.run()).toBe(1000);
+    expect(sockets).toHaveLength(2);
+  });
 });

@@ -45,6 +45,8 @@ export type WorkerInput =
   | { type: "init"; url: string; now: number; reducedMotion: boolean }
   | { type: "tick"; now: number }
   | { type: "reducedMotion"; value: boolean }
+  /** El navegador volvió a tener red: reconectar ya. */
+  | { type: "online" }
   | { type: "close" };
 
 /** Worker → hilo principal. */

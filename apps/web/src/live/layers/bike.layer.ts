@@ -61,6 +61,10 @@ function onPick(info: PickingInfo<RingDatum>): boolean {
 const bike: LiveLayerDefinition = {
   id: "bike",
   sources: ["bike"],
+  // Sin dato (M4.6): la tarjeta abierta cerraría con datos fantasma; el pipeline ya hace la capa no seleccionable.
+  onSourceState(state) {
+    if (state === "nodata" && selectedId !== null) select(null);
+  },
   createLayers(ctx) {
     latest = ctx;
     const data = ringData(ctx.store.items("bike").values(), selectedId);

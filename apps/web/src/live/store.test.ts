@@ -52,4 +52,20 @@ describe("LayerStore", () => {
     expect(s.get("bus").size).toBe(0);
     expect(s.freshness("bus")?.receivedAt).toBe(T0);
   });
+
+  it("un snapshot atrasado no hace retroceder elementos ni la frescura", () => {
+    const s = new LayerStore();
+    s.replace("bus", [bus("a", { ts: T0 + 100, lon: -8.41 }), bus("b", { ts: T0 + 100 })], T0);
+    const kept = s.replace(
+      "bus",
+      [bus("a", { ts: T0 + 50, lon: -8.5 }), bus("c", { ts: T0 })],
+      T0 + 9,
+    );
+    expect(kept.map((i) => itemKey(i)).sort()).toEqual(["a", "c"]); // b no venía: se retira
+    expect(s.get("bus").get("a")).toMatchObject({ ts: T0 + 100, lon: -8.41 });
+    expect(s.freshness("bus")).toEqual({ receivedAt: T0 + 9, dataTs: T0 + 100 });
+    // uno más nuevo sí sustituye
+    s.replace("bus", [bus("a", { ts: T0 + 200, lon: -8.3 })], T0 + 10);
+    expect(s.get("bus").get("a")).toMatchObject({ lon: -8.3 });
+  });
 });

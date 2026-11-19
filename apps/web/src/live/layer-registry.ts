@@ -1,6 +1,7 @@
 import type { Layer } from "@deck.gl/core";
 import type { LayerId } from "@pulso/schema";
 import type { LiveStoreReader } from "./live-store";
+import type { SourceState } from "./source-status";
 
 /**
  * Registro único de capas en vivo (bus, bici, viento…). Cada capa es un fichero propio en
@@ -49,6 +50,12 @@ export interface LiveLayerDefinition {
   animated?: boolean;
   /** Crea las capas deck.gl a partir del estado actual. Debe ser barata y sin efectos laterales. */
   createLayers(ctx: LiveLayerContext): Layer[];
+  /**
+   * Opcional (M4.6): la fuente cambió de estado (`live`, `delayed`, `nodata`, `disconnected`). La
+   * atenuación la aplica el pipeline; esto sirve para soltar estado propio, p. ej. cerrar la
+   * tarjeta abierta cuando pasa a `nodata` para no dejar datos fantasma.
+   */
+  onSourceState?(state: SourceState): void;
 }
 
 const definitions = new Map<string, LiveLayerDefinition>();
