@@ -47,7 +47,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
   - [x] M4.3b Capa bus (estelas, color por línea, tarjeta)
 - [x] M4.4 Capa bici
 - [x] M4.5 Viento con partículas
-- [ ] M4.6 Estados de fuente caída
+- [x] M4.6 Estados de fuente caída
 - [x] M4.7 Degradación automática
 
 ## M5 — La marea

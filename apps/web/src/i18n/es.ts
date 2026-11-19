@@ -33,6 +33,22 @@ export const es = {
   "bus.card.nextStop": "Próxima parada",
   "bus.card.estimated": "Estimado según horario",
   "bus.card.close": "Cerrar",
+  "status.region": "Estado de los datos",
+  "status.layer.bus": "Bus",
+  "status.layer.bike": "BiciCoruña",
+  "status.layer.weather": "Viento",
+  "status.layer.sea": "Mar",
+  "status.layer.ship": "Barcos",
+  "status.layer.air": "Aire",
+  "status.layer.plane": "Aviones",
+  "status.layer.train": "Tren",
+  "status.nodata": "{layer}: sin datos desde {ago}",
+  "status.nodata.unknown": "{layer}: sin datos",
+  "status.delayed": "{layer}: retrasado, último dato {ago}",
+  "status.delayed.short": "{layer}: datos retrasados",
+  "status.live": "{layer}: datos al día",
+  "status.reconnecting": "Reconectando…",
+  "status.reconnected": "Conexión restablecida",
 } as const;
 
 export type MessageKey = keyof typeof es;

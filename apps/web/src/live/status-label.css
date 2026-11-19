@@ -1,0 +1,79 @@
+/*
+ * Etiqueta de estado de los datos (M4.6). Solo tokens de docs/design/tokens.md; sin sombras ni vidrio.
+ * La marca no depende solo del color: relleno = retrasado, aro hueco = sin datos, aro discontinuo = reconectando.
+ */
+.source-status {
+  margin-top: var(--pulso-space-3);
+  max-width: min(100%, 46ch);
+}
+
+.source-status[hidden] {
+  display: none;
+}
+
+.source-status__list {
+  display: grid;
+  justify-items: start;
+  gap: var(--pulso-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-status__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pulso-space-2);
+  max-width: 100%;
+  padding: var(--pulso-space-1) var(--pulso-space-3) var(--pulso-space-1) var(--pulso-space-2);
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  line-height: 1.3;
+  color: var(--pulso-text);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-hairline);
+  border-radius: var(--pulso-radius-pill);
+  animation: source-status-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.source-status__item--delayed {
+  color: var(--pulso-text-muted);
+}
+
+.source-status__mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--chip, var(--pulso-warn));
+  background: var(--chip, var(--pulso-warn));
+}
+
+.source-status__item--nodata .source-status__mark {
+  background: transparent;
+}
+
+.source-status__item--reconnecting .source-status__mark {
+  background: transparent;
+  border-style: dashed;
+  animation: source-status-spin 2.4s linear infinite;
+}
+
+@keyframes source-status-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes source-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .source-status__item--reconnecting .source-status__mark {
+    animation: none;
+  }
+}

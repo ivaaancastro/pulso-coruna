@@ -34,12 +34,23 @@ export class LayerStore {
     return [...new Set([...this.data.keys(), ...this.fresh.keys()])];
   }
 
-  /** Sustituye la capa entera (snapshot). */
-  replace(layer: LayerId, items: readonly LayerItem[], receivedAt: number): void {
+  /**
+   * Sustituye la capa entera (snapshot): lo que no viene, se va. Pero un elemento nunca retrocede:
+   * si ya guardamos uno con `ts` más reciente que el del snapshot (snapshot atrasado, réplica con
+   * la BD por detrás), se conserva el nuestro. Devuelve los elementos que han quedado.
+   */
+  replace(layer: LayerId, items: readonly LayerItem[], receivedAt: number): LayerItem[] {
+    const prevMap = this.data.get(layer);
     const map = new Map<string, LayerItem>();
-    for (const item of items) map.set(itemKey(item), item);
+    for (const item of items) {
+      const key = itemKey(item);
+      const prev = prevMap?.get(key);
+      map.set(key, prev && prev.ts > item.ts ? prev : item);
+    }
     this.data.set(layer, map);
-    this.touch(layer, items, receivedAt);
+    const kept = [...map.values()];
+    this.touch(layer, kept, receivedAt);
+    return kept;
   }
 
   /** Vacía una capa sin tocar su frescura (la capa no vino en el snapshot). */

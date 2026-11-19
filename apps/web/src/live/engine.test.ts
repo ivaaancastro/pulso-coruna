@@ -88,4 +88,13 @@ describe("LiveEngine", () => {
     expect(f?.positions[0]).toBeCloseTo(-8.39, 4);
     expect(e.frames(T0 + 12)).toEqual([]);
   });
+
+  it("un snapshot atrasado no mueve el bus hacia atrás ni lo emite como nuevo", () => {
+    const e = new LiveEngine();
+    e.handle(snapshot({ bus: [bus("a", { lon: -8.39, ts: T0 + 5000 })] }, T0 + 5000), T0 + 5000);
+    const [ev] = e.handle(snapshot({ bus: [bus("a", { lon: -8.4, ts: T0 })] }, T0), T0 + 6000);
+    expect(ev?.upserts[0]).toMatchObject({ lon: -8.39, ts: T0 + 5000 });
+    expect(ev?.dataTs).toBe(T0 + 5000);
+    expect(e.store.get("bus").get("a")).toMatchObject({ lon: -8.39 });
+  });
 });

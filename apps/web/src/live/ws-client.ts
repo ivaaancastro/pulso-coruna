@@ -31,11 +31,19 @@ export interface WsClientOptions {
   random?: () => number;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
+  /**
+   * Watchdog de silencio: si pasan tantos ms sin ningún mensaje (o sin llegar a abrir), el socket se
+   * da por muerto (conexión semiabierta) y se reconecta. 0 o ausente = sin watchdog. El servidor solo
+   * envía deltas cuando hay cambios, así que debe ser holgado.
+   */
+  silenceMs?: number;
 }
 
 export interface WsClient {
   connect(): void;
   close(): void;
+  /** Reconecta ya (evento `online`): descarta el socket actual, aunque parezca abierto, y la espera pendiente. */
+  retryNow(): void;
 }
 
 /**
@@ -50,10 +58,21 @@ export function createWsClient(opts: WsClientOptions): WsClient {
   const setTimer = opts.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = opts.clearTimer ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>));
 
+  const silenceMs = opts.silenceMs ?? 0;
   let socket: SocketLike | null = null;
   let timer: unknown = null;
+  let watchdog: unknown = null;
   let attempt = 0;
   let closed = false;
+
+  const stopWatchdog = (): void => {
+    if (watchdog !== null) clearTimer(watchdog);
+    watchdog = null;
+  };
+
+  const detach = (current: SocketLike): void => {
+    current.onopen = current.onmessage = current.onclose = current.onerror = null;
+  };
 
   const scheduleRetry = (): void => {
     if (closed || timer !== null) return;
@@ -77,12 +96,35 @@ export function createWsClient(opts: WsClientOptions): WsClient {
       return;
     }
     socket = current;
+    const arm = (): void => {
+      if (silenceMs <= 0) return;
+      stopWatchdog();
+      watchdog = setTimer(() => {
+        watchdog = null;
+        if (socket !== current) return;
+        // Sin mensajes en todo este tiempo: conexión semiabierta. Se cierra y se reconecta.
+        socket = null;
+        detach(current);
+        try {
+          current.close();
+        } catch {
+          // ya estaba cerrado
+        }
+        scheduleRetry();
+      }, silenceMs);
+    };
+    arm();
     current.onopen = () => {
       if (socket === current) opts.onState("open", attempt);
     };
     current.onmessage = (ev) => {
       if (socket !== current) return;
-      attempt = 0;
+      if (attempt !== 0) {
+        // Primer mensaje tras reconectar: ahora sí está sana (un servidor que abre y cierra al instante no).
+        attempt = 0;
+        opts.onState("open", 0);
+      }
+      arm();
       opts.onMessage(ev.data);
     };
     current.onerror = () => {
@@ -91,6 +133,7 @@ export function createWsClient(opts: WsClientOptions): WsClient {
     current.onclose = () => {
       if (socket !== current) return;
       socket = null;
+      stopWatchdog();
       scheduleRetry();
     };
   };
@@ -101,14 +144,33 @@ export function createWsClient(opts: WsClientOptions): WsClient {
       if (socket || timer !== null) return;
       open();
     },
+    retryNow() {
+      if (closed) return;
+      if (timer !== null) clearTimer(timer);
+      timer = null;
+      stopWatchdog();
+      const current = socket;
+      socket = null;
+      if (current) {
+        detach(current);
+        try {
+          current.close();
+        } catch {
+          // ya estaba cerrado
+        }
+      }
+      attempt = 0;
+      open();
+    },
     close() {
       closed = true;
       if (timer !== null) clearTimer(timer);
       timer = null;
+      stopWatchdog();
       const current = socket;
       socket = null;
       if (current) {
-        current.onopen = current.onmessage = current.onclose = current.onerror = null;
+        detach(current);
         current.close();
       }
       opts.onState("closed", attempt);

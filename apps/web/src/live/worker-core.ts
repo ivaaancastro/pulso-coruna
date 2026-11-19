@@ -10,7 +10,12 @@ export interface WorkerCoreDeps {
   random?: () => number;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
+  /** Watchdog de silencio del WS, ms (0 lo desactiva). */
+  silenceMs?: number;
 }
+
+/** El servidor solo envía deltas ante cambios y sus ping son de protocolo (invisibles al navegador). */
+const SILENCE_MS = 120_000;
 
 /**
  * Lógica del worker sin APIs globales: recibe órdenes del hilo principal, mantiene la conexión,
@@ -34,6 +39,7 @@ export function createWorkerCore(deps: WorkerCoreDeps): (input: WorkerInput) => 
           random: deps.random,
           setTimer: deps.setTimer,
           clearTimer: deps.clearTimer,
+          silenceMs: deps.silenceMs ?? SILENCE_MS,
           onState: (state, attempt) => deps.post({ type: "status", state, attempt }, []),
           onMessage: (raw) => {
             const parsed = parseWsMessage(raw);
@@ -64,6 +70,9 @@ export function createWorkerCore(deps: WorkerCoreDeps): (input: WorkerInput) => 
       }
       case "reducedMotion":
         engine.setReducedMotion(input.value);
+        return;
+      case "online":
+        client?.retryNow();
         return;
       case "close":
         client?.close();

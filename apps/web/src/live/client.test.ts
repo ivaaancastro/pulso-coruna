@@ -150,4 +150,25 @@ describe("cliente del hilo principal", () => {
     expect(worker.terminated).toBe(true);
     expect(h.queued).toBe(0);
   });
+
+  it("el evento `online` del navegador pide al worker reconectar; se desuscribe al parar", () => {
+    const listeners = new Set<() => void>();
+    const online = {
+      addEventListener: (_: "online", l: () => void) => void listeners.add(l),
+      removeEventListener: (_: "online", l: () => void) => void listeners.delete(l),
+    };
+    const worker = new FakeWorker();
+    const client = createLiveClient({
+      worker,
+      url: "ws://x",
+      now: () => T0,
+      motion: new FakeMotion(true),
+      online,
+    });
+    client.start();
+    for (const l of listeners) l();
+    expect(worker.sent.filter((m) => m.type === "online")).toHaveLength(1);
+    client.stop();
+    expect(listeners.size).toBe(0);
+  });
 });

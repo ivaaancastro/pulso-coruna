@@ -14,12 +14,20 @@ export interface MotionQueryLike {
   removeEventListener(type: "change", listener: () => void): void;
 }
 
+/** `window`, o un doble en los tests: solo el evento `online`. */
+export interface OnlineSourceLike {
+  addEventListener(type: "online", listener: () => void): void;
+  removeEventListener(type: "online", listener: () => void): void;
+}
+
 export interface LiveClientOptions {
   worker: WorkerLike;
   url: string;
   /** Reloj de la app (`time/now.ts`), epoch ms UTC. */
   now: () => number;
   motion: MotionQueryLike;
+  /** Origen del evento `online` (por defecto `window`): fuerza una reconexión inmediata. */
+  online?: OnlineSourceLike;
   /** Planificador de fotogramas (rAF); devuelve cómo cancelar. */
   raf?: (cb: () => void) => () => void;
   /** Cadencia de los ticks con reduced-motion (solo hay fotograma si cambian los datos). */
@@ -79,6 +87,9 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
     schedule();
   };
 
+  const online = opts.online ?? (typeof window === "undefined" ? undefined : window);
+  const onOnline = (): void => opts.worker.postMessage({ type: "online" });
+
   opts.worker.onmessage = (event) => {
     const out = event.data;
     if (out.type === "frames") pending = false;
@@ -97,12 +108,14 @@ export function createLiveClient(opts: LiveClientOptions): LiveClient {
         reducedMotion: reduced(),
       });
       opts.motion.addEventListener("change", onMotionChange);
+      online?.addEventListener("online", onOnline);
       schedule();
     },
     stop() {
       if (!running) return;
       running = false;
       opts.motion.removeEventListener("change", onMotionChange);
+      online?.removeEventListener("online", onOnline);
       if (cancel) cancel();
       if (timer) clearTimeout(timer);
       cancel = timer = null;
