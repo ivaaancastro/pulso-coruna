@@ -1,6 +1,9 @@
 import type { Layer } from "@deck.gl/core";
 import type { LayerId } from "@pulso/schema";
 import type { LiveStoreReader } from "./live-store";
+import type { QualityLevel } from "./quality/monitor";
+
+export type { QualityLevel };
 
 /**
  * Registro único de capas en vivo (bus, bici, viento…). Cada capa es un fichero propio en
@@ -47,6 +50,11 @@ export interface LiveLayerDefinition {
   sources: readonly LayerId[];
   /** Reevaluar en cada fotograma aunque no cambien los datos (partículas, transiciones por tiempo). */
   animated?: boolean;
+  /**
+   * Degradación automática por fps (M4.7): el monitor la llama con el nivel vigente (`high` al
+   * inicio). Cada capa lo traduce a lo suyo (partículas, estelas…); sin ella, no se degrada.
+   */
+  setQualityLevel?(level: QualityLevel): void;
   /** Crea las capas deck.gl a partir del estado actual. Debe ser barata y sin efectos laterales. */
   createLayers(ctx: LiveLayerContext): Layer[];
 }

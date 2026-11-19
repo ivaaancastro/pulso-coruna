@@ -19,6 +19,9 @@ export interface WindLayerDefinition extends LiveLayerDefinition {
   getQuality(): number;
 }
 
+/** Nivel de degradación automática (M4.7) → factor de calidad de partículas y estela. */
+export const WIND_QUALITY_BY_LEVEL = { high: 1, medium: 0.6, low: 0.3 } as const;
+
 export interface WindLayerOptions {
   /** Partículas con calidad 1. Por defecto 1500, pensado para móvil. */
   maxParticles?: number;
@@ -104,6 +107,10 @@ export function createWindLayer(opts: WindLayerOptions = {}): WindLayerDefinitio
       arrows = undefined;
     },
     getQuality: () => system.quality,
+    setQualityLevel(level) {
+      system.setQuality(WIND_QUALITY_BY_LEVEL[level]);
+      arrows = undefined;
+    },
     createLayers(ctx) {
       const f = currentField(ctx);
       // La animación avanza con reloj propio: `ctx.now` es el reloj de la app (fijable con `?t=`).
