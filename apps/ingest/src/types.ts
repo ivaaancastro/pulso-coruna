@@ -3,8 +3,11 @@ import type { Adapter, Entity, Observation, StationStatus } from "@pulso/schema"
 /** Cualquier fila que puede producir un adaptador. */
 export type Row = Entity | StationStatus | Observation;
 
-/** Adaptador tal y como lo ve la ingesta (`Adapter<Entity>` etc. son asignables). */
-export type IngestAdapter = Adapter<Row>;
+/**
+ * Adaptador tal y como lo ve la ingesta (`Adapter<Entity>` etc. son asignables). `close` es opcional:
+ * lo usan los colectores de larga duración (p. ej. aisstream, ADR-0023) para soltar su conexión al apagar.
+ */
+export type IngestAdapter = Adapter<Row> & { close?(): void | Promise<void> };
 
 /** Filas ya validadas, agrupadas por tabla de destino. */
 export interface ValidRows {

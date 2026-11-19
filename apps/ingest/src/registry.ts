@@ -1,3 +1,4 @@
+import { aisstreamConfigFromEnv, createAisstreamAdapter } from "@pulso/adapters/aisstream";
 import { bicicorunaAdapter } from "@pulso/adapters/bicicoruna";
 import {
   createScheduleEstimatesAdapter,
@@ -6,10 +7,11 @@ import {
 } from "@pulso/adapters/gtfs";
 import { createItranviasAdapter, itranviasConfigFromEnv } from "@pulso/adapters/itranvias";
 import { meteogaliciaAdapter } from "@pulso/adapters/meteogalicia";
+import { consoleLogger, silentLogger } from "./clock.js";
 import { createOpenskyAdapter, openskyConfigFromEnv } from "@pulso/adapters/opensky";
 import { portusAdapter, portusEnabled } from "@pulso/adapters/portus";
 import { openMeteoAirAdapter, openMeteoAirEnabled } from "@pulso/adapters/openmeteo-air";
-import type { IngestAdapter } from "./types.js";
+import type { IngestAdapter, Logger } from "./types.js";
 
 /**
  * Único punto de cableado de adaptadores reales. `id` debe ser único: es la clave de `source_health`.
@@ -21,10 +23,14 @@ import type { IngestAdapter } from "./types.js";
  * - Open-Meteo Air (M5.1b): aire MODELADO (CAMS), `stationId` `openmeteo:coruna:model`; activo por
  *   defecto, se apaga con `OPENMETEO_AIR_ENABLED=false`.
  * - iTranvías solo se registra con `ITRANVIAS_ENABLED=true` (permiso del operador sin confirmar).
+ * - Barcos (aisstream, M5.1c) solo con `AISSTREAM_API_KEY` y `SHIP_ID_SALT`; sin ellas se avisa y se omite.
  * - OpenSky (M5.1d, aviones) solo con `OPENSKY_ENABLED=true`; intervalo `OPENSKY_INTERVAL_MS`
  *   (defecto 5 min; cuota anónima 400/día). Credenciales OAuth2 opcionales, solo servidor.
  */
-export function buildAdapters(env: Record<string, string | undefined>): IngestAdapter[] {
+export function buildAdapters(
+  env: Record<string, string | undefined>,
+  logger: Logger = silentLogger,
+): IngestAdapter[] {
   const adapters: IngestAdapter[] = [bicicorunaAdapter, meteogaliciaAdapter];
   if (portusEnabled(env)) adapters.push(portusAdapter);
   if (openMeteoAirEnabled(env)) adapters.push(openMeteoAirAdapter);
@@ -35,7 +41,13 @@ export function buildAdapters(env: Record<string, string | undefined>): IngestAd
   if (scheduleEstimatesEnabled(env)) {
     adapters.push(createScheduleEstimatesAdapter(scheduleEstimatesConfigFromEnv(env)));
   }
+  const ais = aisstreamConfigFromEnv(env);
+  if (ais.enabled && ais.apiKey && ais.idSalt) {
+    adapters.push(createAisstreamAdapter({ apiKey: ais.apiKey, idSalt: ais.idSalt, logger }));
+  } else {
+    logger.warn("barcos (aisstream) desactivados", { reason: ais.reason });
+  }
   return adapters;
 }
 
-export const adapters: IngestAdapter[] = buildAdapters(process.env);
+export const adapters: IngestAdapter[] = buildAdapters(process.env, consoleLogger);

@@ -27,6 +27,7 @@ const shutdown = async (signal: string, code = 0): Promise<void> => {
   const force = setTimeout(() => process.exit(1), 10_000);
   force.unref();
   await scheduler?.stop();
+  await Promise.allSettled(adapters.map((a) => a.close?.()));
   await sql.end({ timeout: 5 }).catch(() => {});
   process.exit(code);
 };

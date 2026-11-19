@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildAdapters } from "../src/registry.js";
 
 describe("registry", () => {
@@ -26,5 +26,21 @@ describe("registry", () => {
   it("los ids son únicos", () => {
     const ids = buildAdapters({ ITRANVIAS_ENABLED: "true" }).map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("barcos: solo con AISSTREAM_API_KEY y SHIP_ID_SALT; sin ellas avisa y no rompe", () => {
+    const warn = vi.fn();
+    const logger = { info() {}, warn, error() {} };
+    expect(buildAdapters({}, logger).map((a) => a.id)).not.toContain("aisstream");
+    expect(warn).toHaveBeenCalledWith("barcos (aisstream) desactivados", {
+      reason: expect.stringContaining("AISSTREAM_API_KEY"),
+    });
+    expect(buildAdapters({ AISSTREAM_API_KEY: "k" }, logger).map((a) => a.id)).not.toContain(
+      "aisstream",
+    );
+    const all = buildAdapters({ AISSTREAM_API_KEY: "k", SHIP_ID_SALT: "s" }, logger);
+    expect(all.map((a) => a.id)).toContain("aisstream");
+    // Crear el adaptador no abre ningún socket (se abre en el primer ciclo).
+    all.forEach((a) => void a.close?.());
   });
 });
