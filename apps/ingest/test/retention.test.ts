@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { silentLogger } from "../src/clock.js";
 import { loadConfig } from "../src/config.js";
 import { migrate } from "../src/db/migrate.js";
@@ -28,10 +28,11 @@ describe("config de retención (puro)", () => {
     });
   });
   it("se configura por env y valida", () => {
-    const r = loadConfig({ ...base, RETENTION_ENABLED: "false", RETENTION_RAW_DAYS: "7" });
-    expect(r.retention).toMatchObject({ enabled: false, rawDays: 7 });
+    const r = loadConfig({ ...base, RETENTION_ENABLED: "false", RETENTION_RAW_DAYS: "10" });
+    expect(r.retention).toMatchObject({ enabled: false, rawDays: 10 });
     expect(() => loadConfig({ ...base, RETENTION_ENABLED: "quizá" })).toThrow(/RETENTION_ENABLED/);
     expect(() => loadConfig({ ...base, RETENTION_RAW_DAYS: "0" })).toThrow(/RETENTION_RAW_DAYS/);
+    expect(() => loadConfig({ ...base, RETENTION_RAW_DAYS: "3" })).toThrow(/>= 7/);
   });
 });
 
@@ -201,22 +202,24 @@ describe.skipIf(!testDatabaseUrl)("retención contra TimescaleDB (sintético, >3
 
   it("el bucle arranca con una pasada, se repite con el reloj y para limpiamente", async () => {
     const clock = new FakeClock();
-    clock.now = () => now;
+    let tick = 0;
+    clock.now = () => now + tick * 1000;
     const job = startRetention(sql, {
       config: { enabled: true, rawDays: 30, intervalMs: 1000, statementTimeoutMs: 60_000 },
       clock,
       logger,
     });
-    await new Promise((r) => setTimeout(r, 1500)); // primera pasada
-    const [a] = await sql<
-      { t: Date }[]
-    >`select last_run_at t from retention_status where target = 'positions'`;
+    const lastRun = async (): Promise<number> => {
+      const [r] = await sql<
+        { t: Date }[]
+      >`select last_run_at t from retention_status where target = 'observations'`;
+      return r?.t.getTime() ?? 0;
+    };
+    await vi.waitFor(async () => expect(await lastRun()).toBe(now), { timeout: 10_000 });
+    await vi.waitFor(() => expect(clock.pending).toBe(1), { timeout: 10_000 });
+    tick = 1;
     await clock.advance(1000);
-    await new Promise((r) => setTimeout(r, 1500));
-    const [b] = await sql<
-      { t: Date }[]
-    >`select last_run_at t from retention_status where target = 'positions'`;
-    expect(b?.t.getTime() ?? 0).toBeGreaterThan(a?.t.getTime() ?? Infinity);
+    await vi.waitFor(async () => expect(await lastRun()).toBe(now + 1000), { timeout: 10_000 });
     await job.stop();
   });
 });

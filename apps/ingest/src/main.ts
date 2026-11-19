@@ -36,8 +36,7 @@ const shutdown = async (signal: string, code = 0): Promise<void> => {
   // Si un adaptador ignora la señal, no esperamos más de 10 s.
   const force = setTimeout(() => process.exit(1), 10_000);
   force.unref();
-  await scheduler?.stop();
-  await retention?.stop();
+  await Promise.all([scheduler?.stop(), retention?.stop()]);
   await Promise.allSettled(adapters.map((a) => a.close?.()));
   await sql.end({ timeout: 5 }).catch(() => {});
   await retentionSql.end({ timeout: 5 }).catch(() => {});

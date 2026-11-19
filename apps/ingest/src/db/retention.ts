@@ -103,7 +103,7 @@ export async function runRetention(
         const success = r.error ? null : new Date(o.nowMs);
         await conn`
           insert into retention_status (target, last_run_at, last_success_at, last_error, cutoff, dropped_last, dropped_total)
-          values (${t.raw}, now(), ${success}, ${r.error ?? null}, ${cutoff},
+          values (${t.raw}, ${new Date(o.nowMs)}, ${success}, ${r.error ?? null}, ${cutoff},
                   ${r.droppedChunks}, ${r.droppedChunks})
           on conflict (target) do update set
             last_run_at = excluded.last_run_at,
@@ -125,7 +125,7 @@ export async function runRetention(
       }
       return results;
     } finally {
-      await conn`select pg_advisory_unlock(${LOCK_KEY})`;
+      await conn`select pg_advisory_unlock(${LOCK_KEY})`.catch(() => {});
     }
   } finally {
     conn.release();

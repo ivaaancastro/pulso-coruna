@@ -60,6 +60,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     dbStatementTimeoutMs: int(env, "DB_STATEMENT_TIMEOUT_MS", 15_000),
     migrateAttempts: int(env, "INGEST_MIGRATE_ATTEMPTS", 10),
   };
+  // Con menos de 7 días, drop_chunks invalidaría un rango que el refresco automático (3 días) vaciaría.
+  if (config.retention.rawDays < 7) throw new Error("RETENTION_RAW_DAYS debe ser >= 7");
   if (config.backoffMaxMs < config.backoffBaseMs) {
     throw new Error("INGEST_BACKOFF_MAX_MS no puede ser menor que INGEST_BACKOFF_BASE_MS");
   }
