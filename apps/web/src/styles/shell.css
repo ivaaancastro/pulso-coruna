@@ -46,6 +46,8 @@ body {
   position: absolute;
   inset: 0;
   background: var(--pulso-bg);
+  /* Contiene el z-index de los controles de MapLibre (y el canvas de deck.gl): el shell queda siempre encima. */
+  isolation: isolate;
 }
 
 .map-veil {
