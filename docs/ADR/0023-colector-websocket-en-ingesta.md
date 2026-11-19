@@ -9,7 +9,7 @@ aisstream.io (barcos) es un WebSocket de larga duración, no un sondeo. El plani
 
 ## Decisión
 
-El contrato `Adapter` no cambia. El adaptador crea un colector que mantiene la conexión (backoff exponencial con jitter, watchdog de silencio) y un estado en memoria por barco; `fetch` abre el colector la primera vez, purga barcos callados y devuelve las posiciones nuevas desde el ciclo anterior; `parse` es puro. Si lleva más de 2 min sin conexión, `fetch` falla y `source_health` se degrada. Único cambio en ingesta: `IngestAdapter` admite un `close()` opcional que `main.ts` llama al apagar. Sin dependencias de runtime: WebSocket global de Node 22+ y `node:crypto` (hash SHA-256 con sal del MMSI). Solo `@types/node` 24.19.2 (la versión ya usada por ingesta y API) como devDependency de `@pulso/adapters`, para tipar `node:crypto`.
+El contrato `Adapter` no cambia. El adaptador crea un colector que mantiene la conexión (backoff exponencial con jitter, watchdog de silencio) y un estado en memoria por barco; `fetch` abre el colector la primera vez, purga barcos callados y devuelve las posiciones nuevas desde el ciclo anterior; `parse` es puro. Si lleva más de 5 min sin señal sana (desconexión, clave inválida o socket mudo), `fetch` falla y `source_health` se degrada. Único cambio en ingesta: `IngestAdapter` admite un `close()` opcional que `main.ts` llama al apagar. Sin dependencias de runtime: WebSocket global de Node 22+ y `node:crypto` (hash SHA-256 con sal del MMSI). Solo `@types/node` 24.19.2 (la versión ya usada por ingesta y API) como devDependency de `@pulso/adapters`, para tipar `node:crypto`.
 
 ## Alternativas
 
