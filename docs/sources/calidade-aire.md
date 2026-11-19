@@ -3,6 +3,7 @@
 - **Verificado:** 2026-11-18 (UTC), con peticiones reales espaciadas ≥5 s. Sustituye a la nota anterior (que solo constataba que la web de MeteoGalicia usa una clave incrustada).
 - **Licencia:** decisión humana tomada: «aceptada, con atribución». Los términos se citan abajo.
 - **Recomendación:** principal **EEA Air Quality Download Service** (mediciones reales de las 4 estaciones de A Coruña, sin clave); respaldo **Open-Meteo Air Quality** (modelo CAMS, sin clave, siempre disponible).
+- **Decisión humana (2026-11-19):** Open-Meteo aceptada (CC BY 4.0, uso no comercial), con atribución «Open-Meteo.com (datos CAMS)».
 
 ## Comparativa
 

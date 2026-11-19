@@ -1,0 +1,29 @@
+{
+  "latitude": 43.4,
+  "longitude": -8.4,
+  "generationtime_ms": 0.2168416976928711,
+  "utc_offset_seconds": 0,
+  "timezone": "GMT",
+  "timezone_abbreviation": "GMT",
+  "elevation": 59.0,
+  "current_units": {
+    "time": "iso8601",
+    "interval": "seconds",
+    "pm10": "μg/m³",
+    "pm2_5": "μg/m³",
+    "nitrogen_dioxide": "μg/m³",
+    "ozone": "μg/m³",
+    "sulphur_dioxide": "μg/m³",
+    "european_aqi": "EAQI"
+  },
+  "current": {
+    "time": "2026-11-19T14:00",
+    "interval": 3600,
+    "pm10": 10.0,
+    "pm2_5": 3.6,
+    "nitrogen_dioxide": 2.6,
+    "ozone": 78.0,
+    "sulphur_dioxide": 0.6,
+    "european_aqi": 29
+  }
+}

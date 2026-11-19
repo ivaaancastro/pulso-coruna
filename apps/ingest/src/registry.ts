@@ -7,6 +7,7 @@ import {
 import { createItranviasAdapter, itranviasConfigFromEnv } from "@pulso/adapters/itranvias";
 import { meteogaliciaAdapter } from "@pulso/adapters/meteogalicia";
 import { portusAdapter, portusEnabled } from "@pulso/adapters/portus";
+import { openMeteoAirAdapter, openMeteoAirEnabled } from "@pulso/adapters/openmeteo-air";
 import type { IngestAdapter } from "./types.js";
 
 /**
@@ -16,11 +17,14 @@ import type { IngestAdapter } from "./types.js";
  *   (M4.3a): posiciones de bus ESTIMADAS por horario (ids `sched:*`, `meta.estimated = 1`),
  *   activa por defecto; se apaga con `SCHEDULE_ESTIMATES_ENABLED=false`.
  * - Portus (M5.1a, nivel del mar) solo con `PORTUS_ENABLED=true`: API interna de su web, sin garantías.
+ * - Open-Meteo Air (M5.1b): aire MODELADO (CAMS), `stationId` `openmeteo:coruna:model`; activo por
+ *   defecto, se apaga con `OPENMETEO_AIR_ENABLED=false`.
  * - iTranvías solo se registra con `ITRANVIAS_ENABLED=true` (permiso del operador sin confirmar).
  */
 export function buildAdapters(env: Record<string, string | undefined>): IngestAdapter[] {
   const adapters: IngestAdapter[] = [bicicorunaAdapter, meteogaliciaAdapter];
   if (portusEnabled(env)) adapters.push(portusAdapter);
+  if (openMeteoAirEnabled(env)) adapters.push(openMeteoAirAdapter);
   const itranvias = itranviasConfigFromEnv(env);
   if (itranvias.enabled) adapters.push(createItranviasAdapter(itranvias));
   if (scheduleEstimatesEnabled(env)) {
