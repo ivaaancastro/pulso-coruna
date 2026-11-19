@@ -7,7 +7,7 @@ import type {
 } from "@pulso/schema";
 
 /**
- * Simulador SOLO DE DESARROLLO de la API en vivo (bus, bici, viento). Lo usa únicamente el plugin
+ * Simulador SOLO DE DESARROLLO de la API en vivo (bus, bici, viento, aire). Lo usa únicamente el plugin
  * de Vite `vite/mock-live-plugin.mjs` (servidor de desarrollo, con PULSO_MOCK_LIVE=1); el cliente
  * no lo importa, así que no entra en el bundle. Todo dato lleva `meta.simulated`/ids `mock-`.
  */
@@ -122,6 +122,9 @@ function makePlanes(): SimPlane[] {
 }
 
 const WEATHER_STATIONS = ["mock-w1", "mock-w2", "mock-w3"] as const;
+/** Como en producción, el sufijo `:model` marca un dato de modelo (una sola celda para toda la ciudad). */
+const AIR_STATION = "mock:coruna:model";
+const HOUR_MS = 3_600_000;
 
 interface Bus {
   id: string;
@@ -179,6 +182,8 @@ export interface MockWorldOptions {
   bikeIntervalMs?: number;
   /** Cada cuánto emite el viento, ms. */
   weatherIntervalMs?: number;
+  /** Cada cuánto emite el aire (modelo horario), ms. */
+  airIntervalMs?: number;
   /** Cada cuánto emite aviones (OpenSky anónimo: 5 min), ms. */
   planeIntervalMs?: number;
 }
@@ -195,10 +200,18 @@ export class MockWorld {
     bikes: number;
   }[];
   private readonly planes = makePlanes();
-  private readonly intervals: { bus: number; bike: number; weather: number; plane: number };
-  private nextDue = { bus: 0, bike: 0, weather: 0, plane: 0 };
+  private readonly intervals: {
+    bus: number;
+    bike: number;
+    weather: number;
+    air: number;
+    plane: number;
+  };
+  private nextDue = { bus: 0, bike: 0, weather: 0, air: 0, plane: 0 };
   private lastStep = 0;
   private wind = { speed: 4, dir: 220 };
+  /** EAQI ficticio (escala de Open-Meteo, 0–100+): deriva despacio. */
+  private eaqi = 29;
 
   constructor(opts: MockWorldOptions = {}) {
     this.rng = createRng(opts.seed ?? 1);
@@ -206,6 +219,7 @@ export class MockWorld {
       bus: opts.busIntervalMs ?? 5000,
       bike: opts.bikeIntervalMs ?? 15_000,
       weather: opts.weatherIntervalMs ?? 30_000,
+      air: opts.airIntervalMs ?? 60_000,
       plane: opts.planeIntervalMs ?? 300_000,
     };
     const count = opts.buses ?? 60;
@@ -315,12 +329,35 @@ export class MockWorld {
     ]);
   }
 
+  /** Como la fuente real: valores de la hora en curso, con `ts` = inicio de la hora. */
+  private airObservations(now: number): Observation[] {
+    const ts = Math.floor(now / HOUR_MS) * HOUR_MS;
+    const e = this.eaqi;
+    const values: [string, number, string][] = [
+      ["pm25", Math.round(e * 0.14 * 10) / 10, "µg/m³"],
+      ["pm10", Math.round(e * 0.35 * 10) / 10, "µg/m³"],
+      ["no2", Math.round(e * 0.09 * 10) / 10, "µg/m³"],
+      ["o3", Math.round(60 + e * 0.6), "µg/m³"],
+      ["so2", Math.round(e * 0.02 * 10) / 10, "µg/m³"],
+      ["eaqi", Math.round(e), "EAQI"],
+    ];
+    return values.map(([metric, value, unit]) => ({
+      stationId: AIR_STATION,
+      layer: "air" as const,
+      metric,
+      value,
+      unit,
+      ts,
+    }));
+  }
+
   snapshot(now: number): SnapshotMessage {
     this.lastStep = now;
     this.nextDue = {
       bus: now + this.intervals.bus,
       bike: now + this.intervals.bike,
       weather: now + this.intervals.weather,
+      air: now + this.intervals.air,
       plane: now + this.intervals.plane,
     };
     return {
@@ -331,6 +368,7 @@ export class MockWorld {
         bus: this.buses.filter((b) => b.active).map((b) => this.busEntity(b, now)),
         bike: this.stations.map((s) => this.bikeStatus(s, now)),
         weather: this.windObservations(now),
+        air: this.airObservations(now),
         // Como en producción, el dato lleva ~1,5 min de retraso: la capa ya extrapola al abrir.
         plane: this.planes
           .filter((p) => p.active)
@@ -411,6 +449,19 @@ export class MockWorld {
         ts: now,
         layer: "weather",
         upserts: this.windObservations(now),
+        removes: [],
+      });
+    }
+
+    if (now >= this.nextDue.air) {
+      this.nextDue.air = now + this.intervals.air;
+      this.eaqi = Math.max(3, this.eaqi + (this.rng() - 0.5) * 8);
+      out.push({
+        v: 1,
+        type: "delta",
+        ts: now,
+        layer: "air",
+        upserts: this.airObservations(now),
         removes: [],
       });
     }

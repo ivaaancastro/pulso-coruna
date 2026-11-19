@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WsMessageSchema, type Entity, type StationStatus } from "@pulso/schema";
+import { WsMessageSchema, type Entity, type Observation, type StationStatus } from "@pulso/schema";
 import { MockWorld, createRng } from "./mock-sim";
 import { CLOSE_FRAME, PONG_FRAME, encodeTextFrame, frameOpcode } from "./ws-frame";
 
@@ -13,6 +13,10 @@ describe("MockWorld", () => {
     expect(snap.layers.bus?.length).toBe(40);
     expect(snap.layers.bike?.length).toBeGreaterThan(10);
     expect(snap.layers.weather?.length).toBeGreaterThan(0);
+    const air = (snap.layers.air ?? []) as Observation[];
+    expect(air.map((o) => o.metric).sort()).toEqual(["eaqi", "no2", "o3", "pm10", "pm25", "so2"]);
+    // dato de modelo: lo marca el sufijo del stationId, como en producción
+    expect(air.every((o) => o.stationId.endsWith(":model"))).toBe(true);
 
     const layers = new Set<string>();
     for (let t = 1; t <= 120; t++) {
@@ -21,7 +25,7 @@ describe("MockWorld", () => {
         layers.add(d.layer);
       }
     }
-    expect([...layers].sort()).toEqual(["bike", "bus", "weather"]); // aviones: cada 5 min
+    expect([...layers].sort()).toEqual(["air", "bike", "bus", "weather"]); // aviones: cada 5 min
   });
 
   it("aviones ficticios: cumplen el contrato, llevan retraso y aterrizan en Alvedro (cada 5 min)", () => {

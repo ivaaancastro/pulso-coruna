@@ -1,0 +1,245 @@
+/* Etiqueta «modelo» y tarjeta de aire. Solo tokens de docs/design/tokens.md; sin sombras ni vidrio. */
+.air-badge {
+  position: absolute;
+  z-index: 2;
+  /* Móvil: bajo la hora grande (que ocupa el ancho), a la derecha del índice Pulso. */
+  top: calc(var(--pulso-space-6) + 80px + env(safe-area-inset-top));
+  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  min-height: 44px;
+  max-width: min(56vw, 240px);
+  padding: var(--pulso-space-2) var(--pulso-space-3);
+  font: inherit;
+  text-align: left;
+  color: var(--pulso-text);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-1);
+  cursor: pointer;
+  animation: air-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.air-badge[hidden],
+.air-card[hidden] {
+  display: none;
+}
+
+.air-badge__name {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  line-height: 1.2;
+  color: var(--pulso-air);
+}
+
+.air-badge__level {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pulso-space-2);
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  line-height: 1.2;
+  color: var(--level, var(--pulso-text));
+}
+
+.air-badge__attr {
+  font-size: 11px;
+  font-weight: 400;
+  font-stretch: 90%;
+  line-height: 1.2;
+  color: var(--pulso-text-subtle);
+}
+
+/* Escala de 6 segmentos: N rellenos con el color de su nivel; el resto, solo contorno. */
+.air-scale {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+}
+
+.air-scale__seg {
+  display: block;
+  width: 6px;
+  height: 10px;
+  border: 1px solid var(--pulso-text-subtle);
+  border-radius: 1px;
+}
+
+.air-scale__seg--on {
+  background: var(--seg);
+  border-color: var(--seg);
+}
+
+.air-card {
+  position: absolute;
+  left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
+  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
+  bottom: calc(
+    var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + 72px + env(safe-area-inset-bottom)
+  );
+  z-index: 2;
+  display: grid;
+  gap: var(--pulso-space-3);
+  max-width: 360px;
+  padding: var(--pulso-space-4);
+  color: var(--pulso-text);
+  background: var(--pulso-surface-overlay);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-2);
+  animation: air-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+@keyframes air-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.air-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pulso-space-3);
+}
+
+.air-card__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.air-card__layer,
+.air-card__title,
+.air-card__label,
+.air-card__eaqi-value,
+.air-card__model,
+.air-card__note,
+.air-card__updated,
+.air-card__attr {
+  margin: 0;
+}
+
+.air-card__layer,
+.air-card__label {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.air-card__title {
+  font-size: var(--pulso-text-body);
+  font-weight: 400;
+  font-stretch: 110%;
+  line-height: 1.2;
+  color: var(--level, var(--pulso-text));
+}
+
+.air-card__close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: calc(var(--pulso-space-2) * -1) calc(var(--pulso-space-2) * -1) 0 0;
+  padding: 0;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--pulso-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-1);
+  cursor: pointer;
+}
+
+.air-card__eaqi {
+  display: grid;
+  gap: var(--pulso-space-1);
+}
+
+.air-card__eaqi-value {
+  font-size: var(--pulso-text-body);
+  font-weight: 400;
+  font-stretch: 110%;
+  font-variant-numeric: var(--pulso-tabular);
+  color: var(--level, var(--pulso-text));
+}
+
+.air-card__scale .air-scale__seg {
+  width: 22px;
+  height: 8px;
+}
+
+.air-card__model {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-air);
+}
+
+.air-card__note,
+.air-card__updated,
+.air-card__attr {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-subtle);
+}
+
+.air-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pulso-space-3);
+  margin: 0;
+}
+
+.air-card__stat {
+  display: grid;
+  gap: 2px;
+}
+
+.air-card__stat dt {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.air-card__stat dd {
+  margin: 0;
+  font-size: var(--pulso-text-body);
+  font-weight: 400;
+  font-variant-numeric: var(--pulso-tabular);
+  color: var(--pulso-text);
+}
+
+.air-card__attr a {
+  color: var(--pulso-text-subtle);
+  text-decoration: underline;
+}
+
+.air-card__attr a:hover {
+  color: var(--pulso-text);
+}
+
+@media (min-width: 700px) {
+  .air-badge {
+    top: calc(var(--pulso-space-6) + env(safe-area-inset-top));
+  }
+
+  .air-card {
+    left: auto;
+    width: 340px;
+    bottom: calc(
+      var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + 72px + env(safe-area-inset-bottom)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .air-badge,
+  .air-card {
+    animation-duration: var(--pulso-dur-instant);
+  }
+}
