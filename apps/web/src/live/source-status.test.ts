@@ -99,6 +99,29 @@ describe("layerStatus", () => {
     expect(SOURCE_THRESHOLDS.air.delayedMs).toBeGreaterThan(75 * 60_000);
     expect(SOURCE_THRESHOLDS.air.nodataMs).toBe(4 * 3_600_000);
   });
+
+  it("plane: muestreo a 5 min (8 / 15 min) y escasa: vacía no alarma, con aviones sí", () => {
+    const plane = SOURCE_THRESHOLDS.plane;
+    expect(plane.delayedMs).toBe(8 * 60_000);
+    expect(plane.nodataMs).toBe(15 * 60_000);
+    const old = { receivedAt: T0, dataTs: T0 - 3 * 3600_000 };
+    expect(st({ thresholds: plane, freshness: old, empty: true }).state).toBe("live");
+    expect(st({ thresholds: plane, freshness: old, empty: false }).state).toBe("nodata");
+    const at = (min: number) =>
+      st({
+        thresholds: plane,
+        freshness: { receivedAt: T0, dataTs: T0 - min * 60_000 },
+        empty: false,
+      }).state;
+    expect(at(7)).toBe("live");
+    expect(at(8)).toBe("delayed");
+    expect(at(15)).toBe("nodata");
+  });
+
+  it("`empty` solo cuenta en capas escasas (un bus vacío sigue siendo «sin datos»)", () => {
+    const old = { receivedAt: T0, dataTs: T0 - 10 * 60_000 };
+    expect(st({ freshness: old, empty: true }).state).toBe("nodata");
+  });
 });
 
 describe("worstState / stateOpacity", () => {

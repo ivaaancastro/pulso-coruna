@@ -60,6 +60,67 @@ const STATIONS: readonly LonLat[] = [
   [-8.4031, 43.3646], [-8.4079, 43.3619], [-8.4118, 43.3647], [-8.4156, 43.3668],
 ]; // prettier-ignore
 
+/** Alvedro (LCG) y aviones ficticios: uno aterriza, otro cruza (no son vuelos reales). */
+const ALVEDRO: LonLat = [-8.3772, 43.3021];
+
+interface SimPlane {
+  id: string;
+  callsign: string;
+  kind: "landing" | "cruise";
+  /** Origen del trayecto, rumbo (grados), longitud (m), velocidad (m/s) y altitud de crucero (m). */
+  origin: LonLat;
+  heading: number;
+  length: number;
+  speed: number;
+  altitude: number;
+  /** Distancia recorrida, m. */
+  s: number;
+  active: boolean;
+  /** Actualizaciones ya emitidas en tierra (el aterrizado desaparece tras dos). */
+  groundedUpdates: number;
+}
+
+function offset(origin: LonLat, headingDeg: number, meters: number): LonLat {
+  const rad = (headingDeg * Math.PI) / 180;
+  return [
+    origin[0] + (Math.sin(rad) * meters) / (M_LAT * Math.cos((origin[1] * Math.PI) / 180)),
+    origin[1] + (Math.cos(rad) * meters) / M_LAT,
+  ];
+}
+
+function makePlanes(): SimPlane[] {
+  const approach = 40_000;
+  return [
+    {
+      id: "mock-plane-lcg001",
+      callsign: "MOCK101",
+      kind: "landing",
+      // Llega desde el nordeste con rumbo 211 y toca pista en Alvedro.
+      origin: offset(ALVEDRO, 31, approach),
+      heading: 211,
+      length: approach,
+      speed: 110,
+      altitude: 2800,
+      s: approach * 0.55,
+      active: true,
+      groundedUpdates: 0,
+    },
+    {
+      id: "mock-plane-xtr002",
+      callsign: "MOCK202",
+      kind: "cruise",
+      origin: [-8.66, 43.42],
+      heading: 82,
+      length: 50_000,
+      speed: 90,
+      altitude: 9500,
+      s: 9000,
+      active: true,
+      groundedUpdates: 0,
+    },
+  ];
+}
+
 const WEATHER_STATIONS = ["mock-w1", "mock-w2", "mock-w3"] as const;
 /** Como en producción, el sufijo `:model` marca un dato de modelo (una sola celda para toda la ciudad). */
 const AIR_STATION = "mock:coruna:model";
@@ -123,6 +184,8 @@ export interface MockWorldOptions {
   weatherIntervalMs?: number;
   /** Cada cuánto emite el aire (modelo horario), ms. */
   airIntervalMs?: number;
+  /** Cada cuánto emite aviones (OpenSky anónimo: 5 min), ms. */
+  planeIntervalMs?: number;
 }
 
 /** Mundo simulado con el mismo contrato que la API (`snapshot` y luego `delta`). */
@@ -138,6 +201,9 @@ export class MockWorld {
   }[];
   private readonly intervals: { bus: number; bike: number; weather: number; air: number };
   private nextDue = { bus: 0, bike: 0, weather: 0, air: 0 };
+  private readonly planes = makePlanes();
+  private readonly intervals: { bus: number; bike: number; weather: number; plane: number };
+  private nextDue = { bus: 0, bike: 0, weather: 0, plane: 0 };
   private lastStep = 0;
   private wind = { speed: 4, dir: 220 };
   /** EAQI ficticio (escala de Open-Meteo, 0–100+): deriva despacio. */
@@ -150,6 +216,7 @@ export class MockWorld {
       bike: opts.bikeIntervalMs ?? 15_000,
       weather: opts.weatherIntervalMs ?? 30_000,
       air: opts.airIntervalMs ?? 60_000,
+      plane: opts.planeIntervalMs ?? 300_000,
     };
     const count = opts.buses ?? 60;
     for (let i = 0; i < count; i++) {
@@ -212,6 +279,31 @@ export class MockWorld {
     };
   }
 
+  /** Avión en su posición real de hace `ageMs` (el dato de OpenSky llega con retraso). */
+  private planeEntity(p: SimPlane, ts: number, ageMs: number): Entity {
+    const along = Math.min(p.length, Math.max(0, p.s - p.speed * (ageMs / 1000)));
+    const landed = p.kind === "landing" && p.s >= p.length;
+    const [lon, lat] = landed ? ALVEDRO : offset(p.origin, p.heading, along);
+    const frac = p.kind === "landing" ? 1 - along / p.length : 1;
+    return {
+      id: p.id,
+      layer: "plane",
+      lon,
+      lat,
+      heading: p.heading,
+      speed: landed ? 0 : p.speed,
+      ts,
+      meta: {
+        source: "opensky",
+        callsign: p.callsign,
+        alt: landed ? 0 : Math.round(p.altitude * frac),
+        onGround: landed ? 1 : 0,
+        vrate: landed ? 0 : p.kind === "landing" ? -4 : 0,
+        simulated: 1,
+      },
+    };
+  }
+
   private windObservations(ts: number): Observation[] {
     return WEATHER_STATIONS.flatMap((stationId, i) => [
       {
@@ -262,6 +354,7 @@ export class MockWorld {
       bike: now + this.intervals.bike,
       weather: now + this.intervals.weather,
       air: now + this.intervals.air,
+      plane: now + this.intervals.plane,
     };
     return {
       v: 1,
@@ -272,6 +365,10 @@ export class MockWorld {
         bike: this.stations.map((s) => this.bikeStatus(s, now)),
         weather: this.windObservations(now),
         air: this.airObservations(now),
+        // Como en producción, el dato lleva ~1,5 min de retraso: la capa ya extrapola al abrir.
+        plane: this.planes
+          .filter((p) => p.active)
+          .map((p) => this.planeEntity(p, now - 90_000, 90_000)),
       },
     };
   }
@@ -281,6 +378,7 @@ export class MockWorld {
     const dt = Math.max(0, now - this.lastStep) / 1000;
     this.lastStep = now;
     for (const b of this.buses) if (b.active) b.s += b.speed * dt;
+    for (const p of this.planes) if (p.active) p.s += p.speed * dt;
     const out: DeltaMessage[] = [];
 
     if (now >= this.nextDue.bus) {
@@ -312,6 +410,29 @@ export class MockWorld {
         upserts.push(this.bikeStatus(st, now));
       }
       out.push({ v: 1, type: "delta", ts: now, layer: "bike", upserts, removes: [] });
+    }
+
+    if (now >= this.nextDue.plane) {
+      this.nextDue.plane = now + this.intervals.plane;
+      const upserts: Entity[] = [];
+      const removes: string[] = [];
+      for (const p of this.planes) {
+        if (!p.active) {
+          p.active = true; // un avión nuevo entra en la caja
+          p.s = 0;
+          p.groundedUpdates = 0;
+        } else if (p.s >= p.length) {
+          if (p.kind === "landing" && p.groundedUpdates++ < 2) {
+            upserts.push(this.planeEntity(p, now - 20_000, 20_000));
+            continue;
+          }
+          p.active = false; // aterrizado hace rato o fuera de la caja: desaparece
+          removes.push(p.id);
+          continue;
+        }
+        upserts.push(this.planeEntity(p, now - 20_000, 20_000));
+      }
+      out.push({ v: 1, type: "delta", ts: now, layer: "plane", upserts, removes });
     }
 
     if (now >= this.nextDue.weather) {
