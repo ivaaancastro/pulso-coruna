@@ -29,8 +29,15 @@ const opt = (n: string, d: number): number => {
 
 const url = process.env["DATABASE_URL"];
 if (!url) throw new Error("Falta DATABASE_URL");
-if (!/@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url) && process.env["SEED_ALLOW_REMOTE"] !== "1")
-  throw new Error("Solo siembra BDs locales (SEED_ALLOW_REMOTE=1 para forzarlo): son datos falsos");
+{
+  const u = new URL(url);
+  const local =
+    ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname) && !u.searchParams.has("host");
+  if (!local && process.env["SEED_ALLOW_REMOTE"] !== "1")
+    throw new Error(
+      "Solo siembra BDs locales (SEED_ALLOW_REMOTE=1 para forzarlo): son datos falsos",
+    );
+}
 
 const hours = opt("--hours", 36);
 const rawDays = Number(process.env["RETENTION_RAW_DAYS"] ?? 30);
@@ -87,5 +94,5 @@ main()
     process.exitCode = 1;
   })
   .finally(() => {
-    if (!flag("--follow")) void sql.end({ timeout: 5 });
+    void sql.end({ timeout: 5 });
   });

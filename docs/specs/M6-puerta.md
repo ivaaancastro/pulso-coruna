@@ -26,7 +26,7 @@ sh apps/ingest/scripts/dev-db.sh stop
 
 ## Resultados
 
-Pila: macOS arm64, Chrome estable headless, API y BD en la misma máquina (latencia de red ≈ 0). 24 h de datos de ayer (+ hoy hasta ahora), ≈ 150 000 filas de posiciones en 36 h.
+Pila: macOS arm64, Chrome estable headless, API y BD en la misma máquina (latencia de red ≈ 0). 24 h de datos de ayer (+ hoy hasta ahora), ≈ 270 000 filas de posiciones (60 h + franja del corte).
 
 ### Qué se probó (y pasó)
 

@@ -348,7 +348,7 @@ export function createReplayController(opts: ReplayControllerOptions): ReplayCon
       if (state.mode === "view") exit();
       // El instante pedido se coloca ANTES de entrar: así el worker descarga directamente la ventana
       // del enlace y no la de hace una hora (una petición de más a la API, con el límite global de 2).
-      if (state.t !== undefined) initialized = true;
+      if (state.t !== undefined && state.mode === "replay") initialized = true;
       else if (state.mode === "replay") enter(); // sin instante: arranca como siempre (hace 1 h) y aplica el resto
       if (state.day !== undefined && madridDayStart(state.day) !== day) {
         day = madridDayStart(state.day);
