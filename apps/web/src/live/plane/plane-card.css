@@ -1,0 +1,115 @@
+/* Tarjeta de avión. Solo tokens de docs/design/tokens.md; sin sombras ni vidrio. */
+.plane-card {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: calc(
+    var(--pulso-space-5) + 56px + var(--pulso-space-3) + var(--pulso-attrib-room, 0px) +
+      env(safe-area-inset-bottom)
+  );
+  width: min(440px, calc(100% - 2 * var(--pulso-gutter)));
+  padding: var(--pulso-space-3) var(--pulso-space-4);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-2);
+  color: var(--pulso-text);
+  transform: translateX(-50%);
+  animation: plane-card-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.plane-card[hidden] {
+  display: none;
+}
+
+@keyframes plane-card-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.plane-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pulso-space-3);
+}
+
+.plane-card__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.plane-card__layer {
+  margin: 0;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-plane);
+}
+
+.plane-card__title {
+  margin: 0;
+  font-size: var(--pulso-text-body);
+  font-weight: 500;
+  font-stretch: 100%;
+  line-height: var(--pulso-leading-body);
+  overflow-wrap: anywhere;
+}
+
+.plane-card__close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: calc(-1 * var(--pulso-space-2)) calc(-1 * var(--pulso-space-3))
+    calc(-1 * var(--pulso-space-2)) 0;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--pulso-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-1);
+  cursor: pointer;
+}
+
+.plane-card__rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--pulso-space-1) var(--pulso-space-4);
+  margin: var(--pulso-space-2) 0 0;
+}
+
+.plane-card__rows dt {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.plane-card__rows dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Posición extrapolada: trazo discontinuo (no solo color) y texto, nunca como posición real. */
+.plane-card__note {
+  margin: var(--pulso-space-3) 0 0;
+  padding: var(--pulso-space-1) var(--pulso-space-3);
+  width: fit-content;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-pill);
+}
+
+.plane-card__note--estimated {
+  border-style: dashed;
+}
+
+.plane-card__source {
+  margin: var(--pulso-space-2) 0 0;
+  font-size: var(--pulso-text-label);
+  color: var(--pulso-text-muted);
+}
