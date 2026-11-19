@@ -130,7 +130,7 @@ describe("air.layer (contrato del registro)", () => {
   it("tocar el halo abre y cierra la tarjeta", () => {
     const layers = air.createLayers(ctx(storeWith(29)));
     const onClick = props(layers[1])["onClick"] as () => boolean;
-    const panel = document.querySelector<HTMLElement>(".air-card");
+    const panel = document.querySelector<HTMLElement>(".pulso-card");
     expect(panel?.hidden).toBe(true);
     expect(onClick()).toBe(true);
     expect(panel?.hidden).toBe(false);
@@ -152,7 +152,7 @@ describe("estado de la fuente (M4.6)", () => {
     });
     const hit = () => p.collect().find((l) => l.id === "air-hit");
     (props(hit())["onClick"] as () => boolean)();
-    const panel = document.querySelector<HTMLElement>(".air-card");
+    const panel = document.querySelector<HTMLElement>(".pulso-card");
     const badge = document.querySelector<HTMLElement>(".air-badge");
     expect(panel?.hidden).toBe(false);
 

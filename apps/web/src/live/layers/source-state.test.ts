@@ -38,7 +38,7 @@ describe("tarjeta abierta cuando la capa pasa a «sin datos» (sin datos fantasm
       p.collect().find((l) => l.id === "bike-hit") as unknown as Clickable;
 
     hit().props.onClick?.({ object: { id: "7" } });
-    const card = document.querySelector<HTMLElement>(".bike-card");
+    const card = document.querySelector<HTMLElement>(".pulso-card");
     expect(card?.hidden).toBe(false);
 
     states["bike"] = "delayed"; // retrasado: la tarjeta se queda (ya dice «Actualizado hace X»)
@@ -88,7 +88,7 @@ describe("tarjeta abierta cuando la capa pasa a «sin datos» (sin datos fantasm
 
     halo().props.onClick?.({ index: 0 });
     p.collect();
-    const card = document.querySelector<HTMLElement>(".bus-card");
+    const card = document.querySelector<HTMLElement>(".pulso-card");
     expect(card?.hidden).toBe(false);
 
     states["bus"] = "nodata";

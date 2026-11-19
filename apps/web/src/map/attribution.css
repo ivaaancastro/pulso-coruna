@@ -15,7 +15,7 @@
   padding: 0 var(--pulso-space-2);
   background: transparent;
   color: var(--pulso-text-subtle);
-  font-size: 11px;
+  font-size: var(--pulso-text-micro);
   font-weight: 400;
   font-stretch: 90%;
   line-height: 20px;

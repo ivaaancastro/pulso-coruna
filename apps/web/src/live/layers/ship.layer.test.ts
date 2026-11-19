@@ -120,14 +120,14 @@ describe("capa ship (definición)", () => {
     expect(onClick({ index: 0 })).toBe(true);
     const layers = p.collect(); // la selección invalida la capa
     expect(layers.map((l) => l.id)).toContain("ship-selected");
-    const card = document.querySelector<HTMLElement>(".ship-card");
+    const card = document.querySelector<HTMLElement>(".pulso-card");
     expect(card?.hidden).toBe(false);
     expect(card?.textContent).toContain("MOCK");
     expect(card?.textContent).toContain("aisstream.io");
     expect(card?.textContent).not.toContain("abc123def456");
 
     shipLayer.onSourceState?.("nodata");
-    expect(document.querySelector<HTMLElement>(".ship-card")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(true);
     expect(
       p
         .collect()
@@ -149,10 +149,10 @@ describe("capa ship (definición)", () => {
     const hit = p.collect().find((l) => l.id === "ship-hit");
     (hit?.props.onClick as (info: { index: number }) => boolean)({ index: 0 });
     p.collect();
-    expect(document.querySelector<HTMLElement>(".ship-card")?.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(false);
     now = T0 + 11 * 60_000;
     p.collect();
-    expect(document.querySelector<HTMLElement>(".ship-card")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(true);
   });
 
   it("Esc cierra la tarjeta y tocar de nuevo el barco seleccionado la cierra", () => {
@@ -165,7 +165,7 @@ describe("capa ship (definición)", () => {
       p.collect();
     };
     const hidden = (): boolean | undefined =>
-      document.querySelector<HTMLElement>(".ship-card")?.hidden;
+      document.querySelector<HTMLElement>(".pulso-card")?.hidden;
     click();
     expect(hidden()).toBe(false);
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

@@ -1,6 +1,7 @@
 import type { Entity } from "@pulso/schema";
 import { describe, expect, it } from "vitest";
 import { createTranslator, LOCALES, type Locale } from "../../../i18n";
+import { cardRows, summarize } from "../../card/panel";
 import { formatBusCard } from "./card";
 import { BUS_META, busInfo } from "./meta";
 
@@ -50,30 +51,37 @@ describe("formatBusCard", () => {
       es,
     );
     expect(card.title).toBe("Línea 3A");
-    expect(card.rows).toEqual([
+    expect(cardRows(card)).toEqual([
       { label: "Destino", value: "Matogrande" },
       { label: "Próxima parada", value: "Riazor" },
     ]);
-    expect(card.note).toBeUndefined();
-    expect(card.summary).toContain("Línea 3A");
+    expect(card.notes).toEqual([]);
+    expect(card.icon?.text).toBe("3A");
+    expect(summarize(card)).toContain("Línea 3A");
   });
 
   it("rotula «estimado según horario» siempre que la marca esté presente", () => {
     const card = formatBusCard(busInfo(bus({ line: "3A", estimated: 1 })), es);
-    expect(card.note).toBe("Estimado según horario");
-    expect(card.summary).toContain("Estimado según horario");
+    expect(card.notes).toEqual([{ text: "Estimado según horario", kind: "estimated" }]);
+    expect(summarize(card)).toContain("Estimado según horario");
   });
 
   it("omite las filas que faltan y titula «Autobús» sin línea", () => {
     const card = formatBusCard(busInfo(bus()), es);
     expect(card.title).toBe("Autobús");
-    expect(card.rows).toEqual([]);
+    expect(cardRows(card)).toEqual([]);
+    expect(card.icon).toBeUndefined();
+  });
+
+  it("el acento de la línea llega como color CSS", () => {
+    const card = formatBusCard(busInfo(bus({ line: "3A" })), es, [255, 194, 61]);
+    expect(card.accent).toBe("rgb(255 194 61)");
   });
 
   it("está traducido a es, en y gl", () => {
     const info = busInfo(bus({ line: "5", headsign: "X", nextStop: "Y", estimated: 1 }));
     const notes = (["es", "en", "gl"] as Locale[]).map(
-      (l) => formatBusCard(info, createTranslator(l)).note,
+      (l) => formatBusCard(info, createTranslator(l)).notes?.[0]?.text,
     );
     expect(new Set(notes).size).toBe(3);
     for (const l of Object.keys(LOCALES) as Locale[]) {

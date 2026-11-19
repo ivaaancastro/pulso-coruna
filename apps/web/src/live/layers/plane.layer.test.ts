@@ -143,7 +143,7 @@ describe("capa plane (definición)", () => {
     expect(tap(hit)).toBe(true);
     const ids = pipeline.collect().map((l) => l.id);
     expect(ids).toContain("plane-selected");
-    const card = document.body.querySelector<HTMLElement>(".plane-card");
+    const card = document.body.querySelector<HTMLElement>(".pulso-card");
     expect(card?.hidden).toBe(false);
     expect(card?.textContent).toContain("IBE1234");
     expect(card?.textContent).toContain("OpenSky Network");
@@ -170,6 +170,6 @@ describe("capa plane (definición)", () => {
     });
     pipeline.notify({ kind: "items", layer: "plane" });
     expect(pipeline.collect()).toEqual([]);
-    expect(document.body.querySelector<HTMLElement>(".plane-card")?.hidden).toBe(true);
+    expect(document.body.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(true);
   });
 });

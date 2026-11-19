@@ -1,8 +1,7 @@
 import type { StationStatus } from "@pulso/schema";
-import { INTL_LOCALE, type Locale, type Translate } from "../../i18n";
-import { formatAgo, formatMadridTime } from "../../time/format";
+import type { Locale, Translate } from "../../i18n";
+import { createCardView, freshness, type CardModel } from "../card/panel";
 import { fillFraction, fillRadius, RING_RADIUS, ringWidth, stationState } from "./bike-model";
-import "./bike-card.css";
 
 export interface BikeCardOptions {
   parent: HTMLElement;
@@ -19,24 +18,14 @@ export interface BikeCardOptions {
 }
 
 export interface BikeCard {
-  element: HTMLElement;
+  /** El panel de detalle compartido (`live/card`). */
+  readonly element: HTMLElement;
   show(id: string): void;
   hide(): void;
   readonly selected: string | null;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
-
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className?: string,
-  text?: string,
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 /** Glifo del aro, con el mismo codificado que el mapa (grosor, área de relleno). */
 function glyph(station: StationStatus): SVGSVGElement {
@@ -46,8 +35,7 @@ function glyph(station: StationStatus): SVGSVGElement {
   const c = size / 2;
   const svg = document.createElementNS(SVG, "svg");
   svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("class", `bike-card__glyph bike-card__glyph--${state}`);
+  if (state === "out") svg.style.opacity = "var(--pulso-layer-muted-opacity)";
   const ring = document.createElementNS(SVG, "circle");
   ring.setAttribute("cx", String(c));
   ring.setAttribute("cy", String(c));
@@ -68,47 +56,44 @@ function glyph(station: StationStatus): SVGSVGElement {
   return svg;
 }
 
+/** Modelo de la tarjeta de una estación: bicis, huecos y estado, sin DOM. */
+export function bikeCardModel(
+  station: StationStatus,
+  t: Translate,
+  locale: Locale,
+  now: number,
+): CardModel {
+  const state = stationState(station);
+  return {
+    layer: "bike",
+    label: t("bike.card.label"),
+    kicker: t("bike.name"),
+    title: t("bike.station", { id: station.id }),
+    icon: { key: `${state}:${station.bikes}:${station.docks}`, build: () => glyph(station) },
+    groups: [
+      {
+        layout: "stats",
+        columns: 2,
+        rows: [
+          { label: t("bike.bikes"), value: String(station.bikes), size: "lead" },
+          { label: t("bike.docks"), value: String(station.docks), size: "lead" },
+        ],
+      },
+    ],
+    notes: state === "normal" ? [] : [{ text: t(`bike.state.${state}`), kind: "state" }],
+    updated: freshness(t, station.ts, now, locale),
+  };
+}
+
 /**
- * Tarjeta mínima de una estación: bicis, huecos y «actualizado hace X». DOM propio (no es canvas),
- * así que lleva texto real y se lee con lector de pantalla. Se refresca sola con el reloj de la app.
+ * Tarjeta de una estación sobre el panel común: bicis, huecos y «actualizado hace X». Se refresca
+ * sola con el reloj de la app; los cambios de estado (vacía, llena) se anuncian con `aria-live`.
  */
 export function createBikeCard(opts: BikeCardOptions): BikeCard {
-  const { t } = opts;
-  const intl = INTL_LOCALE[opts.locale];
-  const root = el("section", "bike-card");
-  root.setAttribute("aria-label", t("bike.card.label"));
-  root.hidden = true;
-
-  const head = el("header", "bike-card__head");
-  const glyphSlot = el("span", "bike-card__glyph-slot");
-  const titles = el("div", "bike-card__titles");
-  const layerName = el("p", "bike-card__layer", t("bike.name"));
-  const title = el("h2", "bike-card__title");
-  titles.append(layerName, title);
-  const close = el("button", "bike-card__close", "×");
-  close.type = "button";
-  close.setAttribute("aria-label", t("bike.close"));
-  head.append(glyphSlot, titles, close);
-
-  const list = el("dl", "bike-card__stats");
-  const bikesBox = el("div", "bike-card__stat");
-  const bikesLabel = el("dt", undefined, t("bike.bikes"));
-  const bikesValue = el("dd");
-  bikesBox.append(bikesLabel, bikesValue);
-  const docksBox = el("div", "bike-card__stat");
-  const docksLabel = el("dt", undefined, t("bike.docks"));
-  const docksValue = el("dd");
-  docksBox.append(docksLabel, docksValue);
-  list.append(bikesBox, docksBox);
-
-  const stateLine = el("p", "bike-card__state");
-  const updated = el("p", "bike-card__updated");
-  root.append(head, list, stateLine, updated);
-  opts.parent.append(root);
-
+  const view = createCardView(opts.parent, "bike", { t: opts.t, onClose: () => close() });
   let selected: string | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
-  let renderedState: string | null = null;
+  let announced: string | null = null;
 
   const render = (): void => {
     if (selected === null) return;
@@ -119,55 +104,39 @@ export function createBikeCard(opts: BikeCardOptions): BikeCard {
       opts.onClose();
       return;
     }
+    // Se anuncia al abrir y cuando cambia el estado (vacía/llena/sin servicio), no con el reloj.
     const state = stationState(station);
-    title.textContent = t("bike.station", { id: station.id });
-    bikesValue.textContent = String(station.bikes);
-    docksValue.textContent = String(station.docks);
-    stateLine.textContent = state === "normal" ? "" : t(`bike.state.${state}`);
-    stateLine.hidden = state === "normal";
-    const key = `${state}:${station.bikes}:${station.docks}`;
-    if (key !== renderedState) {
-      glyphSlot.replaceChildren(glyph(station));
-      renderedState = key;
-    }
-    const ago = formatAgo(station.ts, opts.now(), intl);
-    updated.textContent = t("bike.updated", { ago });
-    updated.title = formatMadridTime(station.ts, intl);
-  };
-
-  const onKey = (event: KeyboardEvent): void => {
-    if (event.key === "Escape" && selected !== null) {
-      hide();
-      opts.onClose();
-    }
+    view.show(bikeCardModel(station, opts.t, opts.locale, opts.now()), announced !== state);
+    announced = state;
   };
 
   function hide(): void {
     selected = null;
-    renderedState = null;
-    root.hidden = true;
+    announced = null;
     if (timer) clearInterval(timer);
     timer = null;
-    document.removeEventListener("keydown", onKey);
+    view.hide();
   }
 
-  close.addEventListener("click", () => {
+  /** Cierre del usuario (botón, Esc) o por otra tarjeta: suelta la selección. */
+  function close(): void {
+    if (selected === null) return;
     hide();
     opts.onClose();
-  });
+  }
 
   return {
-    element: root,
+    get element() {
+      return view.element;
+    },
     get selected() {
       return selected;
     },
     show(id) {
+      if (selected !== id) announced = null;
       selected = id;
-      renderedState = null;
-      root.hidden = false;
       render();
-      if (!timer) timer = setInterval(render, opts.refreshMs ?? 1000);
-      document.addEventListener("keydown", onKey);
+      if (selected !== null && !timer) timer = setInterval(render, opts.refreshMs ?? 1000);
     },
     hide,
   };

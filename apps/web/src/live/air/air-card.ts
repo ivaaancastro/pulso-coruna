@@ -1,5 +1,5 @@
 import { INTL_LOCALE, type Locale, type Translate } from "../../i18n";
-import { formatAgo, formatMadridTime } from "../../time/format";
+import { createCardView, freshness, PANEL_ID, type CardModel } from "../card/panel";
 import {
   AIR_LEVELS,
   ATTRIBUTION,
@@ -26,7 +26,8 @@ export interface AirCardOptions {
 
 export interface AirCard {
   badge: HTMLButtonElement;
-  panel: HTMLElement;
+  /** El panel de detalle compartido (`live/card`). */
+  readonly panel: HTMLElement;
   /** Lectura vigente, o `null` si no hay: oculta etiqueta y tarjeta. */
   update(reading: AirReading | null): void;
   /** `true`: fuente sin datos; oculta etiqueta y tarjeta aunque haya una lectura vieja. */
@@ -49,8 +50,8 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 /** Escala de 6 segmentos con N rellenos (el nivel no depende solo del color). */
-function scale(level: AirLevel): HTMLElement {
-  const root = el("span", "air-scale");
+function scale(level: AirLevel, wide = false): HTMLElement {
+  const root = el("span", wide ? "air-scale air-scale--wide" : "air-scale");
   root.setAttribute("aria-hidden", "true");
   for (const l of AIR_LEVELS) {
     const seg = el("i", l <= level ? "air-scale__seg air-scale__seg--on" : "air-scale__seg");
@@ -79,74 +80,68 @@ export function createAirCard(opts: AirCardOptions): AirCard {
   const badgeAttr = el("span", "air-badge__attr", ATTRIBUTION);
   badge.append(badgeName, badgeLevel, badgeAttr);
 
-  // — Tarjeta
-  const panel = el("section", "air-card");
-  panel.id = "air-card";
-  panel.setAttribute("aria-label", t("air.card.label"));
-  panel.hidden = true;
-  badge.setAttribute("aria-controls", panel.id);
-
-  const head = el("header", "air-card__head");
-  const titles = el("div", "air-card__titles");
-  const layerName = el("p", "air-card__layer", t("air.name"));
-  const title = el("h2", "air-card__title");
-  titles.append(layerName, title);
-  const close = el("button", "air-card__close", "×");
-  close.type = "button";
-  close.setAttribute("aria-label", t("air.close"));
-  head.append(titles, close);
-
-  const eaqiBox = el("div", "air-card__eaqi");
-  const eaqiLabel = el("p", "air-card__label", t("air.eaqi"));
-  const eaqiValue = el("p", "air-card__eaqi-value");
-  const eaqiScale = el("div", "air-card__scale");
-  eaqiBox.append(eaqiLabel, eaqiValue, eaqiScale);
-
-  const modelNote = el("p", "air-card__model", t("air.model"));
-  const cityNote = el("p", "air-card__note", t("air.city"));
-
-  const pollutantsLabel = el("p", "air-card__label", t("air.pollutants"));
-  const list = el("dl", "air-card__stats");
-  const values = new Map<string, HTMLElement>();
-  for (const { metric, label } of POLLUTANTS) {
-    const box = el("div", "air-card__stat");
-    const dt = el("dt", undefined, label);
-    const dd = el("dd");
-    values.set(metric, dd);
-    box.append(dt, dd);
-    list.append(box);
-  }
-
-  const updated = el("p", "air-card__updated");
-  const attribution = el("p", "air-card__attr");
-  const link = el("a", undefined, ATTRIBUTION);
-  link.href = ATTRIBUTION_URL;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  attribution.append(link);
-
-  panel.append(head, eaqiBox, modelNote, cityNote, pollutantsLabel, list, updated, attribution);
-  opts.parent.append(badge, panel);
+  // — Tarjeta (panel común)
+  badge.setAttribute("aria-controls", PANEL_ID);
+  const view = createCardView(opts.parent, "air", {
+    t,
+    onClose: () => setOpen(false),
+    returnFocus: () => badge,
+  });
+  opts.parent.append(badge);
 
   let reading: AirReading | null = null;
   let suppressed = false;
   let isOpen = false;
+  let announceNext = false;
   let timer: ReturnType<typeof setInterval> | null = null;
   let renderedKey: string | null = null;
 
   const visible = (): boolean => reading !== null && !suppressed;
 
-  const renderText = (): void => {
-    if (!reading) return;
-    const ago = formatAgo(reading.ts, opts.now(), intl);
-    updated.textContent = t("air.updated", { ago });
-    updated.title = formatMadridTime(reading.ts, intl);
+  const model = (r: AirReading): CardModel => {
+    const word = t(`air.level.${r.level}`);
+    return {
+      layer: "air",
+      label: t("air.card.label"),
+      kicker: t("air.name"),
+      title: t("air.title", { level: word }),
+      accent: rgbCss(LEVEL_RGB[r.level]),
+      groups: [
+        {
+          rows: [
+            {
+              label: t("air.eaqi"),
+              value: t("air.eaqi.value", { value: number.format(r.eaqi), level: String(r.level) }),
+              extra: () => scale(r.level, true),
+            },
+          ],
+        },
+        {
+          heading: t("air.pollutants"),
+          layout: "stats",
+          columns: 3,
+          rows: POLLUTANTS.map(({ metric, label }) => {
+            const p = r.pollutants[metric];
+            return { label, value: p ? `${number.format(p.value)} ${p.unit}` : "—" };
+          }),
+        },
+      ],
+      notes: r.model ? [{ text: t("air.model"), kind: "model" }, { text: t("air.city") }] : [],
+      updated: freshness(t, r.ts, opts.now(), opts.locale),
+      attribution: { text: ATTRIBUTION, href: ATTRIBUTION_URL },
+    };
+  };
+
+  const paintCard = (): void => {
+    if (!isOpen || !reading) return;
+    view.show(model(reading), announceNext);
+    announceNext = false;
   };
 
   const render = (): void => {
     badge.hidden = !visible();
     if (!visible()) {
-      if (isOpen) close_();
+      if (isOpen) setOpen(false);
       return;
     }
     if (!reading) return;
@@ -154,60 +149,36 @@ export function createAirCard(opts: AirCardOptions): AirCard {
     const key = `${reading.level}:${reading.eaqi}:${reading.ts}:${JSON.stringify(reading.pollutants)}`;
     if (key !== renderedKey) {
       renderedKey = key;
-      const color = rgbCss(LEVEL_RGB[reading.level]);
       badgeLevel.replaceChildren(scale(reading.level), el("span", "air-badge__word", word));
-      badge.style.setProperty("--level", color);
+      badge.style.setProperty("--level", rgbCss(LEVEL_RGB[reading.level]));
       badge.setAttribute("aria-label", t("air.badge.label", { level: word }));
-      panel.style.setProperty("--level", color);
-      title.textContent = t("air.title", { level: word });
-      eaqiValue.textContent = t("air.eaqi.value", {
-        value: number.format(reading.eaqi),
-        level: String(reading.level),
-      });
-      eaqiScale.replaceChildren(scale(reading.level));
-      for (const { metric } of POLLUTANTS) {
-        const dd = values.get(metric);
-        if (!dd) continue;
-        const p = reading.pollutants[metric];
-        dd.textContent = p ? `${number.format(p.value)} ${p.unit}` : "—";
-      }
-      modelNote.hidden = !reading.model;
-      cityNote.hidden = !reading.model;
     }
-    renderText();
-  };
-
-  const onKey = (event: KeyboardEvent): void => {
-    if (event.key === "Escape" && isOpen) close_();
+    paintCard();
   };
 
   function setOpen(next: boolean): void {
     if (next === isOpen) return;
     isOpen = next;
-    panel.hidden = !next;
     badge.setAttribute("aria-expanded", String(next));
     if (next) {
-      renderText();
-      timer ??= setInterval(renderText, opts.refreshMs ?? 1000);
-      document.addEventListener("keydown", onKey);
+      announceNext = true;
+      paintCard();
+      timer ??= setInterval(paintCard, opts.refreshMs ?? 1000);
     } else {
       if (timer) clearInterval(timer);
       timer = null;
-      document.removeEventListener("keydown", onKey);
+      view.hide();
     }
     opts.onToggle?.(next);
   }
 
-  function close_(): void {
-    setOpen(false);
-  }
-
   badge.addEventListener("click", () => setOpen(!isOpen));
-  close.addEventListener("click", close_);
 
   return {
     badge,
-    panel,
+    get panel() {
+      return view.element;
+    },
     get isOpen() {
       return isOpen;
     },
@@ -223,9 +194,11 @@ export function createAirCard(opts: AirCardOptions): AirCard {
     open() {
       if (visible()) setOpen(true);
     },
-    close: close_,
+    close() {
+      setOpen(false);
+    },
     toggle() {
-      if (isOpen) close_();
+      if (isOpen) setOpen(false);
       else if (visible()) setOpen(true);
     },
   };

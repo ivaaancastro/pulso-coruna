@@ -1,0 +1,308 @@
+/*
+ * Panel de detalle común (M5.3) de las seis capas con tarjeta. Solo tokens de docs/design/tokens.md;
+ * sin sombras (separa el color). Móvil: hoja inferior sobre el selector de modo. Escritorio: tarjeta
+ * flotante a la izquierda, también sobre el selector (no se solapan a ningún ancho).
+ */
+.pulso-card {
+  --card-accent: var(--pulso-text);
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
+  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
+  bottom: calc(var(--pulso-shell-bottom) + var(--pulso-dock-h) + var(--pulso-space-3));
+  display: grid;
+  gap: var(--pulso-space-3);
+  max-height: 55dvh;
+  padding: var(--pulso-space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--pulso-text);
+  background: var(--pulso-surface-overlay);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-2);
+  animation: pulso-card-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.pulso-card[hidden] {
+  display: none;
+}
+
+/* El foco llega al abrir el panel; el aro visible lo dibuja `:focus-visible` solo con teclado. */
+.pulso-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@keyframes pulso-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--pulso-space-2));
+  }
+}
+
+@keyframes pulso-card-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulso-card {
+    animation-name: pulso-card-fade;
+  }
+}
+
+@media (min-width: 700px) {
+  .pulso-card {
+    right: auto;
+    width: var(--pulso-card-w);
+    max-height: 60dvh;
+  }
+}
+
+/* Cabecera: icono de la capa, kicker + título, cerrar. */
+.pulso-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pulso-space-3);
+}
+
+.pulso-card__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--pulso-card-icon);
+  height: var(--pulso-card-icon);
+  color: var(--card-accent);
+}
+
+.pulso-card__icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sin icono propio: una marca de forma por capa (no solo color). */
+.pulso-card__icon:empty::before {
+  content: "";
+  width: var(--pulso-space-3);
+  height: var(--pulso-space-3);
+  background: currentColor;
+  border-radius: var(--pulso-radius-pill);
+}
+
+.pulso-card[data-layer="ship"] .pulso-card__icon:empty::before {
+  width: var(--pulso-space-2);
+  height: var(--pulso-space-5);
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 100%, 0 100%, 0 25%);
+}
+
+.pulso-card[data-layer="plane"] .pulso-card__icon:empty::before {
+  width: var(--pulso-space-4);
+  height: var(--pulso-space-4);
+  border-radius: 0;
+  clip-path: polygon(
+    45% 0,
+    55% 0,
+    55% 35%,
+    100% 60%,
+    100% 72%,
+    55% 58%,
+    55% 82%,
+    72% 94%,
+    72% 100%,
+    28% 100%,
+    28% 94%,
+    45% 82%,
+    45% 58%,
+    0 72%,
+    0 60%,
+    45% 35%
+  );
+}
+
+/* Distintivo con texto (línea de autobús): el color lo pone el acento. */
+.pulso-card__icon--badge {
+  width: auto;
+  min-width: 2.25em;
+  height: auto;
+  padding: 0 var(--pulso-space-2);
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  line-height: 1.9;
+  color: var(--pulso-bg);
+  background: var(--card-accent);
+  border-radius: var(--pulso-radius-1);
+}
+
+.pulso-card__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pulso-card__kicker,
+.pulso-card__title {
+  margin: 0;
+}
+
+.pulso-card__kicker {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.pulso-card__title {
+  font-size: var(--pulso-text-body);
+  font-weight: 400;
+  font-stretch: 110%;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.pulso-card__close {
+  flex: none;
+  width: var(--pulso-touch);
+  height: var(--pulso-touch);
+  margin: calc(var(--pulso-space-2) * -1) calc(var(--pulso-space-2) * -1)
+    calc(var(--pulso-space-2) * -1) 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--pulso-text-icon);
+  line-height: 1;
+  color: var(--pulso-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-1);
+  cursor: pointer;
+}
+
+.pulso-card__close:hover {
+  background: var(--pulso-surface);
+}
+
+/* Filas etiqueta/valor. */
+.pulso-card__body {
+  display: grid;
+  gap: var(--pulso-space-3);
+}
+
+.pulso-card__group {
+  display: grid;
+  gap: var(--pulso-space-2);
+}
+
+.pulso-card__heading {
+  margin: 0;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.pulso-card__rows {
+  margin: 0;
+}
+
+.pulso-card__row dt {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.pulso-card__row dd {
+  margin: 0;
+  min-width: 0;
+  font-variant-numeric: var(--pulso-tabular);
+  overflow-wrap: anywhere;
+}
+
+.pulso-card__rows--list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--pulso-space-1) var(--pulso-space-4);
+}
+
+.pulso-card__rows--list .pulso-card__row {
+  display: contents;
+}
+
+.pulso-card__rows--stats {
+  display: grid;
+  grid-template-columns: repeat(var(--card-cols), minmax(0, 1fr));
+  gap: var(--pulso-space-3);
+}
+
+.pulso-card__rows--stats .pulso-card__row {
+  display: grid;
+  gap: var(--pulso-space-1);
+}
+
+.pulso-card__row dd.pulso-card__lead {
+  font-size: var(--pulso-text-title);
+  font-weight: 400;
+  font-stretch: 110%;
+  line-height: 1.1;
+  color: var(--card-accent);
+}
+
+/* Notas: texto de apoyo; modelo y estimación llevan además trazo discontinuo. */
+.pulso-card__notes {
+  display: grid;
+  justify-items: start;
+  gap: var(--pulso-space-2);
+}
+
+.pulso-card__notes[hidden],
+.pulso-card__updated[hidden],
+.pulso-card__attribution[hidden] {
+  display: none;
+}
+
+.pulso-card__note,
+.pulso-card__updated,
+.pulso-card__attribution {
+  margin: 0;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.pulso-card__note--state {
+  color: var(--pulso-text);
+}
+
+.pulso-card__note--model,
+.pulso-card__note--estimated {
+  padding: var(--pulso-space-1) var(--pulso-space-3);
+  border: 1px dashed var(--pulso-border-control);
+  border-radius: var(--pulso-radius-pill);
+}
+
+.pulso-card__note--model {
+  color: var(--card-accent);
+}
+
+/* Pie: frescura y atribución, lo más discreto. */
+.pulso-card__updated,
+.pulso-card__attribution {
+  color: var(--pulso-text-subtle);
+}
+
+.pulso-card__attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Enlace con objetivo de al menos 24 px de alto. */
+.pulso-card__attribution a {
+  display: inline-block;
+  padding-block: var(--pulso-space-1);
+}
+
+.pulso-card__attribution a:hover {
+  color: var(--pulso-text);
+}

@@ -1,19 +1,8 @@
 import type { Translate } from "../../i18n";
 import { formatAgo } from "../../time/format";
+import type { CardModel, CardRow } from "../card/panel";
 import type { PlaneEstimate } from "./extrapolate";
 import type { PlaneInfo } from "./meta";
-
-/** Contenido de la tarjeta de un avión, ya traducido y sin HTML (lo pinta `card-view.ts`). */
-export interface PlaneCardContent {
-  title: string;
-  rows: { label: string; value: string }[];
-  /** «Posición estimada hace X» / «Posición registrada hace X». */
-  note: string;
-  /** `true` si la posición se está extrapolando (la nota se pinta con trazo discontinuo). */
-  estimated: boolean;
-  source: string;
-  summary: string;
-}
 
 const FT_PER_M = 3.280839895;
 const KMH_PER_MS = 3.6;
@@ -32,13 +21,13 @@ export function formatPlaneCard(
   now: number,
   t: Translate,
   intl: string,
-): PlaneCardContent {
+): CardModel {
   let nf = formats.get(intl);
   if (!nf) {
     nf = new Intl.NumberFormat(intl, { maximumFractionDigits: 0 });
     formats.set(intl, nf);
   }
-  const rows: PlaneCardContent["rows"] = [];
+  const rows: CardRow[] = [];
   if (info.onGround) {
     rows.push({ label: t("plane.card.altitude"), value: t("plane.card.onGround") });
   } else if (info.altM !== undefined) {
@@ -66,9 +55,15 @@ export function formatPlaneCard(
     });
   }
   const ago = formatAgo(info.ts, now, intl);
+  // La nota de frescura es la propia posición: estimada (trazo discontinuo) o registrada.
   const note = t(est.extrapolated ? "plane.card.estimated" : "plane.card.reported", { ago });
-  const title = info.callsign ?? t("plane.card.untitled");
-  const source = t("plane.card.source");
-  const summary = [title, ...rows.map((r) => `${r.label}: ${r.value}`), note, source].join(". ");
-  return { title, rows, note, estimated: est.extrapolated, source, summary };
+  return {
+    layer: "plane",
+    label: t("plane.card.region"),
+    kicker: t("plane.name"),
+    title: info.callsign ?? t("plane.card.untitled"),
+    groups: rows.length ? [{ rows }] : [],
+    notes: [{ text: note, kind: est.extrapolated ? "estimated" : "plain" }],
+    attribution: { text: t("plane.card.source") },
+  };
 }

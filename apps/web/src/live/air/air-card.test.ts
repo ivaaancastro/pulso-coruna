@@ -99,14 +99,21 @@ describe("tarjeta", () => {
     const { card } = setup();
     card.update(reading(29));
     card.open();
-    expect(text(card.panel, ".air-card__title")).toBe("Calidad del aire: Razonable");
-    expect(text(card.panel, ".air-card__eaqi-value")).toBe("29, nivel 2 de 6");
-    expect(text(card.panel, ".air-card__model")).toBe("Modelo CAMS, no medición");
-    expect(card.panel.querySelector<HTMLElement>(".air-card__note")?.hidden).toBe(false);
-    const stats = [...card.panel.querySelectorAll(".air-card__stat")].map((n) => [
-      n.querySelector("dt")?.textContent,
-      n.querySelector("dd")?.textContent,
+    expect(text(card.panel, ".pulso-card__title")).toBe("Calidad del aire: Razonable");
+    expect(text(card.panel, ".pulso-card__kicker")).toBe("Aire");
+    expect(card.panel.getAttribute("aria-label")).toBe("Calidad del aire (modelo)");
+    const [eaqi] = card.panel.querySelectorAll(".pulso-card__group:first-child .pulso-card__row");
+    expect(eaqi?.querySelector("dd")?.textContent).toBe("29, nivel 2 de 6");
+    expect(eaqi?.querySelectorAll(".air-scale__seg--on")).toHaveLength(2);
+    const notes = card.panel.querySelectorAll(".pulso-card__note");
+    expect([...notes].map((n) => n.textContent)).toEqual([
+      "Modelo CAMS, no medición",
+      "Un solo valor para toda la ciudad (celda de unos 40 km)",
     ]);
+    expect(notes[0]?.className).toContain("pulso-card__note--model");
+    const stats = [
+      ...card.panel.querySelectorAll(".pulso-card__group:last-child .pulso-card__row"),
+    ].map((n) => [n.querySelector("dt")?.textContent, n.querySelector("dd")?.textContent]);
     expect(stats).toEqual([
       ["PM2.5", "3,6 µg/m³"],
       ["PM10", "10 µg/m³"],
@@ -114,11 +121,11 @@ describe("tarjeta", () => {
       ["O₃", "78 µg/m³"],
       ["SO₂", "0,6 µg/m³"],
     ]);
-    expect(text(card.panel, ".air-card__updated")).toMatch(/^Actualizado hace 20 min/);
-    expect(card.panel.querySelector(".air-card__updated")?.getAttribute("title")).toMatch(
+    expect(text(card.panel, ".pulso-card__updated")).toMatch(/^Actualizado hace 20 min/);
+    expect(card.panel.querySelector(".pulso-card__updated")?.getAttribute("title")).toMatch(
       /^\d\d:\d\d$/,
     );
-    const link = card.panel.querySelector<HTMLAnchorElement>(".air-card__attr a");
+    const link = card.panel.querySelector<HTMLAnchorElement>(".pulso-card__attribution a");
     expect(link?.textContent).toBe("Open-Meteo.com (datos CAMS)");
     expect(link?.rel).toContain("noopener");
   });
@@ -128,7 +135,9 @@ describe("tarjeta", () => {
     const r = readAir([air("eaqi", 30), air("pm10", 9)], T0);
     card.update(r);
     card.open();
-    const dds = [...card.panel.querySelectorAll("dd")].map((n) => n.textContent);
+    const dds = [...card.panel.querySelectorAll(".pulso-card__group:last-child dd")].map(
+      (n) => n.textContent,
+    );
     expect(dds).toEqual(["—", "9 µg/m³", "—", "—", "—"]);
   });
 
@@ -137,12 +146,12 @@ describe("tarjeta", () => {
     const { card, tick } = setup();
     card.update(reading(29));
     card.open();
-    expect(text(card.panel, ".air-card__updated")).toMatch(/20 min/);
+    expect(text(card.panel, ".pulso-card__updated")).toMatch(/20 min/);
     tick(5 * 60_000);
     vi.advanceTimersByTime(1000);
-    expect(text(card.panel, ".air-card__updated")).toMatch(/25 min/);
+    expect(text(card.panel, ".pulso-card__updated")).toMatch(/25 min/);
     card.update(reading(70));
-    expect(text(card.panel, ".air-card__title")).toBe("Calidad del aire: Mala");
+    expect(text(card.panel, ".pulso-card__title")).toBe("Calidad del aire: Mala");
   });
 
   it("Esc la cierra; deja de escuchar el teclado y el reloj al cerrarse", () => {
@@ -153,6 +162,8 @@ describe("tarjeta", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(card.panel.hidden).toBe(true);
     expect(onToggle).toHaveBeenLastCalledWith(false);
+    // Sin intervalo vivo: los pendientes (p. ej. de jsdom al dar foco) se agotan solos.
+    vi.advanceTimersByTime(10_000);
     expect(vi.getTimerCount()).toBe(0);
     card.open();
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "a" }));

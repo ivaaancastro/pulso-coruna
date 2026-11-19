@@ -5,7 +5,7 @@ import { createTranslator, detectLocale, type Locale, type Translate } from "../
 import type { LiveLayerContext, LiveLayerDefinition } from "../layer-registry";
 import { EMPTY_TRAILS, TrailHistory } from "./bus/trails";
 import { formatShipCard } from "./ship/card";
-import { createShipCard, type ShipCardView } from "./ship/card-view";
+import { lazyCardView } from "../card/panel";
 import { shipInfo } from "./ship/meta";
 import { ageOf, FOCUS_RGB, SELECT_RADIUS, SHIP_RGB, STALE_MS, styleShips } from "./ship/model";
 import { shipTrailConfig } from "./ship/trail";
@@ -33,9 +33,8 @@ const ATLAS = { w: 32, h: 64 } as const;
 
 const history = new TrailHistory();
 let selectedId: string | null = null;
-let card: ShipCardView | null = null;
 let translate: Translate | null = null;
-let locale: Locale = "es"; // se fija al crear la tarjeta
+let locale: Locale = "es"; // el de `i18n()`
 let atlas: string | null | undefined;
 let lastReduced = false;
 let announcedId: string | null = null;
@@ -68,24 +67,26 @@ function iconAtlas(): string | null {
   return atlas;
 }
 
-function getCard(): ShipCardView {
-  if (card?.element.isConnected) return card;
-  const search = window.location.search;
-  locale = detectLocale(search, navigator.languages);
-  translate = createTranslator(locale);
-  card = createShipCard({
-    t: translate,
-    host: document.getElementById("app") ?? document.body,
-    onClose: () => select(null),
-  });
-  return card;
+/** Idioma y traductor, en caché mientras no cambie `?lang=`. */
+function i18n(): { t: Translate; locale: Locale } {
+  const next = detectLocale(window.location.search, navigator.languages);
+  if (!translate || next !== locale) {
+    locale = next;
+    translate = createTranslator(next);
+  }
+  return { t: translate, locale };
 }
+
+const getCard = lazyCardView("ship", {
+  t: (key, params) => i18n().t(key, params),
+  onClose: () => select(null),
+});
 
 function select(id: string | null): void {
   const changed = selectedId !== id;
   selectedId = id;
   if (id === null) {
-    card?.hide();
+    getCard().hide();
     announcedId = null;
   }
   if (changed) invalidate?.();
@@ -103,11 +104,10 @@ function syncCard(ctx: LiveLayerContext): void {
     select(null); // el barco salió del almacén o lleva demasiado callado
     return;
   }
-  const view = getCard();
-  if (!translate) return;
+  const { t, locale: lang } = i18n();
   const announce = announcedId !== selectedId;
   announcedId = selectedId;
-  view.show(formatShipCard(shipInfo(entity), translate, locale, ctx.now), announce);
+  getCard().show(formatShipCard(shipInfo(entity), t, lang, ctx.now), announce);
 }
 
 function createShipLayers(ctx: LiveLayerContext) {

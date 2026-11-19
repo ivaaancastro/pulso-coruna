@@ -2,10 +2,10 @@ import { TripsLayer } from "@deck.gl/geo-layers";
 import { IconLayer, ScatterplotLayer } from "@deck.gl/layers";
 import type { Entity, LayerItem } from "@pulso/schema";
 import { createTranslator, detectLocale, type Translate } from "../../i18n";
+import { lazyCardView } from "../card/panel";
 import type { LiveLayerContext, LiveLayerDefinition } from "../layer-registry";
 import type { LiveFrame } from "../live-store";
 import { formatBusCard } from "./bus/card";
-import { createBusCard, type BusCardView } from "./bus/card-view";
 import { colorForLine, FOCUS_COLOR, type Rgb } from "./bus/line-color";
 import { BUS_META, busInfo } from "./bus/meta";
 import { busTrailConfig } from "./bus/trail-config";
@@ -39,7 +39,6 @@ const ADDITIVE = {
 
 const history = new TrailHistory();
 let selectedId: string | null = null;
-let card: BusCardView | null = null;
 let translate: Translate | null = null;
 let atlas: string | null | undefined;
 let lastReduced = false;
@@ -72,19 +71,22 @@ function iconAtlas(): string | null {
   return atlas;
 }
 
-function getCard(): BusCardView | null {
-  if (card) return card;
-  const host = document.getElementById("app") ?? document.body;
-  translate ??= createTranslator(detectLocale(window.location.search, navigator.languages));
-  card = createBusCard({ t: translate, host, onClose: () => select(null) });
-  return card;
+function tr(): Translate {
+  return (translate ??= createTranslator(
+    detectLocale(window.location.search, navigator.languages),
+  ));
 }
+
+const getCard = lazyCardView("bus", {
+  t: (key, params) => tr()(key, params),
+  onClose: () => select(null),
+});
 
 function select(id: string | null): void {
   const changed = selectedId !== id;
   selectedId = id;
   if (id === null) {
-    card?.hide();
+    getCard().hide();
     announcedId = null;
   }
   if (changed) invalidate?.();
@@ -106,12 +108,10 @@ function syncCard(ctx: LiveLayerContext): void {
     select(null); // el bus salió de servicio
     return;
   }
-  const view = getCard();
-  if (!view || !translate) return;
   const announce = announcedId !== selectedId;
   announcedId = selectedId;
   const info = busInfo(entity);
-  view.show(formatBusCard(info, translate), colorForLine(info.line), announce);
+  getCard().show(formatBusCard(info, tr(), colorForLine(info.line)), announce);
 }
 
 const colorCache = new Map<string, Rgb>();

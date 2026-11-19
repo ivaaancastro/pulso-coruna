@@ -1,10 +1,10 @@
-/* Indicador y tarjeta de la marea (M5.2a). Solo tokens de docs/design/tokens.md; sin sombras. */
+/* Indicador de la marea (M5.2a; la tarjeta es el panel común de M5.3). Solo tokens de docs/design/tokens.md; sin sombras. */
 .sea-chip {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
   gap: var(--pulso-space-2);
-  min-height: 44px;
+  min-height: var(--pulso-touch);
   max-width: 100%;
   padding: var(--pulso-space-1) var(--pulso-space-3) var(--pulso-space-1) var(--pulso-space-2);
   font: inherit;
@@ -22,19 +22,12 @@
   animation: sea-in var(--pulso-dur-base) var(--pulso-ease-out);
 }
 
-.sea-chip[hidden],
-.sea-card[hidden] {
+.sea-chip[hidden] {
   display: none;
 }
 
 .sea-chip[aria-expanded="true"] {
   border-color: var(--pulso-border-control);
-}
-
-.sea-chip:focus-visible,
-.sea-card__close:focus-visible {
-  outline: 2px solid var(--pulso-focus);
-  outline-offset: 2px;
 }
 
 .sea-chip__glyph {
@@ -50,146 +43,15 @@
   height: 100%;
 }
 
-.sea-card {
-  position: absolute;
-  left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
-  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
-  bottom: calc(
-    var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + 72px + env(safe-area-inset-bottom)
-  );
-  z-index: 2;
-  display: grid;
-  gap: var(--pulso-space-3);
-  max-width: 360px;
-  padding: var(--pulso-space-4);
-  color: var(--pulso-text);
-  background: var(--pulso-surface-overlay);
-  border: 1px solid var(--pulso-border-control);
-  border-radius: var(--pulso-radius-2);
-  animation: sea-in var(--pulso-dur-base) var(--pulso-ease-out);
-}
-
 @keyframes sea-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-.sea-card__head {
-  display: flex;
-  align-items: center;
-  gap: var(--pulso-space-3);
-}
-
-.sea-card__glyph-slot {
-  flex: none;
-  width: 36px;
-  height: 26px;
-  color: var(--pulso-sea);
-}
-
-.sea-card__titles {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.sea-card__layer,
-.sea-card__title {
-  margin: 0;
-}
-
-.sea-card__layer {
-  font-size: var(--pulso-text-label);
-  font-weight: 500;
-  font-stretch: 90%;
-  color: var(--pulso-text-muted);
-}
-
-.sea-card__title {
-  font-size: var(--pulso-text-body);
-  font-weight: 400;
-  font-stretch: 110%;
-  line-height: 1.2;
-}
-
-.sea-card__close {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  margin: calc(var(--pulso-space-2) * -1) calc(var(--pulso-space-2) * -1) 0 0;
-  padding: 0;
-  font: inherit;
-  font-size: 24px;
-  line-height: 1;
-  color: var(--pulso-text);
-  background: transparent;
-  border: 0;
-  border-radius: var(--pulso-radius-1);
-  cursor: pointer;
-}
-
-.sea-card__stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--pulso-space-3);
-  margin: 0;
-}
-
-.sea-card__stat {
-  display: grid;
-  gap: var(--pulso-space-1);
-}
-
-.sea-card__stat dt {
-  font-size: var(--pulso-text-label);
-  font-weight: 500;
-  font-stretch: 90%;
-  color: var(--pulso-text-muted);
-}
-
-.sea-card__stat dd {
-  margin: 0;
-  font-size: var(--pulso-text-title);
-  font-weight: 400;
-  font-stretch: 110%;
-  line-height: 1.1;
-  font-variant-numeric: var(--pulso-tabular);
-  color: var(--pulso-sea);
-}
-
-/* La tendencia es texto de apoyo: menor que el nivel. */
-.sea-card__stat dd.sea-card__trend {
-  font-size: var(--pulso-text-body);
-  line-height: 1.4;
-}
-
-.sea-card__note,
-.sea-card__updated {
-  margin: 0;
-  font-size: var(--pulso-text-label);
-  font-weight: 500;
-  font-stretch: 90%;
-  color: var(--pulso-text-muted);
-}
-
-.sea-card__updated {
-  color: var(--pulso-text-subtle);
-}
-
-@media (min-width: 700px) {
-  .sea-card {
-    right: auto;
-    width: 320px;
-    bottom: calc(
-      var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + env(safe-area-inset-bottom)
-    );
+    transform: translateY(var(--pulso-space-2));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sea-chip,
-  .sea-card {
+  .sea-chip {
     animation-duration: var(--pulso-dur-instant);
   }
 }

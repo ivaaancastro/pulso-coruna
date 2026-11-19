@@ -66,6 +66,21 @@
   --pulso-space-8: 72px;
   --pulso-gutter: 16px;
 
+  /* controles y paneles (M5.3): tamaños que antes eran literales sueltos */
+  --pulso-touch: 44px; /* objetivo táctil mínimo */
+  --pulso-control-h: 48px; /* selector de modo */
+  --pulso-dock-h: calc(
+    var(--pulso-control-h) + 2 * var(--pulso-space-1) + 2px
+  ); /* selector + borde */
+  --pulso-text-micro: 11px; /* atribuciones y pies */
+  --pulso-text-icon: 24px; /* glifo del botón cerrar */
+  --pulso-card-w: 340px; /* panel de detalle en escritorio */
+  --pulso-card-icon: 36px; /* icono de cabecera del panel */
+  /* borde inferior útil del shell: encima de la atribución y del hueco seguro */
+  --pulso-shell-bottom: calc(
+    var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + env(safe-area-inset-bottom)
+  );
+
   /* radios */
   --pulso-radius-0: 0;
   --pulso-radius-1: 6px;
@@ -89,6 +104,8 @@
     --pulso-text-display: 120px;
     --pulso-text-title: 40px;
     --pulso-gutter: 32px;
+    /* el shell de escritorio usa space-6 abajo (sin hueco de atribución) */
+    --pulso-shell-bottom: calc(var(--pulso-space-6) + env(safe-area-inset-bottom));
   }
 }
 
