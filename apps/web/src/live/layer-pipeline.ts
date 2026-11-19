@@ -8,6 +8,8 @@ export interface PipelineOptions {
   now: () => number;
   reducedMotion: () => boolean;
   onError?: (id: string, error: unknown) => void;
+  /** Pide un fotograma de render (lo usa `LiveLayerContext.invalidate`). */
+  requestRender?: () => void;
 }
 
 /**
@@ -34,6 +36,12 @@ export class LayerPipeline {
     return this.dirty.size > 0;
   }
 
+  /** Marca una capa como sucia y pide un fotograma. */
+  invalidate(id: string): void {
+    this.dirty.add(id);
+    this.opts.requestRender?.();
+  }
+
   /** ¿Hay trabajo pendiente o alguna capa animada? */
   get pending(): boolean {
     return this.dirty.size > 0 || this.opts.definitions.some((d) => d.animated);
@@ -41,7 +49,7 @@ export class LayerPipeline {
 
   /** Recalcula lo sucio y devuelve todas las capas, en orden de registro. */
   collect(): Layer[] {
-    const ctx = {
+    const base = {
       store: this.opts.store,
       now: this.opts.now(),
       reducedMotion: this.opts.reducedMotion(),
@@ -50,7 +58,10 @@ export class LayerPipeline {
     for (const d of this.opts.definitions) {
       if (this.dirty.has(d.id) || d.animated || !this.cache.has(d.id)) {
         try {
-          this.cache.set(d.id, d.createLayers(ctx));
+          this.cache.set(
+            d.id,
+            d.createLayers({ ...base, invalidate: () => this.invalidate(d.id) }),
+          );
         } catch (error) {
           this.cache.set(d.id, this.cache.get(d.id) ?? []);
           this.opts.onError?.(d.id, error);

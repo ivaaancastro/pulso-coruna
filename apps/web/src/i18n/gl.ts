@@ -18,4 +18,11 @@ export const gl: Messages = {
   "pwa.update": "Hai unha versión nova.",
   "pwa.update.action": "Actualizar",
   "pwa.offline": "Sen conexión. Móstrase o gardado.",
+  "bus.card.region": "Detalle do autobús",
+  "bus.card.title": "Liña {line}",
+  "bus.card.untitled": "Autobús",
+  "bus.card.headsign": "Destino",
+  "bus.card.nextStop": "Próxima parada",
+  "bus.card.estimated": "Estimado segundo o horario",
+  "bus.card.close": "Pechar",
 };

@@ -33,6 +33,11 @@ export interface LiveLayerContext {
   now: number;
   /** `prefers-reduced-motion: reduce`: sin movimiento continuo ni transiciones largas. */
   reducedMotion: boolean;
+  /**
+   * Pide recrear esta capa en el próximo fotograma aunque no hayan cambiado los datos (p. ej. al
+   * seleccionar una entidad con reduced-motion, donde no hay fotogramas continuos).
+   */
+  invalidate(): void;
 }
 
 export interface LiveLayerDefinition {

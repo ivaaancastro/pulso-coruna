@@ -18,4 +18,11 @@ export const en: Messages = {
   "pwa.update": "A new version is available.",
   "pwa.update.action": "Update",
   "pwa.offline": "Offline. Showing saved content.",
+  "bus.card.region": "Bus details",
+  "bus.card.title": "Line {line}",
+  "bus.card.untitled": "Bus",
+  "bus.card.headsign": "Destination",
+  "bus.card.nextStop": "Next stop",
+  "bus.card.estimated": "Estimated from timetable",
+  "bus.card.close": "Close",
 };
