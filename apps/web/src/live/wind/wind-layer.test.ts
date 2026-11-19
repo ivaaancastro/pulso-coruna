@@ -35,7 +35,7 @@ let clockNow = 0;
 const clock = (): number => clockNow;
 const ctx = (store: LiveStore, now: number, reducedMotion = false): LiveLayerContext => {
   clockNow = now;
-  return { store, now, reducedMotion };
+  return { store, now, reducedMotion, invalidate: () => undefined };
 };
 
 describe("contrato del registro", () => {
