@@ -25,7 +25,8 @@ describe("MockWorld", () => {
         layers.add(d.layer);
       }
     }
-    expect([...layers].sort()).toEqual(["air", "bike", "bus", "weather"]); // aviones: cada 5 min
+    expect(snap.layers.sea?.[0]).toMatchObject({ stationId: "portus:3219", metric: "tide_level" });
+    expect([...layers].sort()).toEqual(["air", "bike", "bus", "sea", "weather"]); // aviones: cada 5 min
   });
 
   it("aviones ficticios: cumplen el contrato, llevan retraso y aterrizan en Alvedro (cada 5 min)", () => {
