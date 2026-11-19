@@ -1,4 +1,4 @@
-# ADR-0024: MessagePack con `@msgpack/msgpack` para `/api/v1/replay`
+# ADR-0025: MessagePack con `@msgpack/msgpack` para `/api/v1/replay`
 
 - Fecha: 2026-11-19
 - Estado: aceptada

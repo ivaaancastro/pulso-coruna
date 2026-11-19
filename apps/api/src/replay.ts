@@ -61,9 +61,16 @@ export function parseReplayParams(
   return { ok: true, params: { from, to, layers: LAYER_IDS.filter((l) => wanted.has(l)) } };
 }
 
-/** `raw` si el inicio cae dentro de los días con datos brutos; si no, la tabla de 1 muestra/min. */
-export const replayResolution = (from: number, now: number, rawDays: number): ReplayResolution =>
-  from >= now - rawDays * DAY_MS ? "raw" : "1m";
+/** Corte brutos/1 min (M6.1): `ahora − rawDays`, redondeado al minuto como hace la retención. */
+export const replayCutoff = (now: number, rawDays: number): number =>
+  Math.floor((now - rawDays * DAY_MS) / 60_000) * 60_000;
+
+/**
+ * `raw` si toda la ventana es posterior al corte; `1m` si empieza antes (aunque su final sea ya bruto:
+ * una ventana que cruza el corte mezcla cadencias y se anuncia con la más gruesa).
+ */
+export const replayResolution = (from: number, cutoff: number): ReplayResolution =>
+  from >= cutoff ? "raw" : "1m";
 
 /** `from` múltiplo de 5 min y ventana de exactamente 5 min: la URL que la web precarga y la CDN cachea. */
 export const isAlignedWindow = (from: number, to: number): boolean =>
@@ -155,7 +162,9 @@ function buildTracks(layer: LayerId, from: number, to: number, rows: ReplayRows)
       lon: s.map((r) => toReplayCoord(r.lon)),
       lat: s.map((r) => toReplayCoord(r.lat)),
       ...(hasHeading && { heading: s.map((r) => (r.heading === null ? null : hdg(r.heading))) }),
-      ...(hasSpeed && { speed: s.map((r) => (r.speed === null ? null : nn(toReplaySpeed(r.speed)))) }),
+      ...(hasSpeed && {
+        speed: s.map((r) => (r.speed === null ? null : nn(toReplaySpeed(r.speed)))),
+      }),
     };
   });
 }

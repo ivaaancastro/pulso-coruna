@@ -7,6 +7,11 @@ export interface ReplayQuery {
   to: number;
   layers: readonly LayerId[];
   resolution: ReplayResolution;
+  /**
+   * Corte brutos/1 min (epoch ms, al minuto): brutos con `ts >= cutoff`, vistas de 1 min con `bucket < cutoff`.
+   * Una ventana que lo cruza mezcla ambas cadencias.
+   */
+  cutoff: number;
   /** Hasta dónde mirar atrás para el estado inicial (ms), por tipo de dato. */
   lookbackMs: { entity: number; station: number; observation: number };
   /** Tope de filas por tabla (se lee una de más para detectar el desbordamiento). */
@@ -21,7 +26,7 @@ export interface PositionSample {
   lat: number;
   heading: number | null;
   speed: number | null;
-  /** Solo en `raw`: la tabla de 1 min no conserva `meta`. */
+  /** Solo en muestras brutas: la vista de 1 min no conserva `meta`. */
   meta: Record<string, string | number> | null;
 }
 export interface StationSample {
@@ -60,22 +65,14 @@ export const emptyReplayRows = (resolution: ReplayResolution): ReplayRows => ({
 });
 
 const UNDEFINED_TABLE = "42P01";
+/** Vistas de 1 min de M6.1 (columna temporal `bucket`). */
+const LOW_RES = {
+  positions: "positions_1m",
+  stations: "station_status_1m",
+  observations: "observations_1m",
+};
 const MOBILE = new Set<string>(["bus", "ship", "plane", "train"]);
 const OBSERVATION = new Set<string>(OBSERVATION_LAYER_IDS);
-
-/** Tabla/vista y columna de tiempo según la resolución (las vistas de 1 min son de M6.1, migración 0002). */
-const SOURCES = {
-  raw: {
-    positions: ["positions", "ts"],
-    stations: ["station_status", "ts"],
-    observations: ["observations", "ts"],
-  },
-  "1m": {
-    positions: ["positions_1m", "bucket"],
-    stations: ["station_status_1m", "bucket"],
-    observations: ["observations_1m", "bucket"],
-  },
-} as const;
 
 /** Tabla inexistente (ingesta sin migrar) = sin datos, como en el resto de la API. */
 async function orEmpty<T>(q: PromiseLike<T[]>): Promise<T[]> {
@@ -98,85 +95,115 @@ const obs = (r: ObsRaw): ObservationSample => ({ ...r, ts: r.ts.getTime() });
 /**
  * Lee de TimescaleDB las filas de una ventana y el último valor anterior de cada entidad.
  *
- * Punto de extensión de la resolución: `q.resolution` decide la tabla (`SOURCES`). La elige el
- * llamador (`replayResolution`): `raw` dentro de `API_REPLAY_RAW_DAYS`, `1m` más atrás. Una ventana
- * nunca mezcla ambas: se decide por su `from` (≤ 5 min de solape con el límite no importan, la vista
- * de 1 min cubre todo lo anterior a la retención y los brutos se conservan 30 días).
+ * Fuente = UNION ALL de la tabla bruta (`ts >= cutoff`) y la vista de 1 min (`bucket < cutoff`), tal
+ * como documenta M6.1: cada instante sale de una sola fuente, sin duplicados, y una ventana que cruza
+ * el corte mezcla ambas cadencias. Si las vistas no existen (BD sin migrar a M6.1) se usan solo los
+ * brutos. `q.resolution` solo se copia al resultado (la fija el llamador con `replayResolution`).
  */
 export async function readReplayRows(sql: Sql, q: ReplayQuery): Promise<ReplayRows> {
   const out = emptyReplayRows(q.resolution);
   const from = new Date(q.from);
   const to = new Date(q.to);
+  const cut = new Date(q.cutoff);
   const limit = q.maxRows + 1;
-  const raw = q.resolution === "raw";
   const mobile = q.layers.filter((l) => MOBILE.has(l));
   const observed = q.layers.filter((l) => OBSERVATION.has(l));
   const wantStations = q.layers.includes("bike");
   const since = (ms: number): Date => new Date(q.from - ms);
   const tasks: Promise<void>[] = [];
 
+  /** `withLow`: incluye la vista de 1 min; si no existe, se reintenta solo con brutos. */
+  const posSrc = (withLow: boolean) =>
+    withLow
+      ? sql`(select id, ts, layer, lon, lat, heading, speed, meta from positions where ts >= ${cut}
+             union all
+             select id, bucket as ts, layer, lon, lat, heading, speed, null::jsonb as meta from ${sql(LOW_RES.positions)} where bucket < ${cut}) u`
+      : sql`positions u`;
+  const stSrc = (withLow: boolean) =>
+    withLow
+      ? sql`(select id, ts, lon, lat, bikes, docks from station_status where ts >= ${cut}
+             union all
+             select id, bucket as ts, lon, lat, bikes, docks from ${sql(LOW_RES.stations)} where bucket < ${cut}) u`
+      : sql`station_status u`;
+  const obsSrc = (withLow: boolean) =>
+    withLow
+      ? sql`(select station_id, metric, layer, ts, value, unit from observations where ts >= ${cut}
+             union all
+             select station_id, metric, layer, bucket as ts, value, unit from ${sql(LOW_RES.observations)} where bucket < ${cut}) u`
+      : sql`observations u`;
+  const both = async <T>(run: (withLow: boolean) => PromiseLike<T[]>): Promise<T[]> => {
+    try {
+      return await run(true);
+    } catch (e) {
+      if ((e as { code?: string }).code !== UNDEFINED_TABLE) throw e;
+    }
+    return orEmpty(run(false));
+  };
+
   if (mobile.length > 0) {
-    const [table, tsCol] = SOURCES[q.resolution].positions;
-    const t = sql(table);
-    const c = sql(tsCol);
-    const meta = raw ? sql`meta` : sql`null::jsonb as meta`;
     const layers = sql(mobile);
     tasks.push(
-      orEmpty(sql<PosRaw[]>`
-        select id, ${c} as ts, layer, lon, lat, heading, speed, ${meta} from ${t}
-        where layer in ${layers} and ${c} >= ${from} and ${c} < ${to}
-        order by id, ${c} limit ${limit}`).then((r) => {
+      both(
+        (w) => sql<PosRaw[]>`
+        select id, ts, layer, lon, lat, heading, speed, meta from ${posSrc(w)}
+        where layer in ${layers} and ts >= ${from} and ts < ${to}
+        order by id, ts limit ${limit}`,
+      ).then((r) => {
         out.positions.rows = r.slice(0, q.maxRows).map(pos);
         if (r.length > q.maxRows) out.truncated = true;
       }),
-      orEmpty(sql<PosRaw[]>`
-        select distinct on (id) id, ${c} as ts, layer, lon, lat, heading, speed, ${meta} from ${t}
-        where layer in ${layers} and ${c} >= ${since(q.lookbackMs.entity)} and ${c} < ${from}
-        order by id, ${c} desc`).then((r) => {
+      both(
+        (w) => sql<PosRaw[]>`
+        select distinct on (id) id, ts, layer, lon, lat, heading, speed, meta from ${posSrc(w)}
+        where layer in ${layers} and ts >= ${since(q.lookbackMs.entity)} and ts < ${from}
+        order by id, ts desc`,
+      ).then((r) => {
         out.positions.init = r.map(pos);
       }),
     );
   }
 
   if (wantStations) {
-    const [table, tsCol] = SOURCES[q.resolution].stations;
-    const t = sql(table);
-    const c = sql(tsCol);
     tasks.push(
-      orEmpty(sql<StRaw[]>`
-        select id, ${c} as ts, lon, lat, bikes, docks from ${t}
-        where ${c} >= ${from} and ${c} < ${to}
-        order by id, ${c} limit ${limit}`).then((r) => {
+      both(
+        (w) => sql<StRaw[]>`
+        select id, ts, lon, lat, bikes, docks from ${stSrc(w)}
+        where ts >= ${from} and ts < ${to}
+        order by id, ts limit ${limit}`,
+      ).then((r) => {
         out.stations.rows = r.slice(0, q.maxRows).map(st);
         if (r.length > q.maxRows) out.truncated = true;
       }),
-      orEmpty(sql<StRaw[]>`
-        select distinct on (id) id, ${c} as ts, lon, lat, bikes, docks from ${t}
-        where ${c} >= ${since(q.lookbackMs.station)} and ${c} < ${from}
-        order by id, ${c} desc`).then((r) => {
+      both(
+        (w) => sql<StRaw[]>`
+        select distinct on (id) id, ts, lon, lat, bikes, docks from ${stSrc(w)}
+        where ts >= ${since(q.lookbackMs.station)} and ts < ${from}
+        order by id, ts desc`,
+      ).then((r) => {
         out.stations.init = r.map(st);
       }),
     );
   }
 
   if (observed.length > 0) {
-    const [table, tsCol] = SOURCES[q.resolution].observations;
-    const t = sql(table);
-    const c = sql(tsCol);
     const layers = sql(observed);
     tasks.push(
-      orEmpty(sql<ObsRaw[]>`
-        select station_id as "stationId", metric, layer, ${c} as ts, value, unit from ${t}
-        where layer in ${layers} and ${c} >= ${from} and ${c} < ${to}
-        order by station_id, metric, ${c} limit ${limit}`).then((r) => {
+      both(
+        (w) => sql<ObsRaw[]>`
+        select station_id as "stationId", metric, layer, ts, value, unit from ${obsSrc(w)}
+        where layer in ${layers} and ts >= ${from} and ts < ${to}
+        order by station_id, metric, ts limit ${limit}`,
+      ).then((r) => {
         out.observations.rows = r.slice(0, q.maxRows).map(obs);
         if (r.length > q.maxRows) out.truncated = true;
       }),
-      orEmpty(sql<ObsRaw[]>`
-        select distinct on (layer, station_id, metric) station_id as "stationId", metric, layer, ${c} as ts, value, unit
-        from ${t}
-        where layer in ${layers} and ${c} >= ${since(q.lookbackMs.observation)} and ${c} < ${from}
-        order by layer, station_id, metric, ${c} desc`).then((r) => {
+      both(
+        (w) => sql<ObsRaw[]>`
+        select distinct on (layer, station_id, metric) station_id as "stationId", metric, layer, ts, value, unit
+        from ${obsSrc(w)}
+        where layer in ${layers} and ts >= ${since(q.lookbackMs.observation)} and ts < ${from}
+        order by layer, station_id, metric, ts desc`,
+      ).then((r) => {
         out.observations.init = r.map(obs);
       }),
     );

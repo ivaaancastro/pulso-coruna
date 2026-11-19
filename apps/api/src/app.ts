@@ -20,6 +20,7 @@ import {
   parseReplayParams,
   replayCacheControl,
   replayEtag,
+  replayCutoff,
   replayResolution,
   REPLAY_SETTLE_MS,
 } from "./replay.js";
@@ -135,13 +136,15 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
           .send({ error: "too_many_requests", message: "demasiadas lecturas de replay a la vez" });
       }
       const ip = req.ip;
-      const resolution = replayResolution(params.from, now, config.replayRawDays);
+      const cutoff = replayCutoff(now, config.replayRawDays);
+      const resolution = replayResolution(params.from, cutoff);
       work = (async (): Promise<EncodedReplay | "too_large"> => {
         const rows = await source.replay({
           from: params.from,
           to: params.to,
           layers: params.layers,
           resolution,
+          cutoff,
           lookbackMs: config.maxAgeMs,
           maxRows: config.replayMaxRows,
         });

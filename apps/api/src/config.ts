@@ -89,7 +89,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     healthStaleFactor: int(env, "API_HEALTH_STALE_FACTOR", 3),
     healthCacheMs: int(env, "API_HEALTH_CACHE_MS", 5_000, 0),
     replayMaxAgeDays: int(env, "API_REPLAY_MAX_AGE_DAYS", 365),
-    replayRawDays: int(env, "API_REPLAY_RAW_DAYS", 28),
+    replayRawDays: int(env, "API_REPLAY_RAW_DAYS", 30),
     replayMaxRows: int(env, "API_REPLAY_MAX_ROWS", 200_000, 100),
     replayMaxBytes: int(env, "API_REPLAY_MAX_BYTES", 4 * 1024 * 1024, 1024),
     replayMaxPerIp: int(env, "API_REPLAY_MAX_PER_IP", 4),

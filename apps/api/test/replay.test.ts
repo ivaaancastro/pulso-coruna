@@ -18,6 +18,7 @@ import {
   parseReplayParams,
   replayCacheControl,
   replayEtag,
+  replayCutoff,
   replayResolution,
 } from "../src/replay.js";
 import { emptyReplayRows, type ReplayQuery, type ReplayRows } from "../src/replay-db.js";
@@ -90,10 +91,15 @@ describe("parseReplayParams", () => {
 });
 
 describe("resolución y caché", () => {
-  it("raw dentro de los días con brutos, 1m más atrás", () => {
-    expect(replayResolution(NOW - DAY, NOW, 28)).toBe("raw");
-    expect(replayResolution(NOW - 27 * DAY, NOW, 28)).toBe("raw");
-    expect(replayResolution(NOW - 29 * DAY, NOW, 28)).toBe("1m");
+  it("corte al minuto; raw si la ventana empieza tras el corte, 1m si empieza antes (aunque cruce)", () => {
+    const cut = replayCutoff(NOW, 30);
+    expect(cut % MIN).toBe(0);
+    expect(cut).toBeLessThanOrEqual(NOW - 30 * DAY);
+    expect(NOW - 30 * DAY - cut).toBeLessThan(MIN);
+    expect(replayResolution(cut, cut)).toBe("raw");
+    expect(replayResolution(cut + DAY, cut)).toBe("raw");
+    expect(replayResolution(cut - 1, cut)).toBe("1m"); // cruza el corte
+    expect(replayResolution(cut - DAY, cut)).toBe("1m");
   });
   it("alineación", () => {
     expect(isAlignedWindow(PAST, PAST + W)).toBe(true);

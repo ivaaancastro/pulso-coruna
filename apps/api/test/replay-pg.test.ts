@@ -5,6 +5,7 @@ import type { Sql } from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { PgDataSource } from "../src/db.js";
+import { replayCutoff } from "../src/replay.js";
 import { readReplayRows } from "../src/replay-db.js";
 import { testConfig } from "./helpers.js";
 import { createBareDb, createTestDb, testDatabaseUrl } from "./test-db.js";
@@ -13,6 +14,7 @@ const MIN = 60_000;
 const DAY = 86_400_000;
 const align = (ms: number): number => Math.floor(ms / W) * W;
 const RAW = align(Date.now() - 3 * 60 * MIN); // ventana reciente (datos brutos)
+const CUT = replayCutoff(Date.now(), 30);
 const OLD = align(Date.now() - 40 * DAY); // ventana de >30 días (solo 1 min)
 const d = (ms: number): Date => new Date(ms);
 const lookbackMs = { entity: 5 * MIN, station: 60 * MIN, observation: 6 * 60 * MIN };
@@ -45,6 +47,14 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
       ('st:1', ${d(OLD + 3 * MIN)}, 'bike', -8.4, 43.3, 9, 1)`;
     await sql`insert into observations (station_id, metric, ts, layer, value, unit) values
       ('m1', 'wind_speed', ${d(OLD + 2 * MIN + 1000)}, 'weather', 7, 'm/s')`;
+    // Alrededor del corte: un bruto antiguo (solo cuenta su minuto agregado) y dos brutos posteriores.
+    await sql`insert into positions (id, ts, layer, lon, lat, heading, speed, meta) values
+      ('bus:x', ${d(CUT - 2 * MIN + 5000)}, 'bus', -8.50, 43.50, null, null, null),
+      ('bus:x', ${d(CUT + 20_000)},         'bus', -8.51, 43.51, null, null, null),
+      ('bus:x', ${d(CUT + 80_000)},         'bus', -8.52, 43.52, null, null, null)`;
+    await sql.unsafe(
+      `call refresh_continuous_aggregate('positions_1m', '${d(CUT - 10 * MIN).toISOString()}', '${d(CUT + 10 * MIN).toISOString()}')`,
+    );
     for (const v of ["positions_1m", "station_status_1m", "observations_1m"]) {
       // Ventana explícita alrededor de los datos antiguos (un refresh abierto procesa por lotes y se salta lo lejano).
       await sql.unsafe(
@@ -63,6 +73,7 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
       layers: ["bus", "bike", "weather"] as const,
       resolution: "raw" as const,
       lookbackMs,
+      cutoff: CUT,
       maxRows: 1000,
     };
     const r = await readReplayRows(sql, { ...q, layers: [...q.layers] });
@@ -83,6 +94,7 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
       layers: ["bus", "bike", "weather"],
       resolution: "1m",
       lookbackMs,
+      cutoff: CUT,
       maxRows: 1000,
     });
     expect(r.resolution).toBe("1m");
@@ -94,6 +106,20 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
     expect(r.observations.rows[0]).toMatchObject({ value: 7, ts: OLD + 2 * MIN });
   });
 
+  it("ventana que cruza el corte: 1m antes, brutos después, sin duplicar el minuto del corte", async () => {
+    const r = await readReplayRows(sql, {
+      from: CUT - 3 * MIN,
+      to: CUT + 2 * MIN,
+      layers: ["bus"],
+      resolution: "1m",
+      cutoff: CUT,
+      lookbackMs,
+      maxRows: 1000,
+    });
+    const x = r.positions.rows.filter((p) => p.id === "bus:x").map((p) => p.ts - CUT);
+    expect(x).toEqual([-2 * MIN, 20_000, 80_000]);
+  });
+
   it("maxRows marca el resultado como truncado", async () => {
     const r = await readReplayRows(sql, {
       from: RAW - 10 * MIN,
@@ -101,6 +127,7 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
       layers: ["bus"],
       resolution: "raw",
       lookbackMs,
+      cutoff: CUT,
       maxRows: 1,
     });
     expect(r.truncated).toBe(true);
@@ -116,6 +143,7 @@ describe.skipIf(!testDatabaseUrl)("replay sobre TimescaleDB (integración)", () 
           layers: ["bus", "bike", "air"],
           resolution,
           lookbackMs,
+          cutoff: CUT,
           maxRows: 10,
         });
         expect(r.positions.rows).toEqual([]);
