@@ -77,7 +77,7 @@ Predicción de pleamar/bajamar (recortada):
 
 ## Zona horaria
 
-`fecha` no lleva zona. La medición `11:42:00` coincidió con la hora UTC de la petición (11:43 UTC), por lo que se asume **UTC**. Confirmar antes del adaptador y convertir a epoch ms UTC.
+`fecha` no lleva zona. La medición `11:42:00` coincidió con la hora UTC de la petición (11:43 UTC), por lo que se asume **UTC**. **Verificado (2026-11-19):** medición 14:56 con petición a las 14:57 UTC, siendo la hora local UTC+1. El adaptador (M5.1a) convierte a epoch ms UTC; métrica `tide_level` (ver `docs/specs/M5.1a-adaptador-mar.md`).
 
 ## Mapeo a `packages/schema`
 
