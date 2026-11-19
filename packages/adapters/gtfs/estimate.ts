@@ -100,8 +100,9 @@ function makePath(coords: readonly Position[]): Path {
 
 /** Distancia acumulada del punto de la polilínea más cercano a `p`, buscando desde el tramo `from`. */
 function project(path: Path, p: XY, from: number): { along: number; seg: number; d: number } {
-  const cands: { d: number; along: number; seg: number }[] = [];
-  for (let i = from; i < path.pts.length - 1; i++) {
+  const last = path.pts.length - 1;
+  if (from >= last) return { along: path.cum[last] as number, seg: from, d: Infinity };
+  const at = (i: number): { d: number; along: number } => {
     const a = path.pts[i] as XY;
     const b = path.pts[i + 1] as XY;
     const dx = b[0] - a[0];
@@ -109,14 +110,19 @@ function project(path: Path, p: XY, from: number): { along: number; seg: number;
     const len2 = dx * dx + dy * dy;
     const t =
       len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2));
-    const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-    cands.push({ d, along: (path.cum[i] as number) + t * Math.sqrt(len2), seg: i });
-  }
-  if (cands.length === 0)
-    return { along: path.cum[path.cum.length - 1] as number, seg: from, d: Infinity };
-  const best = Math.min(...cands.map((c) => c.d));
+    return {
+      d: Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy)),
+      along: (path.cum[i] as number) + t * Math.sqrt(len2),
+    };
+  };
+  let best = Infinity;
+  for (let i = from; i < last; i++) best = Math.min(best, at(i).d);
   // Trazados que pasan dos veces por el mismo sitio: entre los tramos casi igual de cercanos, el primero.
-  return cands.find((c) => c.d <= best + 25) ?? (cands[0] as (typeof cands)[number]);
+  for (let i = from; i < last; i++) {
+    const c = at(i);
+    if (c.d <= best + 25) return { ...c, seg: i };
+  }
+  return { along: path.cum[last] as number, seg: from, d: Infinity };
 }
 
 /** Punto y rumbo (0 = norte, grados) a `s` metros del inicio; el rumbo es el del tramo que sigue. */

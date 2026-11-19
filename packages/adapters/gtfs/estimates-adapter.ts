@@ -5,7 +5,7 @@
  * reintenta con espera creciente sin tocar la red en cada ciclo.
  */
 import type { Adapter, Entity } from "@pulso/schema";
-import { createBusEstimator, madridDate, type BusEstimator } from "./estimate.js";
+import { createBusEstimator, madridDate, previousDate, type BusEstimator } from "./estimate.js";
 import { gtfsAdapter } from "./index.js";
 import { buildFeed, type GtfsFiles } from "./static.js";
 
@@ -64,7 +64,7 @@ export function createScheduleEstimatesAdapter(
   let nextRetryAt = 0;
   let lastError = "";
 
-  /** Lanza la descarga si toca. No depende de la señal del ciclo: su timeout (15 s) es menor que el de la descarga. */
+  /** Lanza la descarga si toca. No depende de la señal del ciclo: el timeout del ciclo (15 s) es menor que el de la descarga (60 s). */
   const refresh = (): void => {
     const t = now();
     const expired =
@@ -112,7 +112,7 @@ export function createScheduleEstimatesAdapter(
       }
       const t = now();
       const { validTo } = model.estimator;
-      if (validTo !== null && madridDate(t) > validTo) {
+      if (validTo !== null && previousDate(madridDate(t)) > validTo) {
         throw new Error(`feed GTFS caducado (vigencia hasta ${validTo}); no se emite nada`);
       }
       return { now: t, estimator: model.estimator };
