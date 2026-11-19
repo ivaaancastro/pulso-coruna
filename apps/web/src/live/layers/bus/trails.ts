@@ -145,6 +145,8 @@ export class TrailHistory {
     count: number,
     lengthMs: number,
     colorOf: (index: number) => Rgb,
+    /** Solo dibuja la estela de los índices para los que devuelve `true` (por defecto, todos). */
+    include?: (index: number) => boolean,
   ): TrailBuffers {
     if (lengthMs <= 0) return EMPTY_TRAILS;
     const cutoff = now - lengthMs;
@@ -159,7 +161,7 @@ export class TrailHistory {
     let paths = 0;
     for (let i = 0; i < n; i++) {
       const e = this.entries.get(ids[i] as string);
-      if (!e) continue;
+      if (!e || (include && !include(i))) continue;
       const kept = e.t.length - firstValid(e);
       if (kept >= 2) {
         vertices += kept + 1;
@@ -178,7 +180,7 @@ export class TrailHistory {
     let p = 0;
     for (let i = 0; i < n; i++) {
       const e = this.entries.get(ids[i] as string);
-      if (!e) continue;
+      if (!e || (include && !include(i))) continue;
       const s = firstValid(e);
       if (e.t.length - s < 2) continue;
       const [r, g, b] = colorOf(i);

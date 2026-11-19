@@ -13,6 +13,14 @@ import type { ItemsEvent, MobileFrame } from "./types";
 const MOBILE = new Set<string>(MOBILE_LAYER_IDS);
 
 /**
+ * Interpolación propia de capas cuya fuente emite de forma muy espaciada. Los barcos (AIS) emiten
+ * cada pocos segundos o cada minutos según su velocidad: con el máximo general (30 s) saltarían.
+ */
+const LAYER_INTERPOLATION: Partial<Record<LayerId, InterpolatorOptions>> = {
+  ship: { maxDurationMs: 180_000 },
+};
+
+/**
  * Estado del worker: almacén por capa + interpolación de las capas de móviles. Puro (sin APIs de
  * worker ni de red) para poder probarlo y medirlo en Node.
  */
@@ -113,7 +121,11 @@ export class LiveEngine {
     if (!MOBILE.has(layer)) return;
     let track = this.tracks.get(layer);
     if (!track) {
-      track = new Interpolator({ ...this.options, reducedMotion: this.reducedMotion });
+      track = new Interpolator({
+        ...LAYER_INTERPOLATION[layer],
+        ...this.options, // las opciones explícitas (tests) mandan sobre las de capa
+        reducedMotion: this.reducedMotion,
+      });
       this.tracks.set(layer, track);
     }
     for (const item of items) track.upsert(item as Entity, now);

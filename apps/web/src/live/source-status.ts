@@ -27,7 +27,8 @@ const MIN = 60_000;
 /**
  * Única tabla de umbrales. Ingesta (docs/specs/M3.5, M4.1): bus 20 s, bici 60 s, meteo 5 min; la
  * API marca `degraded` a 3× el intervalo y `down` a 9×. Aire (M5.2c): dato horario de modelo con `ts` = inicio de la
- * hora, pedido cada 15 min (desfase normal ≈ 75 min).
+ * hora, pedido cada 15 min (desfase normal ≈ 75 min). Barcos (AIS, M5.1c): emiten de forma esporádica y el
+ * colector purga a los 10 min; valores provisionales hasta ver tráfico real.
  */
 export const SOURCE_THRESHOLDS: Readonly<Record<LayerId, Thresholds>> = {
   bus: { delayedMs: MIN, nodataMs: 2 * MIN },
@@ -35,7 +36,7 @@ export const SOURCE_THRESHOLDS: Readonly<Record<LayerId, Thresholds>> = {
   weather: { delayedMs: 15 * MIN, nodataMs: 30 * MIN },
   air: { delayedMs: 120 * MIN, nodataMs: 240 * MIN },
   sea: { delayedMs: 30 * MIN, nodataMs: 90 * MIN },
-  ship: { delayedMs: 2 * MIN, nodataMs: 5 * MIN },
+  ship: { delayedMs: 3 * MIN, nodataMs: 10 * MIN },
   // OpenSky anónimo: una petición cada 5 min (M5.1d); la capa está vacía muchas horas.
   plane: { delayedMs: 8 * MIN, nodataMs: 15 * MIN, sparse: true },
   train: { delayedMs: MIN, nodataMs: 2 * MIN },
