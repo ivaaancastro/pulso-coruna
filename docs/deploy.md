@@ -47,6 +47,8 @@ docker compose exec db psql -U pulso -d pulso -c "SELECT * FROM source_health"
 
 Con `registry.ts` sin adaptadores la ingesta arranca y migra pero no graba nada (`sources: []` en el log). «Primer día grabado» = dejarla 24 h con los adaptadores cableados y revisar `health.sh` (las filas deben crecer y `rows_written_total` subir en cada fuente).
 
+**Retención (M6.1).** La ingesta lleva un job (sin servicio nuevo en compose) que cada hora agrega a 1 muestra/min/entidad (`positions_1m`, `station_status_1m`, `observations_1m`) y borra los chunks brutos de más de `RETENTION_RAW_DAYS` (30) solo si ya están agregados. Se configura en `infra/deploy/.env` (`RETENTION_ENABLED`, `RETENTION_RAW_DAYS`, `RETENTION_INTERVAL_MS`). Estado: bloque «retencion» de `health.sh` (tabla `retention_status`) y logs `retención` / `retención fallida`. Spec: `docs/specs/M6.1-retencion.md`.
+
 Logs: `docker compose logs -f ingest` (JSON, rotados a 3×10 MB).
 
 ## Barcos (aisstream, M5.1c)

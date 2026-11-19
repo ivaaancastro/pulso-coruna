@@ -66,7 +66,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M6 — Máquina del tiempo
 
-- [ ] M6.1 Retención
+- [x] M6.1 Retención (`docs/specs/M6.1-retencion.md`, ADR-0024)
 - [ ] M6.2 `/api/v1/replay`
 - [ ] M6.3 Línea temporal
 - [ ] M6.4 URL compartible

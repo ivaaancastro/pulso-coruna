@@ -22,7 +22,7 @@ describe.skipIf(!testDatabaseUrl)("PostgreSQL + TimescaleDB (integración)", () 
 
   it("las migraciones se aplican, y aplicarlas otra vez no hace nada", async () => {
     const first = await migrate(sql);
-    expect(first).toEqual(["0001_tables.sql", "0002_retention.sql"]);
+    expect(first).toEqual(["0001_tables.sql", "0002_retention.sql", "0003_retention_job.sql"]);
     expect(await migrate(sql)).toEqual([]);
     expect(await migrate(sql)).toEqual([]);
     store = new PgStore(sql);
@@ -36,7 +36,7 @@ describe.skipIf(!testDatabaseUrl)("PostgreSQL + TimescaleDB (integración)", () 
         migrate(other.sql),
         migrate(other.sql),
       ]);
-      expect(results.flat()).toHaveLength(2); // solo una de las tres las aplica
+      expect(results.flat()).toHaveLength(3); // solo una de las tres las aplica
     } finally {
       await other.drop();
     }
@@ -63,8 +63,9 @@ describe.skipIf(!testDatabaseUrl)("PostgreSQL + TimescaleDB (integración)", () 
       group by 1 order by 1`;
     expect(Object.fromEntries(jobs.map((j) => [j.proc_name, j.n]))).toMatchObject({
       policy_compression: "3",
-      policy_retention: "3",
     });
+    // La retención de brutos la hace el job de la ingesta (M6.1, ADR-0024), no una política.
+    expect(jobs.map((j) => j.proc_name)).not.toContain("policy_retention");
   });
 
   it("inserción idempotente: el mismo (id, ts) no duplica en ninguna tabla", async () => {
