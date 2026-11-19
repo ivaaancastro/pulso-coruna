@@ -122,6 +122,9 @@ export const es = {
   "replay.coarse": "Datos antiguos: una muestra por minuto.",
   "replay.ended": "Fin de los datos disponibles.",
   "replay.unavailable": "El histórico no está disponible ahora.",
+  "share.label": "Compartir enlace a esta vista",
+  "share.copied": "Enlace copiado.",
+  "share.failed": "No se pudo copiar el enlace.",
 } as const;
 
 export type MessageKey = keyof typeof es;
