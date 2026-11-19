@@ -95,7 +95,7 @@ describe("worker core", () => {
     handle({ type: "online" });
     expect(sockets).toHaveLength(2);
     expect(timers.pending).toBeLessThanOrEqual(1); // solo el watchdog del nuevo socket
-    expect(of("status").at(-1)?.state).toBe("reconnecting");
+    expect(of("status").at(-1)?.state).toBe("connecting");
   });
 
   it("un socket semiabierto en silencio se cierra y se reconecta (watchdog de 120 s)", () => {

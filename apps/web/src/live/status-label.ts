@@ -55,8 +55,9 @@ export function createStatusLabel(opts: StatusLabelOptions): StatusLabel {
   live.setAttribute("role", "status");
   live.setAttribute("aria-live", "polite");
   live.setAttribute("aria-atomic", "true");
-  root.append(list, live);
-  opts.parent.append(root);
+  root.append(list);
+  // Región viva fuera del bloque que se oculta: un nodo en display:none no se anuncia.
+  opts.parent.append(root, live);
 
   const entries = (): Entry[] => {
     if (monitor.disconnected) {
@@ -98,15 +99,19 @@ export function createStatusLabel(opts: StatusLabelOptions): StatusLabel {
         );
       }
     }
+    const disc = items.some((e) => e.id === "net");
     for (const id of previous.keys()) {
-      if (items.some((e) => e.id === id)) continue;
+      // Con la conexión caída no sabemos nada de las fuentes: ni «recuperada» ni «nueva» al volver.
+      if (items.some((e) => e.id === id) || (disc && id !== "net")) continue;
       messages.push(
         id === "net"
           ? t("status.reconnected")
           : t("status.live", { layer: t(LAYER_KEY(id as LayerId)) }),
       );
     }
-    previous = new Map(items.map((e) => [e.id, e.kind]));
+    const next = new Map(items.map((e) => [e.id, e.kind] as [string, Kind]));
+    if (disc) for (const [id, kind] of previous) if (id !== "net") next.set(id, kind);
+    previous = next;
     if (messages.length > 0) live.textContent = messages.join(". ");
   };
 
@@ -145,6 +150,7 @@ export function createStatusLabel(opts: StatusLabelOptions): StatusLabel {
       unsubscribe();
       clearInterval(timer);
       root.remove();
+      live.remove();
     },
   };
 }

@@ -44,7 +44,7 @@ function setup(locale: "es" | "gl" | "en" = "es") {
       dataTs: ts,
     });
   const lines = () => [...label.element.querySelectorAll("li")].map((li) => li.textContent);
-  const announcement = () => label.element.querySelector("[role=status]")?.textContent;
+  const announcement = () => document.querySelector("[role=status]")?.textContent;
   return { store, monitor, label, put, lines, announcement };
 }
 
@@ -118,7 +118,7 @@ describe("etiqueta de estado", () => {
     const { label } = setup();
     expect(label.element.getAttribute("aria-label")).toBe("Estado de los datos");
     expect(label.element.querySelector("ul")?.getAttribute("aria-live")).toBeNull();
-    const status = label.element.querySelector("[role=status]");
+    const status = document.querySelector("[role=status]");
     expect(status?.getAttribute("aria-live")).toBe("polite");
     expect(status?.className).toContain("sr-only");
     expect(label.element.querySelector(".source-status__mark")).toBeNull();
@@ -138,6 +138,17 @@ describe("etiqueta de estado", () => {
     expect(announcement()).toBe("Bus: sin datos");
     put("bus", Date.now());
     expect(announcement()).toBe("Bus: datos al día");
+  });
+
+  it("al desconectarse no anuncia «datos al día» de fuentes que seguían caídas", () => {
+    const { store, put, announcement } = setup();
+    put("bus", T0);
+    advance(130_000); // bus sin datos
+    expect(announcement()).toBe("Bus: sin datos");
+    store.apply({ type: "status", state: "reconnecting", attempt: 1 });
+    advance(11_000);
+    expect(announcement()).toBe("Reconectando…");
+    expect(announcement()).not.toMatch(/al día/);
   });
 
   it("anuncia la conexión restablecida", () => {

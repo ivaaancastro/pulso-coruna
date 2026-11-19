@@ -66,13 +66,12 @@ describe("layerStatus", () => {
     expect(down(DISCONNECT_GRACE_MS, "closed")).toBe("disconnected");
     // connecting/idle nunca cuentan como desconexión
     expect(down(60_000, "connecting")).toBe("live");
-    // con la conexión caída manda la desconexión aunque el dato sea viejo
+    // un dato ya viejo sigue siendo «sin datos» (no se reabren tarjetas); uno reciente pasa a desconectado
+    const lost = { state: "reconnecting", downForMs: 60_000 } as const;
     expect(
-      st({
-        freshness: { receivedAt: T0, dataTs: T0 - 99 * 60_000 },
-        connection: { state: "reconnecting", downForMs: 60_000 },
-      }).state,
-    ).toBe("disconnected");
+      st({ freshness: { receivedAt: T0, dataTs: T0 - 99 * 60_000 }, connection: lost }).state,
+    ).toBe("nodata");
+    expect(st({ connection: lost }).state).toBe("disconnected");
   });
 
   it("health aporta la edad solo cuando el almacén no tiene marca", () => {

@@ -153,8 +153,13 @@ export function createWsClient(opts: WsClientOptions): WsClient {
       socket = null;
       if (current) {
         detach(current);
-        current.close();
+        try {
+          current.close();
+        } catch {
+          // ya estaba cerrado
+        }
       }
+      attempt = 0;
       open();
     },
     close() {

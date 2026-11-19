@@ -79,11 +79,11 @@ export function layerStatus(input: StatusInput): LayerStatus {
 
   // Antes del primer snapshot no sabemos nada: ni se atenúa ni se alarma.
   if (!freshness && lastDataAt === null) return { state: "live", lastDataAt: null };
-  if (isDisconnected(connection)) return { state: "disconnected", lastDataAt };
+  // «Sin datos» manda sobre la desconexión: no se reabren tarjetas de datos que ya eran viejos.
   if (fromStore === null) return { state: "nodata", lastDataAt };
-
   const age = Math.max(0, now - fromStore);
   if (age >= thresholds.nodataMs) return { state: "nodata", lastDataAt };
+  if (isDisconnected(connection)) return { state: "disconnected", lastDataAt };
   if (age >= thresholds.delayedMs) return { state: "delayed", lastDataAt };
   return { state: "live", lastDataAt };
 }

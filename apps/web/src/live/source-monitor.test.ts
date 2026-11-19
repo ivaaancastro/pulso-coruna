@@ -196,7 +196,7 @@ describe("SourceMonitor + /health", () => {
       pollMs: 10_000,
     });
     emptyBus(store);
-    await vi.advanceTimersByTimeAsync(10_000); // falla → espera 20 s
+    await vi.advanceTimersByTimeAsync(2000); // primera consulta pronto; falla → espera 20 s
     expect(fetchHealth).toHaveBeenCalledTimes(1);
     expect(monitor.status("bus").lastDataAt).toBeNull();
     await vi.advanceTimersByTimeAsync(19_000);

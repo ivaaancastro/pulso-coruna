@@ -72,7 +72,7 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
   let disc = false;
   let timer: ReturnType<typeof setInterval> | null = null;
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
-  let pollDelay = pollBase;
+  let pollDelay = Math.min(pollBase, 2000); // la primera consulta no espera un minuto
   let inflight: AbortController | null = null;
   let unsubscribe: (() => void) | null = null;
   let running = false;
@@ -106,7 +106,12 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
         thresholds: thresholds[layer],
       });
       const prev = current.get(layer);
-      if (!prev || prev.state !== next.state || prev.lastDataAt !== next.lastDataAt) changed = true;
+      if (
+        !prev ||
+        prev.state !== next.state ||
+        (next.state !== "live" && prev.lastDataAt !== next.lastDataAt)
+      )
+        changed = true;
       current.set(layer, next);
     }
     // La desconexión también se avisa aunque ninguna capa tenga dato aún (el servidor no llega a abrir).
@@ -145,10 +150,10 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
       if (parsed) {
         health = parsed;
         pollDelay = pollBase;
-      } else pollDelay = Math.min(pollMax, pollDelay * 2);
+      } else pollDelay = Math.min(pollMax, Math.max(pollBase, pollDelay) * 2);
     } catch {
       if (!running) return;
-      pollDelay = Math.min(pollMax, pollDelay * 2);
+      pollDelay = Math.min(pollMax, Math.max(pollBase, pollDelay) * 2);
     } finally {
       inflight = null;
     }
