@@ -9,7 +9,7 @@ import {
 } from "../../i18n";
 import type { LiveLayerContext, LiveLayerDefinition } from "../layer-registry";
 import { formatPlaneCard } from "../plane/card";
-import { createPlaneCard, type PlaneCardView } from "../plane/card-view";
+import { lazyCardView } from "../card/panel";
 import { estimate, type PlaneEstimate } from "../plane/extrapolate";
 import { FixHistory, trailSegments, type TrailSegment } from "../plane/history";
 import { isPlane, planeInfo, type PlaneInfo } from "../plane/meta";
@@ -41,9 +41,8 @@ interface Shown {
 
 const history = new FixHistory();
 let selectedId: string | null = null;
-let card: PlaneCardView | null = null;
 let translate: Translate | null = null;
-let locale: Locale | null = null;
+let locale: Locale | null = null; // el de `i18n()`
 let atlas: string | null | undefined;
 let announcedId: string | null = null;
 let invalidate: (() => void) | null = null;
@@ -90,20 +89,26 @@ function iconAtlas(): string | null {
   return atlas;
 }
 
-function getCard(): PlaneCardView | null {
-  if (card) return card;
-  const host = document.getElementById("app") ?? document.body;
-  locale ??= detectLocale(window.location.search, navigator.languages);
-  translate ??= createTranslator(locale);
-  card = createPlaneCard({ t: translate, host, onClose: () => select(null) });
-  return card;
+/** Idioma y traductor, en caché mientras no cambie `?lang=`. */
+function i18n(): { t: Translate; locale: Locale } {
+  const next = detectLocale(window.location.search, navigator.languages);
+  if (!translate || next !== locale) {
+    locale = next;
+    translate = createTranslator(next);
+  }
+  return { t: translate, locale: next };
 }
+
+const getCard = lazyCardView("plane", {
+  t: (key, params) => i18n().t(key, params),
+  onClose: () => select(null),
+});
 
 function select(id: string | null): void {
   const changed = selectedId !== id;
   selectedId = id;
   if (id === null) {
-    card?.hide();
+    getCard().hide();
     announcedId = null;
   }
   if (changed) invalidate?.();
@@ -116,11 +121,10 @@ function syncCard(at: number, shown: readonly Shown[]): void {
     select(null); // el avión salió o ya es demasiado viejo para mostrarse
     return;
   }
-  const view = getCard();
-  if (!view || !translate || !locale) return;
+  const { t, locale: lang } = i18n();
   const announce = announcedId !== selectedId;
   announcedId = selectedId;
-  view.show(formatPlaneCard(item.info, item.est, at, translate, INTL_LOCALE[locale]), announce);
+  getCard().show(formatPlaneCard(item.info, item.est, at, t, INTL_LOCALE[lang]), announce);
 }
 
 function shownPlanes(ctx: LiveLayerContext, at: number): Shown[] {

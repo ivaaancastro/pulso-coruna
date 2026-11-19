@@ -28,9 +28,8 @@ export interface SeaLayerOptions {
   locale?: Locale;
   /** Reloj de la app para la tendencia y el «hace X» (por defecto `time/now.ts`). */
   now?: () => number;
-  /** Dónde se montan el indicador y la tarjeta (por defecto `.shell__top` y `#app`). */
+  /** Dónde se monta el indicador (por defecto `.shell__top`). */
   chipParent?: () => HTMLElement;
-  cardParent?: () => HTMLElement;
 }
 
 export function createSeaLayer(opts: SeaLayerOptions = {}): LiveLayerDefinition {
@@ -53,7 +52,8 @@ export function createSeaLayer(opts: SeaLayerOptions = {}): LiveLayerDefinition 
     ui = createSeaUi({
       chipParent:
         opts.chipParent?.() ?? document.querySelector<HTMLElement>(".shell__top") ?? document.body,
-      cardParent: opts.cardParent?.() ?? document.getElementById("app") ?? document.body,
+      // El panel común vive siempre en `#app` (un solo panel a la vez).
+      cardParent: document.getElementById("app") ?? document.body,
       t: createTranslator(locale),
       locale,
       now: appNow,

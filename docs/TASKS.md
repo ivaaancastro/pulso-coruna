@@ -62,7 +62,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
   - [x] M5.2a Capa de marea (halo de nivel, tendencia, tarjeta; ver `docs/specs/M5.2a-capa-marea.md`)
   - [x] M5.2c Capa de aire: halo de modelo con etiqueta «modelo» y tarjeta (`docs/specs/M5.2c-capa-aire.md`)
   - [x] M5.2d Capa aviones (silueta, traza y posición estimada por extrapolación)
-- [ ] M5.3 Tarjetas de detalle
+- [x] M5.3 Tarjetas de detalle: panel común para las seis capas (`docs/specs/M5.3-tarjetas-comunes.md`)
 
 ## M6 — Máquina del tiempo
 

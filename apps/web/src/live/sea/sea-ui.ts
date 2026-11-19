@@ -1,5 +1,5 @@
 import { INTL_LOCALE, type Locale, type MessageKey, type Translate } from "../../i18n";
-import { formatAgo, formatMadridTime } from "../../time/format";
+import { createCardView, freshness, PANEL_ID, type CardModel } from "../card/panel";
 import type { SeaView, Trend } from "./model";
 import "./sea-ui.css";
 
@@ -22,7 +22,7 @@ export interface SeaUiOptions {
 
 export interface SeaUi {
   chip: HTMLButtonElement;
-  card: HTMLElement;
+  readonly card: HTMLElement;
   readonly open: boolean;
   setOpen(open: boolean): void;
   /** Vuelve a leer y pintar (tras una lectura nueva). */
@@ -90,7 +90,7 @@ export function levelGlyph(fraction: number): SVGSVGElement {
 /**
  * Indicador sobrio y tarjeta de la marea. DOM real (texto, no canvas): el indicador es un botón
  * accesible por teclado, la vía equivalente a tocar el mareógrafo en el mapa. Se refresca solo con
- * el reloj de la app. La tarjeta sigue el patrón de `bike-card` (M5.3 unificará el diseño).
+ * el reloj de la app. La tarjeta es el panel común (`live/card`).
  */
 export function createSeaUi(opts: SeaUiOptions): SeaUi {
   const { t } = opts;
@@ -101,55 +101,51 @@ export function createSeaUi(opts: SeaUiOptions): SeaUi {
   });
   const meters = (v: number): string => `${number.format(v)} m`;
 
-  const cardId = "sea-card";
   const chip = el("button", "sea-chip");
   chip.type = "button";
   chip.hidden = true;
   chip.setAttribute("aria-expanded", "false");
-  chip.setAttribute("aria-controls", cardId);
+  chip.setAttribute("aria-controls", PANEL_ID);
   const chipGlyph = el("span", "sea-chip__glyph");
   const chipText = el("span", "sea-chip__text");
   const chipHint = el("span", "sr-only", t("sea.chip.action"));
   chip.append(chipGlyph, chipText, chipHint);
   opts.chipParent.append(chip);
 
-  const root = el("section", "sea-card");
-  root.id = cardId;
-  root.setAttribute("aria-label", t("sea.card.label"));
-  root.hidden = true;
-
-  const head = el("header", "sea-card__head");
-  const glyphSlot = el("span", "sea-card__glyph-slot");
-  const titles = el("div", "sea-card__titles");
-  titles.append(el("p", "sea-card__layer", t("sea.name")));
-  const title = el("h2", "sea-card__title");
-  titles.append(title);
-  const close = el("button", "sea-card__close", "×");
-  close.type = "button";
-  close.setAttribute("aria-label", t("sea.close"));
-  head.append(glyphSlot, titles, close);
-
-  const stats = el("dl", "sea-card__stats");
-  const levelBox = el("div", "sea-card__stat");
-  const levelValue = el("dd");
-  levelBox.append(el("dt", undefined, t("sea.level")), levelValue);
-  const trendBox = el("div", "sea-card__stat");
-  const trendValue = el("dd", "sea-card__trend");
-  trendBox.append(el("dt", undefined, t("sea.trend")), trendValue);
-  stats.append(levelBox, trendBox);
-
-  const zero = el("p", "sea-card__note", t("sea.zero"));
-  const updated = el("p", "sea-card__updated");
-  const source = el("p", "sea-card__note", t("sea.source"));
-  root.append(head, stats, zero, updated, source);
-  opts.cardParent.append(root);
+  const cardView = createCardView(opts.cardParent, "sea", {
+    t,
+    onClose: () => setOpen(false),
+    returnFocus: () => chip,
+  });
 
   let isOpen = false;
+  let announceNext = false;
   let timer: ReturnType<typeof setInterval> | null = null;
   let chipKey = "";
 
-  const trendText = (view: SeaView): string =>
-    view.trend ? t(TREND_KEY[view.trend]) : t("sea.trend.unknown");
+  const model = (view: SeaView, level: string): CardModel => ({
+    layer: "sea",
+    label: t("sea.card.label"),
+    kicker: t("sea.name"),
+    title: t("sea.card.label"),
+    icon: { key: view.fraction.toFixed(3), build: () => levelGlyph(view.fraction) },
+    groups: [
+      {
+        layout: "stats",
+        columns: 2,
+        rows: [
+          { label: t("sea.level"), value: level, size: "lead" },
+          {
+            label: t("sea.trend"),
+            value: view.trend ? t(TREND_KEY[view.trend]) : t("sea.trend.unknown"),
+          },
+        ],
+      },
+    ],
+    notes: [{ text: t("sea.zero") }],
+    updated: freshness(t, view.ts, opts.now(), opts.locale),
+    attribution: { text: t("sea.source") },
+  });
 
   const render = (): void => {
     const view = opts.read();
@@ -168,36 +164,21 @@ export function createSeaUi(opts: SeaUiOptions): SeaUi {
     if (key !== chipKey) {
       chipKey = key;
       chipGlyph.replaceChildren(levelGlyph(view.fraction));
-      glyphSlot.replaceChildren(levelGlyph(view.fraction));
     }
     if (!isOpen) return;
-    title.textContent = t("sea.card.label");
-    levelValue.textContent = level;
-    trendValue.textContent = trendText(view);
-    updated.textContent = t("sea.updated", { ago: formatAgo(view.ts, opts.now(), intl) });
-    updated.title = formatMadridTime(view.ts, intl);
+    cardView.show(model(view, level), announceNext);
+    announceNext = false;
   };
 
   function setOpen(open: boolean): void {
     if (open && chip.hidden) return;
     if (open === isOpen) return;
     isOpen = open;
-    root.hidden = !open;
     chip.setAttribute("aria-expanded", String(open));
-    if (open) {
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.removeEventListener("keydown", onKey);
-    }
+    if (open) announceNext = true;
+    else cardView.hide();
     render();
     opts.onOpenChange(open);
-  }
-
-  function onKey(event: KeyboardEvent): void {
-    if (event.key === "Escape" && isOpen) {
-      setOpen(false);
-      chip.focus();
-    }
   }
 
   function hide(): void {
@@ -209,14 +190,12 @@ export function createSeaUi(opts: SeaUiOptions): SeaUi {
   }
 
   chip.addEventListener("click", () => setOpen(!isOpen));
-  close.addEventListener("click", () => {
-    setOpen(false);
-    chip.focus();
-  });
 
   return {
     chip,
-    card: root,
+    get card() {
+      return cardView.element;
+    },
     get open() {
       return isOpen;
     },
@@ -226,9 +205,8 @@ export function createSeaUi(opts: SeaUiOptions): SeaUi {
     destroy() {
       if (timer) clearInterval(timer);
       timer = null;
-      document.removeEventListener("keydown", onKey);
+      cardView.destroy();
       chip.remove();
-      root.remove();
     },
   };
 }

@@ -101,10 +101,10 @@ describe("sea.layer (contrato del registro)", () => {
     const hit = layer.createLayers(ctx())[3] as unknown as Props;
     const onClick = hit.props["onClick"] as (i: { object: unknown }) => boolean;
     expect(onClick({ object: {} })).toBe(true);
-    expect(document.querySelector<HTMLElement>(".sea-card")?.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(false);
     expect(invalidate).toHaveBeenCalled();
     onClick({ object: {} });
-    expect(document.querySelector<HTMLElement>(".sea-card")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(true);
     expect(onClick({ object: undefined })).toBe(false);
   });
 
@@ -115,7 +115,7 @@ describe("sea.layer (contrato del registro)", () => {
     chip()?.click();
     layer.onSourceState?.("nodata");
     expect(chip()?.hidden).toBe(true);
-    expect(document.querySelector<HTMLElement>(".sea-card")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>(".pulso-card")?.hidden).toBe(true);
     layer.onSourceState?.("live");
     expect(chip()?.hidden).toBe(false);
   });

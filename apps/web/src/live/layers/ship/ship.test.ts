@@ -1,6 +1,7 @@
 import type { Entity } from "@pulso/schema";
 import { describe, expect, it } from "vitest";
 import { createTranslator, LOCALES, type Locale } from "../../../i18n";
+import { cardRows } from "../../card/panel";
 import { T0 } from "../../test-helpers";
 import { TrailHistory } from "../bus/trails";
 import { formatShipCard } from "./card";
@@ -185,13 +186,13 @@ describe("tarjeta", () => {
     });
     const card = formatShipCard(shipInfo(e), t("es"), "es", T0);
     expect(card.title).toBe("MOCK CARGO");
-    expect(card.rows).toEqual([
+    expect(cardRows(card)).toEqual([
       { label: "Tipo", value: "Carguero" },
       { label: "Velocidad", value: "10 kn" },
       { label: "Rumbo", value: "123°" },
     ]);
-    expect(card.updated).toMatch(/^Actualizado hace 2 min/);
-    expect(card.source).toBe("Fuente: aisstream.io");
+    expect(card.updated?.text).toMatch(/^Actualizado hace 2 min/);
+    expect(card.attribution?.text).toBe("Fuente: aisstream.io");
     const all = JSON.stringify(card);
     expect(all).not.toContain("abc123def456");
   });
@@ -204,29 +205,33 @@ describe("tarjeta", () => {
     const card = formatShipCard(shipInfo(e), t("es"), "es", T0);
     expect(card.title).toBe("Embarcación de recreo");
     expect(JSON.stringify(card)).not.toContain("ANA MARIA");
-    expect(card.rows.some((r) => r.label === "Tipo")).toBe(false);
+    expect(cardRows(card).some((r) => r.label === "Tipo")).toBe(false);
   });
 
   it("parado dice «Parado»; sin velocidad ni rumbo no hay filas vacías", () => {
     const stopped = formatShipCard(shipInfo(ship("x", { speed: 0 })), t("es"), "es", T0);
-    expect(stopped.rows).toEqual([{ label: "Velocidad", value: "Parado" }]);
-    expect(formatShipCard(shipInfo(ship("x")), t("es"), "es", T0).rows).toEqual([]);
+    expect(cardRows(stopped)).toEqual([{ label: "Velocidad", value: "Parado" }]);
+    expect(cardRows(formatShipCard(shipInfo(ship("x")), t("es"), "es", T0))).toEqual([]);
   });
 
   it("es/en/gl: tipos, atribución y decimales según el idioma", () => {
     const e = ship("x", { speed: 3, meta: { name: "X", shipType: 80 } });
-    expect(formatShipCard(shipInfo(e), t("en"), "en", T0).rows[0]?.value).toBe("Tanker");
-    expect(formatShipCard(shipInfo(e), t("gl"), "gl", T0).rows[0]?.value).toBe("Petroleiro");
-    expect(formatShipCard(shipInfo(e), t("gl"), "gl", T0).source).toBe("Fonte: aisstream.io");
-    expect(formatShipCard(shipInfo(e), t("en"), "en", T0).source).toBe("Source: aisstream.io");
-    expect(formatShipCard(shipInfo(e), t("en"), "en", T0).rows[1]?.value).toBe("5.8 kn");
-    expect(formatShipCard(shipInfo(e), t("es"), "es", T0).rows[1]?.value).toBe("5,8 kn");
+    expect(cardRows(formatShipCard(shipInfo(e), t("en"), "en", T0))[0]?.value).toBe("Tanker");
+    expect(cardRows(formatShipCard(shipInfo(e), t("gl"), "gl", T0))[0]?.value).toBe("Petroleiro");
+    expect(formatShipCard(shipInfo(e), t("gl"), "gl", T0).attribution?.text).toBe(
+      "Fonte: aisstream.io",
+    );
+    expect(formatShipCard(shipInfo(e), t("en"), "en", T0).attribution?.text).toBe(
+      "Source: aisstream.io",
+    );
+    expect(cardRows(formatShipCard(shipInfo(e), t("en"), "en", T0))[1]?.value).toBe("5.8 kn");
+    expect(cardRows(formatShipCard(shipInfo(e), t("es"), "es", T0))[1]?.value).toBe("5,8 kn");
   });
 
   it("todas las claves de la tarjeta existen en los tres idiomas", () => {
     for (const locale of Object.keys(LOCALES) as Locale[]) {
       const keys = Object.keys(LOCALES[locale]).filter((k) => k.startsWith("ship."));
-      expect(keys.length, locale).toBeGreaterThanOrEqual(17);
+      expect(keys.length, locale).toBeGreaterThanOrEqual(16);
     }
   });
 });

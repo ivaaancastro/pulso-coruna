@@ -72,6 +72,10 @@ Variaciones: `display` `font-weight: 300; font-stretch: 125%`; `title` 400 / 110
 `--pulso-space-1` 4 px · `-2` 8 · `-3` 12 · `-4` 16 · `-5` 24 · `-6` 32 · `-7` 48 · `-8` 72.
 Margen de pantalla (gutter): 16 px móvil, 32 px escritorio. Respeta `env(safe-area-inset-*)`. Objetivo táctil mínimo: 44×44 px.
 
+### Controles y paneles (añadido en M5.3)
+
+Derivados del espaciado y de tamaños que estaban sueltos en el CSS; no cambian la paleta ni la tipografía aprobadas. `--pulso-touch` 44 px (objetivo táctil) · `--pulso-control-h` 48 px (selector de modo) · `--pulso-dock-h` selector + borde (58 px) · `--pulso-text-micro` 11 px (atribuciones del mapa y de la etiqueta de aire) · `--pulso-text-icon` 24 px (glifo de cerrar) · `--pulso-card-w` 340 px y `--pulso-card-icon` 36 px (panel de detalle) · `--pulso-shell-bottom` borde inferior útil del shell (24 px móvil + hueco de atribución, 32 px ≥ 1024 px, más `safe-area`).
+
 ## Radios
 
 `--pulso-radius-0` 0 (mapa, línea de tiempo) · `-1` 6 px (controles y chips) · `-2` 14 px (menús y diálogos) · `-pill` 999 px (selector de modo). Sin sombras: la separación se hace con color de `surface`.

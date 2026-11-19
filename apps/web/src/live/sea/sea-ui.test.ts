@@ -61,7 +61,10 @@ describe("indicador y tarjeta de la marea", () => {
     ui.update();
     expect(text(ui.chip, ".sea-chip__text")).toBe("Marea 3,51 m");
     ui.setOpen(true);
-    expect(text(ui.card, ".sea-card__trend")).toBe("Tendencia aún sin determinar");
+    expect([...ui.card.querySelectorAll("dd")].map((n) => n.textContent)).toEqual([
+      "3,51 m",
+      "Tendencia aún sin determinar",
+    ]);
   });
 
   it("la tarjeta enseña nivel, tendencia, antigüedad, cero y atribución", () => {
@@ -74,7 +77,7 @@ describe("indicador y tarjeta de la marea", () => {
     expect(ui.chip.getAttribute("aria-expanded")).toBe("true");
     const dd = [...ui.card.querySelectorAll("dd")].map((n) => n.textContent);
     expect(dd).toEqual(["3,51 m", "Sube"]);
-    expect(text(ui.card, ".sea-card__updated")).toMatch(/^Actualizado hace 2 min/);
+    expect(text(ui.card, ".pulso-card__updated")).toMatch(/^Actualizado hace 2 min/);
     expect(ui.card.textContent).toContain("Fuente: Puertos del Estado (Portus)");
     expect(ui.card.textContent).toContain("Respecto al cero del mareógrafo");
   });
@@ -86,7 +89,7 @@ describe("indicador y tarjeta de la marea", () => {
     ui.setOpen(true);
     tick(180_000);
     vi.advanceTimersByTime(1000);
-    expect(text(ui.card, ".sea-card__updated")).toMatch(/hace 5 min/);
+    expect(text(ui.card, ".pulso-card__updated")).toMatch(/hace 5 min/);
     set({ ...rising, value: 2.1, trend: "falling" });
     vi.advanceTimersByTime(1000);
     expect(text(ui.chip, ".sea-chip__text")).toBe("Marea 2,10 m · Baja");
@@ -96,7 +99,7 @@ describe("indicador y tarjeta de la marea", () => {
     const { ui, set, onOpenChange } = setup(rising);
     ui.update();
     ui.setOpen(true);
-    ui.card.querySelector<HTMLButtonElement>(".sea-card__close")?.click();
+    ui.card.querySelector<HTMLButtonElement>(".pulso-card__close")?.click();
     expect(ui.open).toBe(false);
     ui.setOpen(true);
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
@@ -121,7 +124,10 @@ describe("indicador y tarjeta de la marea", () => {
 
   it("destroy retira el DOM", () => {
     const { ui } = setup(rising);
+    ui.update();
+    ui.setOpen(true);
     ui.destroy();
-    expect(document.body.children).toHaveLength(0);
+    expect(document.body.querySelector(".sea-chip")).toBeNull();
+    expect((ui.card as HTMLElement).hidden).toBe(true);
   });
 });
