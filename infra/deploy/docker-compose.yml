@@ -77,13 +77,25 @@ services:
       - caddy_data:/data # certificados: no perderlo (límites de Let's Encrypt)
       - caddy_config:/config
 
-  # API (M4): descomentar junto al bloque `handle /api/*` del Caddyfile.
-  # api:
-  #   build: ...
-  #   restart: unless-stopped
-  #   depends_on: { db: { condition: service_healthy } }
-  #   environment:
-  #     DATABASE_URL: postgres://pulso:${POSTGRES_PASSWORD}@db:5432/pulso
+  # API de lectura (M4.1): snapshot, stream WebSocket y health. Solo la alcanza Caddy (`/api/*`).
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/deploy/Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ingest:
+        condition: service_started # la ingesta crea las tablas; sin ellas la API respondería «sin datos»
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://pulso:${POSTGRES_PASSWORD}@db:5432/pulso
+      API_TRUST_PROXY: "true" # la IP real del cliente llega en X-Forwarded-For desde Caddy
+    # Sin `ports:`: no se publica; Caddy llega por la red interna.
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
 volumes:
   pgdata:

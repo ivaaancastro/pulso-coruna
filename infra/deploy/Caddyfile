@@ -16,10 +16,14 @@
 		file_server
 	}
 
-	# API (M4): descomentar cuando exista el servicio `api` en docker-compose.yml.
-	# handle /api/* {
-	# 	reverse_proxy api:3000
-	# }
+	# API (M4.1). `reverse_proxy` transporta WebSocket (/api/v1/stream) sin configuración extra y añade
+	# X-Forwarded-For, que la API usa para el límite de conexiones por IP (API_TRUST_PROXY=true).
+	# `encode` comprimiría el snapshot pero no toca el WebSocket; `flush_interval -1` evita retener deltas.
+	handle /api/* {
+		reverse_proxy api:3000 {
+			flush_interval -1
+		}
+	}
 
 	handle {
 		root * /srv/www

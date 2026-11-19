@@ -40,7 +40,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M4 — El latido
 
-- [ ] M4.1 API snapshot, stream, health
+- [x] M4.1 API snapshot, stream, health
 - [ ] M4.2 Cliente WS + interpolación en worker
 - [ ] M4.3 Capa bus
 - [ ] M4.4 Capa bici
