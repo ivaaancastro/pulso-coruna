@@ -6,6 +6,7 @@ import {
 } from "@pulso/adapters/gtfs";
 import { createItranviasAdapter, itranviasConfigFromEnv } from "@pulso/adapters/itranvias";
 import { meteogaliciaAdapter } from "@pulso/adapters/meteogalicia";
+import { createOpenskyAdapter, openskyConfigFromEnv } from "@pulso/adapters/opensky";
 import { portusAdapter, portusEnabled } from "@pulso/adapters/portus";
 import { openMeteoAirAdapter, openMeteoAirEnabled } from "@pulso/adapters/openmeteo-air";
 import type { IngestAdapter } from "./types.js";
@@ -20,6 +21,8 @@ import type { IngestAdapter } from "./types.js";
  * - Open-Meteo Air (M5.1b): aire MODELADO (CAMS), `stationId` `openmeteo:coruna:model`; activo por
  *   defecto, se apaga con `OPENMETEO_AIR_ENABLED=false`.
  * - iTranvías solo se registra con `ITRANVIAS_ENABLED=true` (permiso del operador sin confirmar).
+ * - OpenSky (M5.1d, aviones) solo con `OPENSKY_ENABLED=true`; intervalo `OPENSKY_INTERVAL_MS`
+ *   (defecto 5 min; cuota anónima 400/día). Credenciales OAuth2 opcionales, solo servidor.
  */
 export function buildAdapters(env: Record<string, string | undefined>): IngestAdapter[] {
   const adapters: IngestAdapter[] = [bicicorunaAdapter, meteogaliciaAdapter];
@@ -27,6 +30,8 @@ export function buildAdapters(env: Record<string, string | undefined>): IngestAd
   if (openMeteoAirEnabled(env)) adapters.push(openMeteoAirAdapter);
   const itranvias = itranviasConfigFromEnv(env);
   if (itranvias.enabled) adapters.push(createItranviasAdapter(itranvias));
+  const opensky = openskyConfigFromEnv(env);
+  if (opensky.enabled) adapters.push(createOpenskyAdapter(opensky));
   if (scheduleEstimatesEnabled(env)) {
     adapters.push(createScheduleEstimatesAdapter(scheduleEstimatesConfigFromEnv(env)));
   }
