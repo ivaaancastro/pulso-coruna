@@ -34,6 +34,7 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
     now: opts.now,
     reducedMotion: opts.reducedMotion,
     onError: (id, error) => console.error(`[live] la capa ${id} falló`, error),
+    onInvalidate: () => request(),
   });
   const animated = opts.definitions.some((d) => d.animated);
 

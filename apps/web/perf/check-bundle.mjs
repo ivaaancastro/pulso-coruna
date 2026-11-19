@@ -2,7 +2,9 @@
 /* global process, console */
 // Mide el peso gzip de dist/ contra apps/web/perf-budget.json.
 // - JS inicial: scripts y modulepreload que referencia dist/index.html, salvo los chunks de mapa.
-// - Chunk de mapa: ficheros .js de dist/ cuyo nombre casa con bundle.mapChunkPattern. Si no existe, se omite.
+// - JS diferido (mapa + deck.gl + capas): todos los .js de dist/ que no son iniciales ni el service worker
+//   ni un worker (bundle.excludeChunkPattern). Cuenta también los chunks que añadan capas nuevas, sin
+//   depender de su nombre. Si no existe ninguno, se omite.
 // Uso: node perf/check-bundle.mjs [--dist dist] [--budget perf-budget.json]
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { gzipSync } from "node:zlib";
@@ -47,13 +49,15 @@ function initialScripts(html) {
 }
 
 export function check({ dist, budget }) {
-  const { mapChunkPattern, initialJsGzipMaxKB, mapChunkGzipMaxKB } = budget.bundle;
+  const { mapChunkPattern, excludeChunkPattern, initialJsGzipMaxKB, mapChunkGzipMaxKB } =
+    budget.bundle;
   const isMap = new RegExp(mapChunkPattern, "i");
+  const isExcluded = new RegExp(excludeChunkPattern, "i");
   const html = readFileSync(join(dist, "index.html"), "utf8");
   const initial = initialScripts(html).filter((f) => !isMap.test(f));
   const mapFiles = listJs(dist)
     .map((f) => f.slice(dist.length + 1))
-    .filter((f) => isMap.test(f));
+    .filter((f) => !initial.includes(f) && !isExcluded.test(f));
   const sum = (files) => files.reduce((n, f) => n + gzipSize(join(dist, f)), 0) / 1024;
 
   const rows = [
@@ -65,7 +69,7 @@ export function check({ dist, budget }) {
       error: initial.length === 0 ? "index.html no referencia ningún JS" : undefined,
     },
     {
-      name: "Chunk mapa+deck.gl (gzip)",
+      name: "JS diferido mapa+deck.gl+capas (gzip)",
       files: mapFiles,
       kb: mapFiles.length > 0 ? sum(mapFiles) : null,
       max: mapChunkGzipMaxKB,

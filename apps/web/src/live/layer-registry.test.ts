@@ -4,7 +4,6 @@ import { LayerPipeline } from "./layer-pipeline";
 import {
   hasLiveLayers,
   listLiveLayers,
-  loadLiveLayers,
   registerLiveLayer,
   resetLiveLayers,
   type LiveLayerDefinition,
@@ -43,10 +42,11 @@ describe("registro de capas", () => {
     expect(hasLiveLayers()).toBe(true);
   });
 
-  it("descubre las capas de layers/*.layer.ts y las registra", async () => {
+  it("descubre las capas de layers/*.layer.ts sin registrar nada a mano", () => {
+    // Con `layers/*.layer.ts` presentes (bici, bus, viento…) hay algo que arrancar. No se cargan
+    // aquí: arrastrarían deck.gl entero al test (lo cubre `bike.layer.test.ts` para la de bici).
+    expect(listLiveLayers()).toEqual([]);
     expect(hasLiveLayers()).toBe(true);
-    const ids = (await loadLiveLayers()).map((d) => d.id);
-    expect(ids).toContain("wind");
   });
 });
 

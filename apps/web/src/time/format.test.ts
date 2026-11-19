@@ -1,5 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { formatMadridDate, formatMadridTime, msToNextMinute } from "./format";
+import { formatAgo, formatMadridDate, formatMadridTime, msToNextMinute } from "./format";
+
+describe("formatAgo", () => {
+  const T = Date.UTC(2026, 10, 18, 12, 0);
+  it("menos de un minuto: «ahora»", () => {
+    expect(formatAgo(T, T + 20_000, "es-ES")).toBe("ahora");
+    expect(formatAgo(T, T + 20_000, "en-GB")).toBe("now");
+  });
+  it("minutos, horas y días", () => {
+    expect(formatAgo(T, T + 2 * 60_000 + 5_000, "es-ES")).toMatch(/^hace 2 min/);
+    expect(formatAgo(T, T + 3 * 3_600_000, "es-ES")).toMatch(/^hace 3 h/);
+    expect(formatAgo(T, T + 3 * 86_400_000, "es-ES")).toMatch(/^hace 3 d/);
+  });
+  it("gallego e inglés", () => {
+    expect(formatAgo(T, T + 5 * 60_000, "gl-ES")).toMatch(/5 min/);
+    expect(formatAgo(T, T + 5 * 60_000, "en-GB")).toMatch(/5 min ago/);
+  });
+  it("reloj adelantado respecto al dato: nunca negativo", () => {
+    expect(formatAgo(T + 60_000, T, "es-ES")).toBe("ahora");
+  });
+});
 
 describe("formatMadridTime", () => {
   it("invierno: UTC+1", () => {

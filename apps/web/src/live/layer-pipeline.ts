@@ -8,6 +8,8 @@ export interface PipelineOptions {
   now: () => number;
   reducedMotion: () => boolean;
   onError?: (id: string, error: unknown) => void;
+  /** Una capa pidió recalcularse (`ctx.invalidate`): hay que planificar un fotograma. */
+  onInvalidate?: () => void;
 }
 
 /**
@@ -41,7 +43,7 @@ export class LayerPipeline {
 
   /** Recalcula lo sucio y devuelve todas las capas, en orden de registro. */
   collect(): Layer[] {
-    const ctx = {
+    const base = {
       store: this.opts.store,
       now: this.opts.now(),
       reducedMotion: this.opts.reducedMotion(),
@@ -50,7 +52,11 @@ export class LayerPipeline {
     for (const d of this.opts.definitions) {
       if (this.dirty.has(d.id) || d.animated || !this.cache.has(d.id)) {
         try {
-          this.cache.set(d.id, d.createLayers(ctx));
+          const invalidate = (): void => {
+            this.dirty.add(d.id);
+            this.opts.onInvalidate?.();
+          };
+          this.cache.set(d.id, d.createLayers({ ...base, invalidate }));
         } catch (error) {
           this.cache.set(d.id, this.cache.get(d.id) ?? []);
           this.opts.onError?.(d.id, error);

@@ -33,6 +33,11 @@ export interface LiveLayerContext {
   now: number;
   /** `prefers-reduced-motion: reduce`: sin movimiento continuo ni transiciones largas. */
   reducedMotion: boolean;
+  /**
+   * Pide recalcular esta capa en el siguiente fotograma, para cambios que no vienen de los datos
+   * (p. ej. la estación seleccionada). Seguro de llamar desde manejadores de eventos.
+   */
+  invalidate(): void;
 }
 
 export interface LiveLayerDefinition {
