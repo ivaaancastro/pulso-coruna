@@ -199,11 +199,15 @@ export class MockWorld {
     capacity: number;
     bikes: number;
   }[];
-  private readonly intervals: { bus: number; bike: number; weather: number; air: number };
-  private nextDue = { bus: 0, bike: 0, weather: 0, air: 0 };
   private readonly planes = makePlanes();
-  private readonly intervals: { bus: number; bike: number; weather: number; plane: number };
-  private nextDue = { bus: 0, bike: 0, weather: 0, plane: 0 };
+  private readonly intervals: {
+    bus: number;
+    bike: number;
+    weather: number;
+    air: number;
+    plane: number;
+  };
+  private nextDue = { bus: 0, bike: 0, weather: 0, air: 0, plane: 0 };
   private lastStep = 0;
   private wind = { speed: 4, dir: 220 };
   /** EAQI ficticio (escala de Open-Meteo, 0–100+): deriva despacio. */
