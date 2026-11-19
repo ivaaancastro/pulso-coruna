@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WsMessageSchema, type Entity, type StationStatus } from "@pulso/schema";
+import { WsMessageSchema, type Entity, type Observation, type StationStatus } from "@pulso/schema";
 import { MockWorld, createRng } from "./mock-sim";
 import { CLOSE_FRAME, PONG_FRAME, encodeTextFrame, frameOpcode } from "./ws-frame";
 
@@ -13,6 +13,10 @@ describe("MockWorld", () => {
     expect(snap.layers.bus?.length).toBe(40);
     expect(snap.layers.bike?.length).toBeGreaterThan(10);
     expect(snap.layers.weather?.length).toBeGreaterThan(0);
+    const air = (snap.layers.air ?? []) as Observation[];
+    expect(air.map((o) => o.metric).sort()).toEqual(["eaqi", "no2", "o3", "pm10", "pm25", "so2"]);
+    // dato de modelo: lo marca el sufijo del stationId, como en producción
+    expect(air.every((o) => o.stationId.endsWith(":model"))).toBe(true);
 
     const layers = new Set<string>();
     for (let t = 1; t <= 120; t++) {
@@ -21,8 +25,43 @@ describe("MockWorld", () => {
         layers.add(d.layer);
       }
     }
-    expect([...layers].sort()).toEqual(["bike", "bus", "sea", "weather"]);
     expect(snap.layers.sea?.[0]).toMatchObject({ stationId: "portus:3219", metric: "tide_level" });
+    expect([...layers].sort()).toEqual(["air", "bike", "bus", "sea", "weather"]); // aviones: cada 5 min
+  });
+
+  it("aviones ficticios: cumplen el contrato, llevan retraso y aterrizan en Alvedro (cada 5 min)", () => {
+    const w = new MockWorld({ buses: 1, seed: 2 });
+    const snap = w.snapshot(NOW);
+    expect(WsMessageSchema.safeParse(snap).success).toBe(true);
+    const planes = (snap.layers.plane ?? []) as Entity[];
+    expect(planes.length).toBeGreaterThanOrEqual(2);
+    for (const p of planes) {
+      expect(p.id.startsWith("mock-plane-")).toBe(true);
+      expect(p.meta?.simulated).toBe(1);
+      expect(p.ts).toBe(NOW - 90_000); // dato ya viejo al abrir: se ve la extrapolación
+      expect(p.speed).toBeGreaterThan(0);
+    }
+    const landing = planes.find((p) => p.id.includes("lcg"));
+    expect(landing?.meta?.onGround).toBe(0);
+
+    const seen: Entity[] = [];
+    const removed: string[] = [];
+    let deltas = 0;
+    for (let t = 1; t <= 40 * 60; t++) {
+      for (const d of w.step(NOW + t * 1000)) {
+        if (d.layer !== "plane") continue;
+        deltas++;
+        expect(WsMessageSchema.safeParse(d).success).toBe(true);
+        seen.push(...(d.upserts as Entity[]));
+        removed.push(...d.removes);
+      }
+    }
+    expect(deltas).toBeGreaterThanOrEqual(7); // una cada 5 min simulados
+    const onGround = seen.filter((p) => p.id.includes("lcg") && p.meta?.onGround === 1);
+    expect(onGround.length).toBeGreaterThan(0);
+    expect(onGround[0]?.lon).toBeCloseTo(-8.3772, 3);
+    expect(onGround[0]?.lat).toBeCloseTo(43.3021, 3);
+    expect(removed.length).toBeGreaterThan(0);
   });
 
   it("los datos simulados se identifican como tales", () => {

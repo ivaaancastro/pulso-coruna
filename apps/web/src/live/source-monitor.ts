@@ -104,6 +104,7 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
         connection: conn,
         healthLastDataAt: health[layer],
         thresholds: thresholds[layer],
+        empty: opts.store.items(layer).size === 0,
       });
       const prev = current.get(layer);
       if (
@@ -125,6 +126,8 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
   /** Solo se sondea /health mientras alguna capa no tenga marca de dato propia. */
   const needsHealth = (): boolean =>
     opts.layers.some((l) => {
+      // Una capa escasa y vacía (aviones) no necesita /health: no hay nada que atenuar.
+      if (thresholds[l].sparse && opts.store.items(l).size === 0) return false;
       const f = opts.store.freshness(l);
       return !f || !(f.dataTs > 0);
     }) && opts.store.connection.state === "open";
