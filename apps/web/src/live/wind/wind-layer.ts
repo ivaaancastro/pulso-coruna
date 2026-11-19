@@ -43,8 +43,8 @@ interface Binary {
   };
 }
 
-function segmentLayer(id: string, buffers: SegmentBuffers, count: number): Layer {
-  const data: Binary = {
+function binary(buffers: SegmentBuffers, count: number): Binary {
+  return {
     length: count,
     attributes: {
       getSourcePosition: { value: buffers.source, size: 2 },
@@ -52,6 +52,9 @@ function segmentLayer(id: string, buffers: SegmentBuffers, count: number): Layer
       getColor: { value: buffers.color, size: 4, normalized: true },
     },
   };
+}
+
+function segmentLayer(id: string, data: Binary): Layer {
   return new LineLayer({
     id,
     data,
@@ -79,7 +82,7 @@ export function createWindLayer(opts: WindLayerOptions = {}): WindLayerDefinitio
 
   let field: WindField | undefined;
   let fieldKey = "";
-  let arrows: { key: string; value: Arrows } | undefined;
+  let arrows: { key: string; count: number; data: Binary } | undefined;
 
   function currentField(ctx: LiveLayerContext): WindField {
     const fresh = ctx.store.freshness("weather");
@@ -117,18 +120,17 @@ export function createWindLayer(opts: WindLayerOptions = {}): WindLayerDefinitio
       if (ctx.reducedMotion) {
         const key = `${fieldKey}|${system.quality}|${style.alpha}`;
         if (arrows?.key !== key) {
-          arrows = { key, value: buildArrows(f, system.quality, style.rgb, style.alpha) };
+          const built: Arrows = buildArrows(f, system.quality, style.rgb, style.alpha);
+          arrows = { key, count: built.count, data: binary(built, built.count) };
         }
-        return arrows.value.count > 0
-          ? [segmentLayer("wind-arrows", arrows.value, arrows.value.count)]
-          : [];
+        return arrows.count > 0 ? [segmentLayer("wind-arrows", arrows.data)] : [];
       }
       arrows = undefined;
       system.step(dtMs / 1000, f);
       flip ^= 1;
       const buffers = frames[flip] as SegmentBuffers;
       const count = system.fill(buffers, style.rgb, style.alpha);
-      return count > 0 ? [segmentLayer("wind-flow", buffers, count)] : [];
+      return count > 0 ? [segmentLayer("wind-flow", binary(buffers, count))] : [];
     },
   };
 }

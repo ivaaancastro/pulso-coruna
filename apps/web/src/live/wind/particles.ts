@@ -97,6 +97,8 @@ export class ParticleSystem {
 
   setQuality(q: number): void {
     this.q = clampQuality(q);
+    // Las que quedan fuera dejan de existir: al subir la calidad renacen en vez de reaparecer viejas.
+    for (let i = this.activeCount; i < this.maxParticles; i++) this.alive[i] = 0;
   }
 
   /** Partículas que se mueven y se dibujan con la calidad actual. */

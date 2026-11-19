@@ -43,9 +43,10 @@ describe("registro de capas", () => {
     expect(hasLiveLayers()).toBe(true);
   });
 
-  it("sin capas descubiertas ni registradas no hay nada que arrancar", async () => {
-    expect(hasLiveLayers()).toBe(false);
-    expect(await loadLiveLayers()).toEqual([]);
+  it("descubre las capas de layers/*.layer.ts y las registra", async () => {
+    expect(hasLiveLayers()).toBe(true);
+    const ids = (await loadLiveLayers()).map((d) => d.id);
+    expect(ids).toContain("wind");
   });
 });
 
