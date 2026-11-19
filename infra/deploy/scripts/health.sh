@@ -16,7 +16,10 @@ SELECT source_id, status, consecutive_failures AS fallos,
 FROM source_health ORDER BY source_id;" -c "
 SELECT 'positions' AS tabla, count(*) AS filas, max(ts) AS ultima FROM positions
 UNION ALL SELECT 'station_status', count(*), max(ts) FROM station_status
-UNION ALL SELECT 'observations', count(*), max(ts) FROM observations;"
+UNION ALL SELECT 'observations', count(*), max(ts) FROM observations;" -c "
+SELECT target AS retencion, now() - last_success_at AS desde_ultimo_ok, cutoff, dropped_last AS chunks_ult,
+       left(coalesce(last_error, ''), 60) AS ultimo_error
+FROM retention_status ORDER BY target;"
 }
 
 if [ "${1:-}" = "--watch" ]; then
