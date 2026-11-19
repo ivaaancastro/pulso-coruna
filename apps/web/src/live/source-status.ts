@@ -21,8 +21,8 @@ const MIN = 60_000;
 
 /**
  * Única tabla de umbrales. Ingesta (docs/specs/M3.5, M4.1): bus 20 s, bici 60 s, meteo 5 min; la
- * API marca `degraded` a 3× el intervalo y `down` a 9×. Las capas sin adaptador aún (M5.1) llevan
- * valores provisionales.
+ * API marca `degraded` a 3× el intervalo y `down` a 9×. Barcos (AIS, M5.1c): emiten de forma
+ * esporádica y el colector purga a los 10 min; valores provisionales hasta ver tráfico real.
  */
 export const SOURCE_THRESHOLDS: Readonly<Record<LayerId, Thresholds>> = {
   bus: { delayedMs: MIN, nodataMs: 2 * MIN },
@@ -30,7 +30,7 @@ export const SOURCE_THRESHOLDS: Readonly<Record<LayerId, Thresholds>> = {
   weather: { delayedMs: 15 * MIN, nodataMs: 30 * MIN },
   air: { delayedMs: 90 * MIN, nodataMs: 180 * MIN },
   sea: { delayedMs: 30 * MIN, nodataMs: 90 * MIN },
-  ship: { delayedMs: 2 * MIN, nodataMs: 5 * MIN },
+  ship: { delayedMs: 3 * MIN, nodataMs: 10 * MIN },
   plane: { delayedMs: MIN, nodataMs: 2 * MIN },
   train: { delayedMs: MIN, nodataMs: 2 * MIN },
 };

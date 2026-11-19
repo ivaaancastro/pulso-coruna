@@ -1,0 +1,119 @@
+/* Tarjeta de barco. Solo tokens de docs/design/tokens.md; sin sombras ni vidrio. */
+.ship-card {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
+  right: calc(var(--pulso-gutter) + env(safe-area-inset-right));
+  bottom: calc(
+    var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + 72px + env(safe-area-inset-bottom)
+  );
+  display: grid;
+  gap: var(--pulso-space-2);
+  max-width: 360px;
+  padding: var(--pulso-space-3) var(--pulso-space-4);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-2);
+  color: var(--pulso-text);
+  animation: ship-card-in var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.ship-card[hidden] {
+  display: none;
+}
+
+@keyframes ship-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.ship-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pulso-space-3);
+}
+
+/* Silueta de casco en el color de la capa: la forma ya identifica el tipo de elemento. */
+.ship-card__mark {
+  flex: none;
+  width: 10px;
+  height: 20px;
+  background: var(--pulso-ship);
+  clip-path: polygon(50% 0, 100% 25%, 100% 100%, 0 100%, 0 25%);
+}
+
+.ship-card__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--pulso-text-body);
+  font-weight: 500;
+  font-stretch: 100%;
+  line-height: var(--pulso-leading-body);
+  overflow-wrap: anywhere;
+}
+
+.ship-card__close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: calc(-1 * var(--pulso-space-2)) calc(-1 * var(--pulso-space-3))
+    calc(-1 * var(--pulso-space-2)) 0;
+  padding: 0;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--pulso-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-1);
+  cursor: pointer;
+}
+
+.ship-card__rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--pulso-space-1) var(--pulso-space-4);
+  margin: 0;
+}
+
+.ship-card__rows dt {
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-muted);
+}
+
+.ship-card__rows dd {
+  margin: 0;
+  min-width: 0;
+  font-variant-numeric: var(--pulso-tabular);
+  overflow-wrap: anywhere;
+}
+
+.ship-card__updated,
+.ship-card__source {
+  margin: 0;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text-subtle);
+}
+
+@media (min-width: 700px) {
+  .ship-card {
+    left: auto;
+    width: 320px;
+    bottom: calc(
+      var(--pulso-space-5) + var(--pulso-attrib-room, 0px) + env(safe-area-inset-bottom)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ship-card {
+    animation-duration: var(--pulso-dur-instant);
+  }
+}

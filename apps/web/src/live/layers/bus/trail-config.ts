@@ -38,7 +38,10 @@ export class TrailConfig {
   private current: TrailQuality;
   private override: number | null = null;
 
-  constructor(quality: TrailQuality = "high") {
+  constructor(
+    quality: TrailQuality = "high",
+    private readonly presets: Readonly<Record<TrailQuality, TrailSettings>> = TRAIL_PRESETS,
+  ) {
     this.current = quality;
   }
 
@@ -52,7 +55,7 @@ export class TrailConfig {
   }
 
   get settings(): TrailSettings {
-    const preset = TRAIL_PRESETS[this.current];
+    const preset = this.presets[this.current];
     return this.override === null ? preset : { ...preset, lengthMs: this.override };
   }
 

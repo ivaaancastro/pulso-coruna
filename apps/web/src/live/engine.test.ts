@@ -97,4 +97,21 @@ describe("LiveEngine", () => {
     expect(ev?.dataTs).toBe(T0 + 5000);
     expect(e.store.get("bus").get("a")).toMatchObject({ lon: -8.39 });
   });
+
+  it("los barcos admiten huecos de minutos sin saltar (interpolación por capa)", () => {
+    const e = new LiveEngine();
+    const ship = (lon: number, ts: number) => ({
+      id: "s1",
+      layer: "ship" as const,
+      lon,
+      lat: 43.37,
+      ts,
+    });
+    e.handle(snapshot({ ship: [ship(-8.4, T0)] }), T0);
+    e.handle(delta("ship", [ship(-8.39, T0 + 120_000)]), T0 + 120_000);
+    // A mitad del tramo (60 s después de recibirlo) está entre las dos posiciones, no ya en la última.
+    const mid = e.frames(T0 + 180_000).find((f) => f.layer === "ship");
+    expect(mid?.positions[0]).toBeGreaterThan(-8.4);
+    expect(mid?.positions[0]).toBeLessThan(-8.39);
+  });
 });
