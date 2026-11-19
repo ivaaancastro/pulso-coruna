@@ -79,12 +79,21 @@ async function restoreReplay(state: ShareState): Promise<void> {
   if (!modes.select("replay")) return;
   const controller = await loadReplay();
   if (!controller || modes.getMode() !== "replay") return;
-  controller.applyState({
-    mode: "replay",
-    ...(state.t !== undefined ? { t: state.t } : {}),
-    ...(state.speed !== undefined ? { speed: state.speed } : {}),
-    playing: state.play === true,
-  });
+  // La continuación de `modes.select` (que ya llamó a `enter()`) corre antes que esta: mismo `loadReplay()`.
+  try {
+    controller.applyState({
+      mode: "replay",
+      ...(state.t !== undefined ? { t: state.t } : {}),
+      ...(state.speed !== undefined ? { speed: state.speed } : {}),
+      playing: state.play === true,
+    });
+  } catch (error) {
+    console.error("[replay] no se pudo restaurar el enlace", error);
+    controller.exit();
+    replay = null;
+    modes.select("view");
+    modes.status.textContent = t("replay.unavailable");
+  }
 }
 
 const modes = createModeSelector(t, (mode) => {

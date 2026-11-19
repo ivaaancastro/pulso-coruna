@@ -90,9 +90,12 @@ export function startShare(opts: StartShareOptions): ShareHandle {
   opts.host.append(button.element);
 
   if (opts.initial.mode === "replay") {
-    void opts.restoreReplay(opts.initial).finally(() => {
-      ready = true;
-    });
+    void opts
+      .restoreReplay(opts.initial)
+      .catch((error: unknown) => console.error("[share] restauración fallida", error))
+      .finally(() => {
+        ready = true;
+      });
   }
   sync.start();
 
