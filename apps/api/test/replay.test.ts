@@ -210,6 +210,22 @@ describe("buildReplayWindow", () => {
     expect(replayEtag(encode(w2))).toBe(replayEtag(encode(w)));
   });
 
+  it("ts repetidos (gana el último) y valores negativos no rompen el contrato", () => {
+    const rows = emptyReplayRows("raw");
+    rows.positions.rows = [
+      pos("b1", PAST + 1000, { lon: -8.1, speed: -2 }),
+      pos("b1", PAST + 1000, { lon: -8.2, speed: -1 }),
+    ];
+    rows.stations.rows = [
+      { id: "s", ts: PAST + 5, lon: -8, lat: 43, bikes: -1, docks: 2 },
+      { id: "s", ts: PAST + 5, lon: -8, lat: 43, bikes: 3, docks: -4 },
+    ];
+    const w = buildReplayWindow({ ...params, layers: ["bus", "bike"] }, rows);
+    expect(ReplayWindowSchema.safeParse(w).success).toBe(true);
+    const bus = w.layers.bus;
+    expect(bus?.kind === "mobile" && bus.tracks[0]?.lon).toEqual([-820_000]);
+  });
+
   it("incluye todas las capas pedidas aunque estén vacías", () => {
     const w = buildReplayWindow({ ...params, layers: ["bus", "sea"] }, emptyReplayRows("1m"));
     expect(Object.keys(w.layers)).toEqual(["bus", "sea"]);
@@ -409,5 +425,35 @@ describe("GET /api/v1/replay", () => {
     expect(src.replayCalls).toHaveLength(1);
     // liberado: ya se puede pedir otra
     expect((await fetch(url(base, PAST - W, PAST, "bus"))).status).toBe(200);
+  });
+
+  it("no cachea en memoria ventanas vacías ni no alineadas; errores sin caché", async () => {
+    const { src, base } = await start();
+    await (await fetch(url(base, PAST, PAST + W, "bus"))).arrayBuffer(); // vacía
+    await (await fetch(url(base, PAST, PAST + W, "bus"))).arrayBuffer();
+    expect(src.replayCalls).toHaveLength(2);
+    seed(src);
+    const un = PAST + 1000;
+    await (await fetch(url(base, un, un + MIN, "bus"))).arrayBuffer();
+    await (await fetch(url(base, un, un + MIN, "bus"))).arrayBuffer();
+    expect(src.replayCalls).toHaveLength(4);
+    const bad = await fetch(url(base, PAST, PAST + W + 1));
+    expect(bad.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("tope global de lecturas simultáneas (429)", async () => {
+    const { src, base } = await start({ replayMaxPerIp: 5, replayMaxGlobal: 1 });
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const real = src.replay.bind(src);
+    src.replay = async (q: ReplayQuery) => {
+      await gate;
+      return real(q);
+    };
+    const first = fetch(url(base, PAST, PAST + W, "bus"));
+    await new Promise((r) => setTimeout(r, 100));
+    expect((await fetch(url(base, PAST - W, PAST, "bus"))).status).toBe(429);
+    release();
+    expect((await first).status).toBe(200);
   });
 });

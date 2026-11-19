@@ -30,6 +30,8 @@ export interface ApiConfig {
   replayMaxBytes: number;
   /** Peticiones de replay simultáneas por IP (cabecera de coste: cada una toca la BD). */
   replayMaxPerIp: number;
+  /** Lecturas de replay simultáneas en total (comparten el pool de BD con el directo). */
+  replayMaxGlobal: number;
   /** Caché en memoria (bytes) de ventanas pasadas ya codificadas; 0 la desactiva. */
   replayCacheBytes: number;
   dbConnectTimeoutS: number;
@@ -91,6 +93,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     replayMaxRows: int(env, "API_REPLAY_MAX_ROWS", 200_000, 100),
     replayMaxBytes: int(env, "API_REPLAY_MAX_BYTES", 4 * 1024 * 1024, 1024),
     replayMaxPerIp: int(env, "API_REPLAY_MAX_PER_IP", 4),
+    replayMaxGlobal: int(env, "API_REPLAY_MAX_GLOBAL", 2),
     replayCacheBytes: int(env, "API_REPLAY_CACHE_BYTES", 32 * 1024 * 1024, 0),
     dbConnectTimeoutS: int(env, "DB_CONNECT_TIMEOUT_S", 10),
     dbIdleTimeoutS: int(env, "DB_IDLE_TIMEOUT_S", 30),

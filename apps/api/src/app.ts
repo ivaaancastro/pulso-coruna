@@ -15,6 +15,7 @@ import {
   ReplayCache,
   buildReplayWindow,
   etagMatches,
+  isAlignedWindow,
   isEmptyWindow,
   parseReplayParams,
   replayCacheControl,
@@ -84,12 +85,15 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
   });
 
   // --- GET /api/v1/replay?from=&to=&layers=  (MessagePack, ventana ≤ 5 min; ver docs/specs/M6.2) ---
+  const GLOBAL = "\u0000global"; // clave del tope global dentro del mismo limitador
   const replayLimiter = new ConnectionLimiter(config.replayMaxPerIp);
+  const replayGlobal = new ConnectionLimiter(config.replayMaxGlobal);
   const replayCache = new ReplayCache(config.replayCacheBytes);
   const replayInflight = new Map<string, Promise<EncodedReplay | "too_large">>();
 
   app.get("/api/v1/replay", async (req, reply) => {
     const now = Date.now();
+    reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
     const parsed = parseReplayParams(
       req.query as Record<string, unknown>,
       now,
@@ -99,18 +103,21 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
     const { params } = parsed;
     const key = `${params.from}:${params.to}:${params.layers.join(",")}`;
     const settled = params.to <= now - REPLAY_SETTLE_MS;
+    // Solo las ventanas alineadas y asentadas entran en la caché de memoria (acota las claves).
+    const cacheable = settled && isAlignedWindow(params.from, params.to);
     const send = (v: EncodedReplay) => {
       reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
       if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
       return reply.type("application/msgpack").send(v.body);
     };
 
-    const hit = settled ? replayCache.get(key) : undefined;
+    const hit = cacheable ? replayCache.get(key) : undefined;
     if (hit) return send(hit);
 
     // Una consulta por clave a la vez: el cliente que precarga y otro igual comparten trabajo.
     let work = replayInflight.get(key);
     if (!work) {
+      // Tope por IP y tope global (el pool de BD se comparte con el directo).
       if (!replayLimiter.acquire(req.ip)) {
         return reply
           .code(429)
@@ -119,6 +126,13 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
             error: "too_many_requests",
             message: `máximo ${config.replayMaxPerIp} peticiones de replay simultáneas por IP`,
           });
+      }
+      if (!replayGlobal.acquire(GLOBAL)) {
+        replayLimiter.release(req.ip);
+        return reply
+          .code(429)
+          .header("Retry-After", "2")
+          .send({ error: "too_many_requests", message: "demasiadas lecturas de replay a la vez" });
       }
       const ip = req.ip;
       const resolution = replayResolution(params.from, now, config.replayRawDays);
@@ -147,10 +161,11 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
             empty: isEmptyWindow(window),
           }),
         };
-        if (settled) replayCache.set(key, done);
+        if (cacheable && !isEmptyWindow(window)) replayCache.set(key, done);
         return done;
       })().finally(() => {
         replayLimiter.release(ip);
+        replayGlobal.release(GLOBAL);
         replayInflight.delete(key);
       });
       replayInflight.set(key, work);

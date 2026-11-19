@@ -173,10 +173,10 @@ export async function readReplayRows(sql: Sql, q: ReplayQuery): Promise<ReplayRo
         if (r.length > q.maxRows) out.truncated = true;
       }),
       orEmpty(sql<ObsRaw[]>`
-        select distinct on (station_id, metric) station_id as "stationId", metric, layer, ${c} as ts, value, unit
+        select distinct on (layer, station_id, metric) station_id as "stationId", metric, layer, ${c} as ts, value, unit
         from ${t}
         where layer in ${layers} and ${c} >= ${since(q.lookbackMs.observation)} and ${c} < ${from}
-        order by station_id, metric, ${c} desc`).then((r) => {
+        order by layer, station_id, metric, ${c} desc`).then((r) => {
         out.observations.init = r.map(obs);
       }),
     );

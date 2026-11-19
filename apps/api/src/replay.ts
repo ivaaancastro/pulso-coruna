@@ -113,6 +113,13 @@ const byKey = <T>(m: Map<string, T[]>, key: string): T[] => {
 };
 const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const hdg = (h: number): number => Math.min(360, Math.max(0, Math.round(h)));
+/** Ordena por `ts` y, con `ts` repetido, se queda con la última muestra (el esquema exige ts estrictos). */
+const sortedUnique = <T extends { ts: number }>(a: T[], from: number, to: number): T[] => {
+  const m = new Map<number, T>();
+  for (const r of a) if (r.ts >= from && r.ts < to) m.set(r.ts, r);
+  return [...m.values()].sort((x, y) => x.ts - y.ts);
+};
+const nn = (n: number): number => Math.max(0, n);
 const initDt = (ts: number, from: number): number => Math.min(0, ts - from);
 
 /** Última meta no vacía (la más reciente de la ventana, o la del estado inicial). */
@@ -127,9 +134,7 @@ function buildTracks(layer: LayerId, from: number, to: number, rows: ReplayRows)
   for (const r of rows.positions.rows) if (r.layer === layer) byKey(samples, r.id).push(r);
   const ids = [...new Set([...init.keys(), ...samples.keys()])].sort(cmp);
   return ids.map((id): ReplayTrack => {
-    const s = (samples.get(id) ?? [])
-      .filter((r) => r.ts >= from && r.ts < to)
-      .sort((a, b) => a.ts - b.ts);
+    const s = sortedUnique(samples.get(id) ?? [], from, to);
     const i = init.get(id);
     const meta = lastMeta(s[s.length - 1], i);
     const hasHeading = s.some((r) => r.heading !== null);
@@ -143,14 +148,14 @@ function buildTracks(layer: LayerId, from: number, to: number, rows: ReplayRows)
           lon: toReplayCoord(i.lon),
           lat: toReplayCoord(i.lat),
           ...(i.heading !== null && { heading: hdg(i.heading) }),
-          ...(i.speed !== null && { speed: toReplaySpeed(i.speed) }),
+          ...(i.speed !== null && { speed: nn(toReplaySpeed(i.speed)) }),
         },
       }),
       ts: s.map((r) => r.ts - from),
       lon: s.map((r) => toReplayCoord(r.lon)),
       lat: s.map((r) => toReplayCoord(r.lat)),
       ...(hasHeading && { heading: s.map((r) => (r.heading === null ? null : hdg(r.heading))) }),
-      ...(hasSpeed && { speed: s.map((r) => (r.speed === null ? null : toReplaySpeed(r.speed))) }),
+      ...(hasSpeed && { speed: s.map((r) => (r.speed === null ? null : nn(toReplaySpeed(r.speed)))) }),
     };
   });
 }
@@ -161,19 +166,17 @@ function buildStations(from: number, to: number, rows: ReplayRows): ReplayStatio
   for (const r of rows.stations.rows) byKey(samples, r.id).push(r);
   const ids = [...new Set([...init.keys(), ...samples.keys()])].sort(cmp);
   return ids.map((id): ReplayStation => {
-    const s = (samples.get(id) ?? [])
-      .filter((r) => r.ts >= from && r.ts < to)
-      .sort((a, b) => a.ts - b.ts);
+    const s = sortedUnique(samples.get(id) ?? [], from, to);
     const i = init.get(id);
     const pos = s[s.length - 1] ?? i;
     return {
       id,
       lon: toReplayCoord(pos?.lon ?? 0),
       lat: toReplayCoord(pos?.lat ?? 0),
-      ...(i && { init: { dt: initDt(i.ts, from), bikes: i.bikes, docks: i.docks } }),
+      ...(i && { init: { dt: initDt(i.ts, from), bikes: nn(i.bikes), docks: nn(i.docks) } }),
       ts: s.map((r) => r.ts - from),
-      bikes: s.map((r) => r.bikes),
-      docks: s.map((r) => r.docks),
+      bikes: s.map((r) => nn(r.bikes)),
+      docks: s.map((r) => nn(r.docks)),
     };
   });
 }
@@ -188,9 +191,7 @@ function buildSeries(layer: LayerId, from: number, to: number, rows: ReplayRows)
   for (const r of rows.observations.rows) if (r.layer === layer) byKey(samples, key(r)).push(r);
   const keys = [...new Set([...init.keys(), ...samples.keys()])].sort(cmp);
   return keys.map((k): ReplaySeries => {
-    const s = (samples.get(k) ?? [])
-      .filter((r) => r.ts >= from && r.ts < to)
-      .sort((a, b) => a.ts - b.ts);
+    const s = sortedUnique(samples.get(k) ?? [], from, to);
     const i = init.get(k);
     const ref = s[s.length - 1] ?? i;
     return {
