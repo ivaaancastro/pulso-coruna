@@ -311,6 +311,8 @@ const bus: LiveLayerDefinition = {
   // Las estelas avanzan con el reloj: un fotograma tras otro (con reduced-motion, solo con datos).
   animated: true,
   createLayers: createBusLayers,
+  // M4.7: los niveles high/medium/low coinciden con las calidades de las estelas.
+  setQualityLevel: (level) => busTrailConfig.setQuality(level),
 };
 
 export default bus;

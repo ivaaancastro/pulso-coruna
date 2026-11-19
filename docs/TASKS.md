@@ -48,7 +48,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M4.4 Capa bici
 - [x] M4.5 Viento con partículas
 - [ ] M4.6 Estados de fuente caída
-- [ ] M4.7 Degradación automática
+- [x] M4.7 Degradación automática
 
 ## M5 — La marea
 
