@@ -87,3 +87,7 @@ stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon
 - Es horario teórico, no posiciones en vivo (eso es iTranvías, M1.2); la correspondencia de `trip_id` con tiempo real no está comprobada.
 - Tamaño: ~45 MB descomprimido (`stop_times` 12,8 MB, `calendar_dates` 8,7 MB); procesar en streaming.
 - Horas GTFS pueden pasar de 24:00:00 (no comprobado); el adaptador debe admitirlo.
+
+## Uso en M4.3a: buses estimados por horario
+
+Mientras iTranvías esté desactivada, la capa `bus` se alimenta de **posiciones estimadas por horario** a partir de este GTFS (`packages/adapters/gtfs/estimate.ts`, fuente `bus-schedule`). No son posiciones reales: son dónde _debería_ estar cada servicio según el horario teórico. Cada entidad lleva `id = sched:<trip_id>`, `meta.estimated = 1` y `meta.source = "schedule"`; el frontend debe rotularlas «estimado según horario». Detalle en `docs/specs/M4.3a-estimador-bus.md`. Se apaga con `SCHEDULE_ESTIMATES_ENABLED=false`.
