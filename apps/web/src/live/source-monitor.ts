@@ -77,16 +77,20 @@ export function createSourceMonitor(opts: SourceMonitorOptions): SourceMonitor {
   let unsubscribe: (() => void) | null = null;
   let running = false;
 
+  /** Caída = reconectando, cerrada, o «abierta» pero sin haber recibido aún nada tras reconectar. */
+  const isDown = (): boolean => {
+    const { state, attempt } = opts.store.connection;
+    return state === "reconnecting" || state === "closed" || (state === "open" && attempt > 0);
+  };
+
   const connection = () => ({
-    state: opts.store.connection.state,
+    state: isDown() ? ("reconnecting" as const) : opts.store.connection.state,
     downForMs: downSince === null ? 0 : Math.max(0, clock() - downSince),
   });
 
   const trackConnection = (): void => {
-    const state = opts.store.connection.state;
-    const down = state === "reconnecting" || state === "closed";
-    if (down && downSince === null) downSince = clock();
-    else if (!down && state === "open") downSince = null;
+    if (isDown()) downSince ??= clock();
+    else if (opts.store.connection.state === "open") downSince = null;
   };
 
   const evaluate = (): void => {

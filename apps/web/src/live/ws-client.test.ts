@@ -74,6 +74,19 @@ describe("createWsClient", () => {
     expect(timers.run()).toBe(1000);
   });
 
+  it("tras reconectar, el primer mensaje avisa de que ya está sana (open, intentos 0)", () => {
+    const { client, timers, sockets, states } = setup();
+    client.connect();
+    sockets[0]?.drop();
+    timers.run();
+    sockets[1]?.open();
+    expect(states.at(-1)).toEqual(["open", 1]); // abierta pero aún sin datos
+    sockets[1]?.receive("snapshot");
+    expect(states.at(-1)).toEqual(["open", 0]);
+    sockets[1]?.receive("delta");
+    expect(states.filter((s) => s[0] === "open" && s[1] === 0)).toHaveLength(1);
+  });
+
   it("abrir sin recibir datos no reinicia la espera (servidor que cierra al instante)", () => {
     const { client, timers, sockets } = setup();
     client.connect();

@@ -119,7 +119,11 @@ export function createWsClient(opts: WsClientOptions): WsClient {
     };
     current.onmessage = (ev) => {
       if (socket !== current) return;
-      attempt = 0;
+      if (attempt !== 0) {
+        // Primer mensaje tras reconectar: ahora sí está sana (un servidor que abre y cierra al instante no).
+        attempt = 0;
+        opts.onState("open", 0);
+      }
       arm();
       opts.onMessage(ev.data);
     };

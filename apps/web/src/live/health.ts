@@ -1,4 +1,8 @@
-import { LAYER_IDS, type LayerId } from "@pulso/schema";
+import type { LayerId } from "@pulso/schema";
+import { SOURCE_THRESHOLDS } from "./source-status";
+
+// Sin importar `@pulso/schema` en tiempo de ejecución: arrastraría zod al hilo principal (~28 KB gzip).
+const LAYER_IDS = Object.keys(SOURCE_THRESHOLDS) as LayerId[];
 
 /** `/api/v1/health` de nuestra API a partir de la URL del stream; `null` si no se puede derivar. */
 export function resolveHealthUrl(streamUrl: string): string | null {

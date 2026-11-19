@@ -97,6 +97,19 @@ describe("SourceMonitor", () => {
     expect(monitor.disconnected).toBe(false);
   });
 
+  it("un servidor que abre y cierra al instante no reinicia la cuenta: sigue desconectado", () => {
+    const { store, monitor } = setup();
+    store.apply({ type: "status", state: "reconnecting", attempt: 1 });
+    advance(6000);
+    store.apply({ type: "status", state: "open", attempt: 1 }); // abre sin mensajes
+    store.apply({ type: "status", state: "reconnecting", attempt: 2 });
+    store.apply({ type: "status", state: "open", attempt: 2 });
+    advance(5000);
+    expect(monitor.disconnected).toBe(true);
+    store.apply({ type: "status", state: "open", attempt: 0 }); // llegó el snapshot
+    expect(monitor.disconnected).toBe(false);
+  });
+
   it("desconectado desde el principio (el servidor nunca abre) también se avisa", () => {
     const { store, monitor, changes } = setup();
     store.apply({ type: "status", state: "connecting", attempt: 0 });
