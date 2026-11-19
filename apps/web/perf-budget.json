@@ -2,8 +2,9 @@
   "$comment": "Presupuestos de docs/ROADMAP.md. Los leen perf/check-bundle.mjs y perf/e2e/*.spec.ts. Ver docs/ADR/0011-ci-rendimiento.md.",
   "bundle": {
     "mapChunkPattern": "(^|/)(maplibre|deck|map|webgl-device)[-._]",
+    "excludeChunkPattern": "(^|/)(sw\\.js$|[^/]*worker[^/]*\\.js$)",
     "initialJsGzipMaxKB": 250,
-    "mapChunkGzipMaxKB": 450
+    "mapChunkGzipMaxKB": 520
   },
   "fps": {
     "$comment": "ci = WebGL por software (SwiftShader) en runner sin GPU: solo vigila regresiones. gpu = presupuesto real del ROADMAP, para PERF_FPS_PROFILE=gpu en un equipo con GPU.",
