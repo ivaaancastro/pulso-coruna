@@ -42,8 +42,9 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 - [x] M4.1 API snapshot, stream, health
 - [x] M4.2 Cliente WS + interpolación en worker
-- [ ] M4.3 Capa bus
+- [x] M4.3 Capa bus
   - [x] M4.3a Estimador de buses por horario
+  - [x] M4.3b Capa bus (estelas, color por línea, tarjeta)
 - [x] M4.4 Capa bici
 - [x] M4.5 Viento con partículas
 - [ ] M4.6 Estados de fuente caída

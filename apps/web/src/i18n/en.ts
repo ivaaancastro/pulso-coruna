@@ -28,4 +28,11 @@ export const en: Messages = {
   "bike.state.out": "Out of service",
   "bike.updated": "Updated {ago}",
   "bike.close": "Close",
+  "bus.card.region": "Bus details",
+  "bus.card.title": "Line {line}",
+  "bus.card.untitled": "Bus",
+  "bus.card.headsign": "Destination",
+  "bus.card.nextStop": "Next stop",
+  "bus.card.estimated": "Estimated from timetable",
+  "bus.card.close": "Close",
 };

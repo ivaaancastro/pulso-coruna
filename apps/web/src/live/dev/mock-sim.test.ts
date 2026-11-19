@@ -32,6 +32,16 @@ describe("MockWorld", () => {
     }
   });
 
+  it("los buses llevan línea, destino y próxima parada; la mitad se marca como estimada", () => {
+    const buses = (new MockWorld({ buses: 6 }).snapshot(NOW).layers.bus ?? []) as Entity[];
+    for (const e of buses) {
+      expect(e.meta?.line).toBeTruthy();
+      expect(e.meta?.headsign).toBeTruthy();
+      expect(e.meta?.nextStop).toBeTruthy();
+    }
+    expect(buses.filter((e) => e.meta?.estimated === 1)).toHaveLength(3);
+  });
+
   it("las bicis conservan la capacidad y los buses se mueven y desaparecen/reaparecen", () => {
     const w = new MockWorld({ buses: 200, seed: 5, busIntervalMs: 1000, bikeIntervalMs: 1000 });
     const snap = w.snapshot(NOW);

@@ -90,7 +90,7 @@ function routeGeometry(route: readonly LonLat[]): { lengths: number[]; total: nu
   return { lengths, total };
 }
 
-function pointAt(bus: Bus): { lon: number; lat: number; heading: number } {
+function pointAt(bus: Bus): { lon: number; lat: number; heading: number; segment: number } {
   let s = bus.s % bus.total;
   for (let i = 0; i < bus.lengths.length; i++) {
     const len = bus.lengths[i] as number;
@@ -101,12 +101,12 @@ function pointAt(bus: Bus): { lon: number; lat: number; heading: number } {
       const dx = (b[0] - a[0]) * Math.cos((a[1] * Math.PI) / 180);
       const dy = b[1] - a[1];
       const heading = ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;
-      return { lon: a[0] + (b[0] - a[0]) * u, lat: a[1] + (b[1] - a[1]) * u, heading };
+      return { lon: a[0] + (b[0] - a[0]) * u, lat: a[1] + (b[1] - a[1]) * u, heading, segment: i };
     }
     s -= len;
   }
   const last = bus.route[bus.route.length - 1] as LonLat;
-  return { lon: last[0], lat: last[1], heading: 0 };
+  return { lon: last[0], lat: last[1], heading: 0, segment: 0 };
 }
 
 export interface MockWorldOptions {
@@ -181,7 +181,14 @@ export class MockWorld {
       heading: Math.round(p.heading),
       speed: b.speed,
       ts,
-      meta: { line: routeId, simulated: 1 },
+      meta: {
+        line: routeId,
+        headsign: `Destino ${routeId}`,
+        nextStop: `Parada ${routeId}-${p.segment + 1}`,
+        // Como en producción (M4.3a) los buses pueden ser estimaciones por horario: la mitad lo es.
+        ...(Number(b.id.slice(-4)) % 2 === 1 ? { estimated: 1, source: "schedule" } : {}),
+        simulated: 1,
+      },
     };
   }
 

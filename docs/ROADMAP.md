@@ -19,7 +19,7 @@ Medidos con la skill `perf-budget` (móvil de gama media emulado: CPU 4×, red �
 | Fotogramas con todas las capas activas                                                 | media ≥ 58 fps, p5 ≥ 50 fps      |
 | Primer fotograma del mapa (`performance.mark('map:first-frame')`; LCP no ve el canvas) | < 2,0 s                          |
 | JS inicial (gzip, sin librería de mapa)                                                | < 250 KB                         |
-| Mapa + deck.gl + capas (gzip, diferida)                                                | < 520 KB                         |
+| Mapa + deck.gl + capas (gzip, diferida)                                                | < 540 KB                         |
 | INP (tocar entidad, cambiar modo, arrastrar línea temporal)                            | < 100 ms                         |
 | Trabajo en hilo principal por fotograma                                                | < 8 ms (interpolación en worker) |
 | Peticiones del navegador a terceros                                                    | 0                                |

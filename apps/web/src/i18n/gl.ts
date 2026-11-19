@@ -28,4 +28,11 @@ export const gl: Messages = {
   "bike.state.out": "Sen servizo",
   "bike.updated": "Actualizado {ago}",
   "bike.close": "Pechar",
+  "bus.card.region": "Detalle do autobús",
+  "bus.card.title": "Liña {line}",
+  "bus.card.untitled": "Autobús",
+  "bus.card.headsign": "Destino",
+  "bus.card.nextStop": "Próxima parada",
+  "bus.card.estimated": "Estimado segundo o horario",
+  "bus.card.close": "Pechar",
 };

@@ -26,6 +26,13 @@ export const es = {
   "bike.state.out": "Sin servicio",
   "bike.updated": "Actualizado {ago}",
   "bike.close": "Cerrar",
+  "bus.card.region": "Detalle del autobús",
+  "bus.card.title": "Línea {line}",
+  "bus.card.untitled": "Autobús",
+  "bus.card.headsign": "Destino",
+  "bus.card.nextStop": "Próxima parada",
+  "bus.card.estimated": "Estimado según horario",
+  "bus.card.close": "Cerrar",
 } as const;
 
 export type MessageKey = keyof typeof es;
