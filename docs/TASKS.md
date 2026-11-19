@@ -45,7 +45,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [ ] M4.3 Capa bus
   - [x] M4.3a Estimador de buses por horario
 - [x] M4.4 Capa bici
-- [ ] M4.5 Viento con partículas
+- [x] M4.5 Viento con partículas
 - [ ] M4.6 Estados de fuente caída
 - [ ] M4.7 Degradación automática
 
