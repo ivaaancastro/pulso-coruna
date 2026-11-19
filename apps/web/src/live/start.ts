@@ -71,6 +71,7 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
     client,
     destroy() {
       quality.destroy();
+      if (dev) delete (window as unknown as { __pulsoQuality?: AutoQuality }).__pulsoQuality;
       client.stop();
       overlay.destroy();
     },
