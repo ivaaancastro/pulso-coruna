@@ -11,7 +11,8 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "tiles:copy": "node scripts/copy-tiles.mjs"
+    "tiles:copy": "node scripts/copy-tiles.mjs",
+    "dev:mock": "PULSO_MOCK_LIVE=1 vite"
   },
   "devDependencies": {
     "jsdom": "^31.0.1",
@@ -20,6 +21,10 @@
     "vite": "^8.3.8"
   },
   "dependencies": {
+    "@deck.gl/core": "9.4.1",
+    "@deck.gl/layers": "9.4.1",
+    "@deck.gl/maplibre": "9.4.1",
+    "@pulso/schema": "workspace:*",
     "maplibre-gl": "5.24.1",
     "pmtiles": "4.5.0"
   }

@@ -1,7 +1,7 @@
 {
   "$comment": "Presupuestos de docs/ROADMAP.md. Los leen perf/check-bundle.mjs y perf/e2e/*.spec.ts. Ver docs/ADR/0011-ci-rendimiento.md.",
   "bundle": {
-    "mapChunkPattern": "(^|/)(maplibre|deck|map)[-._]",
+    "mapChunkPattern": "(^|/)(maplibre|deck|map|webgl-device)[-._]",
     "initialJsGzipMaxKB": 250,
     "mapChunkGzipMaxKB": 450
   },

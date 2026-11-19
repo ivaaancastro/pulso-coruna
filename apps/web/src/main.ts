@@ -50,10 +50,17 @@ clock.start(now);
 
 import("./map/map")
   .then(({ createPulsoMap }) => {
-    createPulsoMap({
+    const pulsoMap = createPulsoMap({
       container: map,
       now,
       fixedTime: import.meta.env.DEV && parseTimeOverride(window.location.search) !== null,
+      // Datos en vivo (worker + deck.gl) tras el primer fotograma, para no competir con la carga.
+      onFirstFrame: () => {
+        const target = pulsoMap.map;
+        void import("./live/start")
+          .then((m) => m.startLive({ map: target, now, search: window.location.search }))
+          .catch((error: unknown) => console.error("[live] no se pudo iniciar", error));
+      },
     });
   })
   .catch((error: unknown) => {
