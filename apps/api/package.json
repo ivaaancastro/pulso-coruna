@@ -1,0 +1,26 @@
+{
+  "name": "@pulso/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node22 --banner:js=\"import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);\" --outfile=dist/main.js",
+    "start": "node dist/main.js",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@fastify/cors": "11.4.3",
+    "@fastify/websocket": "11.3.7",
+    "@pulso/schema": "workspace:*",
+    "fastify": "5.12.8",
+    "postgres": "4.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/ws": "8.18.2",
+    "esbuild": "0.28.2",
+    "typescript": "^5.6.0"
+  }
+}

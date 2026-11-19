@@ -86,9 +86,38 @@ docker compose -f infra/deploy/docker-compose.yml down -v   # borra también los
 
 Si 80/443 están ocupados en tu máquina, cambia `HTTP_PORT`/`HTTPS_PORT` (y pide `https://localhost:PUERTO`).
 
-## Cuando llegue la API (M4)
+## API (M4.1)
 
-Descomenta el servicio `api` en `docker-compose.yml` y el bloque `handle /api/*` del `Caddyfile` (`reverse_proxy api:3000`). No hay que tocar nada más: la web ya solo habla con su propio dominio.
+El servicio `api` (`Dockerfile.api`, imagen sin `node_modules`, usuario `node`) arranca con el resto y lee de la BD lo que graba la ingesta. No publica puertos: Caddy lo expone en `/api/*` (incluido el WebSocket) en el mismo dominio que la web, así que no hace falta CORS. Spec: `docs/specs/M4.1-api-snapshot-stream.md`.
+
+| Endpoint                                   | Qué da                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `GET /api/v1/snapshot?layers=bike,weather` | Último estado de las capas pedidas (todas si se omite). Capa desconocida → 400. Sin datos → `[]` |
+| `WS /api/v1/stream[?layers=…]`             | Snapshot al conectar y luego deltas cada ≤ 2 s. 429 si la IP supera su límite                    |
+| `GET /api/v1/health`                       | BD, estado de cada fuente (ok/degraded/down, edad) y última lectura por capa. 503 si la BD cae   |
+
+```bash
+curl -k https://localhost/api/v1/health
+curl -k "https://localhost/api/v1/snapshot?layers=bike"
+docker compose -f infra/deploy/docker-compose.yml logs -f api
+```
+
+Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/src/config.ts`): `API_WS_MAX_PER_IP` (10), `API_POLL_MS` (2000), `API_WS_PING_MS` (30000), `API_CORS_ORIGINS` (`*`), `API_MAX_AGE_*_MS` (cuánto tiempo sigue «viva» una lectura: 5 min móviles, 1 h bicis, 6 h observaciones), `API_HEALTH_STALE_FACTOR` (3). `API_TRUST_PROXY=true` ya lo fija compose: la API toma la IP real de `X-Forwarded-For` que pone Caddy; **no** lo actives si la API queda expuesta sin proxy.
+
+Con iTranvías apagada la capa `bus` sale vacía (`[]`) y `health.layers.bus.lastDataAt` es `null`: es lo esperado, no un fallo.
+
+### Probar la API sin el stack completo
+
+Para no arrancar la ingesta (que llama a fuentes reales) basta la BD y la imagen de la API:
+
+```bash
+docker build -f infra/deploy/Dockerfile.api -t pulso-api .
+docker network create pt && docker run -d --rm --name pt-db --network pt -e POSTGRES_USER=pulso -e POSTGRES_PASSWORD=pulso -e POSTGRES_DB=pulso timescale/timescaledb:2.32.0-pg17
+for f in apps/ingest/migrations/*.sql; do docker exec -i pt-db psql -q -U pulso -d pulso < $f; done
+docker run -d --rm --name pt-api --network pt -p 3000:3000 -e DATABASE_URL=postgres://pulso:pulso@pt-db:5432/pulso pulso-api
+curl localhost:3000/api/v1/health
+# limpieza: docker rm -f pt-api pt-db; docker network rm pt
+```
 
 ## Solución de problemas
 
