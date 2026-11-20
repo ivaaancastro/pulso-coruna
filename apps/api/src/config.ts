@@ -1,3 +1,5 @@
+import { parsePulseWeights, type PulseWeights } from "./pulse.js";
+
 export interface ApiConfig {
   databaseUrl: string;
   host: string;
@@ -34,6 +36,11 @@ export interface ApiConfig {
   replayMaxGlobal: number;
   /** Caché en memoria (bytes) de ventanas pasadas ya codificadas; 0 la desactiva. */
   replayCacheBytes: number;
+  /** Pesos del índice Pulso por capa (`PULSE_WEIGHTS`, JSON parcial sobre los valores por defecto). */
+  pulseWeights: PulseWeights;
+  /** Lecturas de Pulso simultáneas por IP y en total (cada una agrega hasta 24 h en la BD). */
+  pulseMaxPerIp: number;
+  pulseMaxGlobal: number;
   dbConnectTimeoutS: number;
   dbIdleTimeoutS: number;
   dbMaxLifetimeS: number;
@@ -95,6 +102,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     replayMaxPerIp: int(env, "API_REPLAY_MAX_PER_IP", 4),
     replayMaxGlobal: int(env, "API_REPLAY_MAX_GLOBAL", 2),
     replayCacheBytes: int(env, "API_REPLAY_CACHE_BYTES", 32 * 1024 * 1024, 0),
+    pulseWeights: parsePulseWeights(env["PULSE_WEIGHTS"]),
+    pulseMaxPerIp: int(env, "API_PULSE_MAX_PER_IP", 2),
+    pulseMaxGlobal: int(env, "API_PULSE_MAX_GLOBAL", 2),
     dbConnectTimeoutS: int(env, "DB_CONNECT_TIMEOUT_S", 10),
     dbIdleTimeoutS: int(env, "DB_IDLE_TIMEOUT_S", 30),
     dbMaxLifetimeS: int(env, "DB_MAX_LIFETIME_S", 1800),

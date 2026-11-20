@@ -9,6 +9,13 @@ import type { DataSource } from "./db.js";
 import { buildHealth, type HealthReport } from "./health.js";
 import { StreamHub } from "./hub.js";
 import { ConnectionLimiter } from "./limiter.js";
+import {
+  activePulseLayers,
+  computePulse,
+  parsePulseParams,
+  pulseCacheControl,
+  pulseEtag,
+} from "./pulse.js";
 import { parseLayers, snapshotMessage } from "./protocol.js";
 import {
   type EncodedReplay,
@@ -184,6 +191,87 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
       return send(result);
     } catch (e) {
       req.log.error({ err: e }, "replay: BD no disponible");
+      return reply
+        .code(503)
+        .header("Retry-After", "5")
+        .send({ error: "unavailable", message: "base de datos no disponible" });
+    }
+  });
+
+  // --- GET /api/v1/pulse?from=&to=[&step=]  (JSON, ventana ≤ 24 h; ver docs/specs/M7.2) ---
+  const pulseLimiter = new ConnectionLimiter(config.pulseMaxPerIp);
+  const pulseGlobal = new ConnectionLimiter(config.pulseMaxGlobal);
+  interface EncodedPulse {
+    body: string;
+    etag: string;
+    cacheControl: string;
+  }
+  const pulseInflight = new Map<string, Promise<EncodedPulse>>();
+
+  app.get("/api/v1/pulse", async (req, reply) => {
+    const now = Date.now();
+    reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
+    const parsed = parsePulseParams(
+      req.query as Record<string, unknown>,
+      now,
+      config.replayMaxAgeDays,
+    );
+    if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
+    const { params } = parsed;
+    const key = `${params.from}:${params.to}:${params.stepMs}`;
+    const send = (v: EncodedPulse) => {
+      reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
+      if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
+      return reply.type("application/json; charset=utf-8").send(v.body);
+    };
+
+    let work = pulseInflight.get(key);
+    if (!work) {
+      if (!pulseLimiter.acquire(req.ip)) {
+        return reply
+          .code(429)
+          .header("Retry-After", "2")
+          .send({
+            error: "too_many_requests",
+            message: `máximo ${config.pulseMaxPerIp} peticiones de pulse simultáneas por IP`,
+          });
+      }
+      if (!pulseGlobal.acquire(GLOBAL)) {
+        pulseLimiter.release(req.ip);
+        return reply
+          .code(429)
+          .header("Retry-After", "2")
+          .send({ error: "too_many_requests", message: "demasiadas lecturas de pulse a la vez" });
+      }
+      const ip = req.ip;
+      work = (async (): Promise<EncodedPulse> => {
+        const agg = await source.pulse({
+          ...params,
+          layers: activePulseLayers(config.pulseWeights),
+          cutoff: replayCutoff(now, config.replayRawDays),
+        });
+        const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
+        const body = JSON.stringify(pulse);
+        return {
+          body,
+          etag: pulseEtag(body),
+          cacheControl: pulseCacheControl({
+            to: params.to,
+            now,
+            empty: pulse.points.length === 0,
+          }),
+        };
+      })().finally(() => {
+        pulseLimiter.release(ip);
+        pulseGlobal.release(GLOBAL);
+        pulseInflight.delete(key);
+      });
+      pulseInflight.set(key, work);
+    }
+    try {
+      return send(await work);
+    } catch (e) {
+      req.log.error({ err: e }, "pulse: BD no disponible");
       return reply
         .code(503)
         .header("Retry-After", "5")
