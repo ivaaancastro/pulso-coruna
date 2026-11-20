@@ -345,10 +345,12 @@ export function createReplayController(opts: ReplayControllerOptions): ReplayCon
       };
     },
     applyState(state) {
-      if (state.mode === "replay") enter();
       if (state.mode === "view") exit();
+      // El instante pedido se coloca ANTES de entrar: así el worker descarga directamente la ventana
+      // del enlace y no la de hace una hora (una petición de más a la API, con el límite global de 2).
+      if (state.t !== undefined && state.mode === "replay") initialized = true;
+      else if (state.mode === "replay") enter(); // sin instante: arranca como siempre (hace 1 h) y aplica el resto
       if (state.day !== undefined && madridDayStart(state.day) !== day) {
-        initialized = true;
         day = madridDayStart(state.day);
         limitSet = limitNow();
         clock.setBounds(day, limitSet);
@@ -363,6 +365,7 @@ export function createReplayController(opts: ReplayControllerOptions): ReplayCon
         }
         clock.seek(target);
       }
+      if (state.mode === "replay") enter();
       if (state.playing !== undefined) {
         if (state.playing) clock.play();
         else clock.pause();

@@ -181,4 +181,26 @@ describe("controlador de Reproducir", () => {
     expect(s.controller.getState()).toMatchObject({ mode: "replay", speed: 600, day: json.day });
     expect(Math.abs(s.controller.getState().t - json.t)).toBeLessThan(1000);
   });
+
+  it("abrir con un instante pedido no descarga antes la ventana de hace 1 h", () => {
+    const s = setup();
+    const target = BASE - 30 * 3_600_000; // ayer por la tarde
+    s.controller.applyState({ mode: "replay", t: target, speed: 600, playing: false });
+    s.advance(16);
+    expect(s.controller.getState()).toMatchObject({ mode: "replay", t: target, speed: 600 });
+    expect(s.controller.getState().day).toBe(madridDayStart(target));
+    // El primer mensaje al worker (init) ya lleva el instante del enlace: nada se pide para «hace 1 h».
+    expect(s.sent[0]).toMatchObject({ type: "init", now: target });
+    for (const m of s.sent) if (m.type === "tick") expect(m.now).toBe(target);
+  });
+
+  it("enlace con instante de hoy o futuro: entra en él (futuro acotado a «ahora»)", () => {
+    const a = setup();
+    a.controller.applyState({ mode: "replay", t: BASE - 2 * 3_600_000 });
+    expect(a.sent[0]).toMatchObject({ type: "init", now: BASE - 2 * 3_600_000 });
+    expect(a.controller.getState().t).toBe(BASE - 2 * 3_600_000);
+    const b = setup();
+    b.controller.applyState({ mode: "replay", t: BASE + 100_000 });
+    expect(b.controller.getState().t).toBe(BASE);
+  });
 });

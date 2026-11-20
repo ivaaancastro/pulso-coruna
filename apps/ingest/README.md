@@ -7,3 +7,4 @@ Ingesta: ejecuta los adaptadores (`Adapter<T>`) cada `intervalMs`, valida con `@
 - Migraciones SQL versionadas en `migrations/` (`NNNN_nombre.sql`), aplicadas al arrancar y de forma idempotente.
 - Tests: `pnpm --filter @pulso/ingest test`. Los de integración usan un TimescaleDB efímero en Docker y se saltan solos si no hay Docker (`PULSO_TEST_DB=skip` fuerza saltarlos; `PULSO_TEST_DATABASE_URL` usa una BD ya existente).
 - Producción: `pnpm --filter @pulso/ingest build` genera `dist/main.js` (esbuild, ADR-0017) y `start` lo ejecuta; en Docker lo hace `infra/deploy/Dockerfile.ingest` (`INGEST_MIGRATIONS_DIR` apunta a las migraciones). Ver `docs/deploy.md`.
+- Datos sintéticos (puerta de M6, solo BDs locales): `sh scripts/dev-db.sh` levanta un TimescaleDB efímero y `pnpm seed:synthetic [--hours 36] [--follow]` lo migra y siembra (ids `syn-…`, sin red). Ver `docs/specs/M6-puerta.md`.

@@ -73,6 +73,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
   - [x] M6.3 Modo Reproducir: reloj 1×/60×/600×, selector de día, cursor accesible, worker de histórico y mock (`docs/specs/M6.3-linea-temporal.md`)
 - [x] M6.4 URL compartible
   - [x] M6.4 Estado en el hash (`#v=1&c=…&m=r&t=…&s=…`), restauración de cámara/modo/instante, botón Compartir enlace (es/en/gl); capas reservadas hasta que exista selector (`docs/specs/M6.4-url-compartible.md`)
+- [x] Puerta M6 (`docs/specs/M6-puerta.md`)
+  - Puerta M6: verificada con datos sintéticos; pendiente validación con datos reales y móvil real
 
 ## M7 — Escuchar y Pulso
 

@@ -9,7 +9,7 @@ export const en: Messages = {
   "pulse.scale": "of 100",
   "pulse.placeholder": "Sample value, not real data",
   "mode.label": "Display mode",
-  "mode.view": "Watch",
+  "mode.view": "Now",
   "mode.replay": "Replay",
   "mode.listen": "Listen",
   "mode.soon": "Coming soon",

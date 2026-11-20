@@ -129,7 +129,7 @@ Identidad marítima completa.
 | M6.3 | Línea temporal   | Selector de día, 1×/60×/600×, arrastre fluido a 60 fps             |
 | M6.4 | URL compartible  | Restaura cámara, capas, hora y modo                                |
 
-**Demo:** un día entero en 15 s a 600×.
+**Demo:** un día entero en 2 min 24 s a 600× (24 h ÷ 600 = 144 s; con 1×/60×/600× no hay una velocidad más rápida).
 
 ### M7 — Escuchar y Pulso
 

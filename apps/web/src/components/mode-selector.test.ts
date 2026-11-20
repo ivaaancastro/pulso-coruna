@@ -24,7 +24,7 @@ describe("selector de modo", () => {
     document.body.replaceChildren();
   });
 
-  it("roles ARIA: radiogroup con tres radios, «Ver» marcado", () => {
+  it("roles ARIA: radiogroup con tres radios, «Ahora» marcado", () => {
     const { selector, option } = setup();
     expect(selector.element.getAttribute("role")).toBe("radiogroup");
     expect(selector.element.getAttribute("aria-label")).toBe("Modo de visualización");
@@ -45,7 +45,7 @@ describe("selector de modo", () => {
     expect(selector.status.textContent).toBe("Escuchar estará disponible próximamente.");
   });
 
-  it("Reproducir cambia el modo, avisa y se puede volver a Ver", () => {
+  it("Reproducir cambia el modo, avisa y se puede volver a Ahora", () => {
     const { selector, onChange, option } = setup();
     option("replay").click();
     expect(selector.getMode()).toBe("replay");
@@ -83,7 +83,7 @@ describe("selector de modo", () => {
   it("seleccionar el modo ya activo anuncia sin disparar onChange", () => {
     const { selector, onChange, option } = setup();
     option("view").click();
-    expect(selector.status.textContent).toBe("Modo Ver activo.");
+    expect(selector.status.textContent).toBe("Modo Ahora activo.");
     expect(onChange).not.toHaveBeenCalled();
   });
 });

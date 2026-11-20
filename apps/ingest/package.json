@@ -8,7 +8,8 @@
     "start": "node dist/main.js",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "seed:synthetic": "esbuild scripts/seed-synthetic.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/seed-synthetic.js --log-level=warning && node dist/seed-synthetic.js"
   },
   "dependencies": {
     "@pulso/adapters": "workspace:*",

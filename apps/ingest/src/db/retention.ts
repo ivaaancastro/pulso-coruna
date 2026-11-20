@@ -52,6 +52,24 @@ export interface TargetResult {
   error?: string;
 }
 
+/** SQLSTATE 40P01 (deadlock_detected) o 40001 (serialization_failure): reintentables. */
+function isTransientLockError(e: unknown): boolean {
+  const code = (e as { code?: string } | null)?.code;
+  return code === "40P01" || code === "40001";
+}
+
+/** Ejecuta `fn` reintentando hasta 4 veces (200 ms, 400 ms, 800 ms) si falla por deadlock. */
+export async function withDeadlockRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= attempts || !isTransientLockError(e)) throw e;
+      await new Promise((r) => setTimeout(r, 100 * 2 ** i));
+    }
+  }
+}
+
 /** Clave del advisory lock del job (distinta de la de migraciones). */
 const LOCK_KEY = 7_303_6;
 
@@ -87,14 +105,19 @@ export async function runRetention(
           );
           if (first?.t && first.t.getTime() < cutoff.getTime()) {
             const start = new Date(Math.floor(first.t.getTime() / MIN_MS) * MIN_MS);
-            await conn.unsafe(
-              `call refresh_continuous_aggregate('${t.lowRes}', $1::timestamptz, $2::timestamptz)`,
-              [start.toISOString(), cutoffIso],
-            );
-            const dropped = await conn.unsafe(
-              `select drop_chunks('${t.raw}', older_than => $1::timestamptz) as c`,
-              [cutoffIso],
-            );
+            // Los jobs de fondo de Timescale (política de refresco del agregado) pueden competir por
+            // los mismos locks: un deadlock es transitorio y ambos pasos son idempotentes, así que se
+            // reintenta unas pocas veces antes de darlo por fallo.
+            const dropped = await withDeadlockRetry(async () => {
+              await conn.unsafe(
+                `call refresh_continuous_aggregate('${t.lowRes}', $1::timestamptz, $2::timestamptz)`,
+                [start.toISOString(), cutoffIso],
+              );
+              return conn.unsafe(
+                `select drop_chunks('${t.raw}', older_than => $1::timestamptz) as c`,
+                [cutoffIso],
+              );
+            });
             r.droppedChunks = dropped.length;
           }
         } catch (e) {
