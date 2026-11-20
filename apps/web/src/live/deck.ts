@@ -1,5 +1,6 @@
 import { MapLibreOverlay } from "@deck.gl/maplibre";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { watchDeckCanvas } from "./deck-a11y";
 import { LayerPipeline } from "./layer-pipeline";
 import type { LiveLayerDefinition } from "./layer-registry";
 import type { StoreSource } from "./switchable-store";
@@ -35,6 +36,7 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   const schedule = opts.schedule ?? ((cb) => void requestAnimationFrame(cb));
   const overlay = new MapLibreOverlay({ interleaved: false, layers: [] });
   opts.map.addControl(overlay);
+  const stopWatching = watchDeckCanvas(opts.map.getContainer());
 
   const pipeline = new LayerPipeline({
     definitions: opts.definitions,
@@ -76,6 +78,7 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   return {
     overlay,
     destroy() {
+      stopWatching();
       alive = false;
       unsubscribe();
       unsubscribeStatus?.();

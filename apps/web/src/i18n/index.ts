@@ -15,10 +15,29 @@ export function isLocale(value: string): value is Locale {
   return Object.hasOwn(LOCALES, value);
 }
 
-/** Prioridad: `?lang=`, luego idiomas del navegador, luego es-ES. */
-export function detectLocale(search: string, languages: readonly string[]): Locale {
+/** Clave de `sessionStorage` con el idioma elegido en el selector (solo dura la sesión de la pestaña). */
+export const SESSION_KEY = "pulso.lang";
+
+/** Lee el idioma de la sesión; sin almacenamiento (modo privado, bloqueado) devuelve `null`. */
+export function readSessionLocale(
+  getStorage: () => Pick<Storage, "getItem"> | undefined,
+): string | null {
+  try {
+    return getStorage()?.getItem(SESSION_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Prioridad: `?lang=`, idioma elegido en esta sesión, idiomas del navegador y, por último, es. */
+export function detectLocale(
+  search: string,
+  languages: readonly string[],
+  stored: string | null = null,
+): Locale {
   const asked = new URLSearchParams(search).get("lang");
   if (asked && isLocale(asked)) return asked;
+  if (stored && isLocale(stored)) return stored;
   for (const tag of languages) {
     const base = tag.toLowerCase().split("-")[0] ?? "";
     if (isLocale(base)) return base;

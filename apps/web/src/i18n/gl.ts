@@ -2,6 +2,13 @@ import type { Messages } from "./es";
 
 export const gl: Messages = {
   "app.name": "Pulso A Coruña",
+  "app.description":
+    "A Coruña como un organismo vivo: autobuses, bicis, vento, mareas, barcos, aire e avións.",
+  "lang.label": "Idioma",
+  "lang.current": "Idioma: {language}",
+  "lang.gl": "Galego",
+  "lang.es": "Castellano",
+  "lang.en": "English",
   "map.label": "Mapa 3D da Coruña: península, baía e edificios",
   "map.unavailable": "Non se puido cargar o mapa neste dispositivo",
   "clock.label": "Hora actual na Coruña",
@@ -63,6 +70,7 @@ export const gl: Messages = {
   "air.level.6": "Extremadamente mala",
   "air.eaqi": "Índice europeo (EAQI)",
   "air.eaqi.value": "{value}, nivel {level} de 6",
+  "air.attribution": "Open-Meteo.com (datos CAMS)",
   "air.model": "Modelo CAMS, non é unha medición",
   "air.city": "Un só valor para toda a cidade (cela duns 40 km)",
   "air.pollutants": "Contaminantes",

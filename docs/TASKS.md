@@ -87,8 +87,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M8 — Pulido y lanzamiento
 
-- [ ] M8.1 Idiomas gl/es/en
-- [ ] M8.2 Accesibilidad
+- [x] M8.1 Idiomas gl/es/en (`docs/specs/M8.1-idiomas.md`)
+- [x] M8.2 Accesibilidad
 - [ ] M8.3 Móvil real antiguo
 - [x] M8.4 Estado y créditos
 - [ ] M8.5 Clip vertical y OG

@@ -46,8 +46,16 @@ export function startAudio(opts: StartAudioOptions): AudioHandle {
     else void engine.resume().catch(() => undefined);
   };
   doc.addEventListener("visibilitychange", onVisibility);
-  if (doc.hidden) onVisibility();
-  conductor.start();
+  try {
+    if (doc.hidden) onVisibility();
+    conductor.start();
+  } catch (error) {
+    // Un fallo en el primer ciclo no deja el listener ni los nodos vivos (el motor ya existe).
+    doc.removeEventListener("visibilitychange", onVisibility);
+    conductor.stop();
+    void engine.dispose().catch(() => undefined);
+    throw error;
+  }
 
   let stopped: Promise<void> | null = null;
   const handle: AudioHandle = {

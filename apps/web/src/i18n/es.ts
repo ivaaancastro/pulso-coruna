@@ -1,5 +1,12 @@
 export const es = {
   "app.name": "Pulso A Coruña",
+  "app.description":
+    "A Coruña como un organismo vivo: buses, bicis, viento, mareas, barcos, aire y aviones.",
+  "lang.label": "Idioma",
+  "lang.current": "Idioma: {language}",
+  "lang.gl": "Galego",
+  "lang.es": "Castellano",
+  "lang.en": "English",
   "map.label": "Mapa 3D de A Coruña: península, bahía y edificios",
   "map.unavailable": "No se pudo cargar el mapa en este dispositivo",
   "clock.label": "Hora actual en A Coruña",
@@ -61,6 +68,7 @@ export const es = {
   "air.level.6": "Extremadamente mala",
   "air.eaqi": "Índice europeo (EAQI)",
   "air.eaqi.value": "{value}, nivel {level} de 6",
+  "air.attribution": "Open-Meteo.com (datos CAMS)",
   "air.model": "Modelo CAMS, no medición",
   "air.city": "Un solo valor para toda la ciudad (celda de unos 40 km)",
   "air.pollutants": "Contaminantes",

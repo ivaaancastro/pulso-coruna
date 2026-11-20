@@ -438,3 +438,94 @@ body {
     margin: 0 0 0 calc(var(--pulso-space-2) * -1);
   }
 }
+
+/* Selector de idioma (M8.1): botón con el idioma actual a la izquierda de «Compartir», arriba en móvil
+   y abajo a la derecha en escritorio (arriba vive la etiqueta de aire); despliega un menú de tres opciones. */
+.lang {
+  position: absolute;
+  top: calc(var(--pulso-space-6) + env(safe-area-inset-top));
+  right: calc(
+    var(--pulso-gutter) + var(--pulso-touch) + var(--pulso-space-2) + env(safe-area-inset-right)
+  );
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--pulso-space-2);
+  pointer-events: none;
+}
+
+.lang__toggle,
+.lang__option {
+  min-width: var(--pulso-touch);
+  min-height: var(--pulso-touch);
+  padding: 0 var(--pulso-space-3);
+  font: inherit;
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  letter-spacing: 0.04em;
+  color: var(--pulso-text);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-pill);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color var(--pulso-dur-base) var(--pulso-ease-out),
+    color var(--pulso-dur-base) var(--pulso-ease-out);
+}
+
+.lang__menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pulso-space-1);
+  padding: var(--pulso-space-1);
+  background: var(--pulso-surface-overlay);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: calc(var(--pulso-touch) / 2 + var(--pulso-space-1));
+  pointer-events: auto;
+}
+
+.lang__menu[hidden] {
+  display: none;
+}
+
+.lang__option {
+  letter-spacing: 0;
+  background: transparent;
+  border-color: transparent;
+}
+
+.lang__toggle:hover,
+.lang__option:hover:not([aria-pressed="true"]) {
+  background: var(--pulso-surface-overlay);
+}
+
+.lang__toggle[aria-expanded="true"],
+.lang__option[aria-pressed="true"] {
+  background: var(--pulso-text);
+  color: var(--pulso-bg);
+}
+
+.lang__option[aria-pressed="true"] {
+  cursor: default;
+}
+
+@media (min-width: 1024px) {
+  .lang {
+    top: auto;
+    bottom: calc(var(--pulso-space-7) + var(--pulso-space-2));
+    flex-direction: column-reverse;
+  }
+}
+
+/* prefers-reduced-motion: los fundidos de color de los controles pasan a cambio directo. */
+@media (prefers-reduced-motion: reduce) {
+  .modes__option,
+  .listen,
+  .lang__toggle,
+  .lang__option {
+    transition: none;
+  }
+}

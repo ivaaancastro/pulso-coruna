@@ -3,9 +3,10 @@ import "./styles/shell.css";
 import { createUserContext } from "./audio/context";
 import type { AudioHandle } from "./audio/start";
 import { createClock } from "./components/clock";
+import { createLanguageSelector } from "./components/language-selector";
 import { createModeSelector } from "./components/mode-selector";
 import { createPulseIndex } from "./components/pulse-index";
-import { createTranslator, detectLocale } from "./i18n";
+import { createTranslator, DEFAULT_LOCALE, detectLocale, readSessionLocale } from "./i18n";
 import { resolvePulseUrl, resolveStreamUrl } from "./live/config";
 import { deriveSnapshot } from "./pulse/model";
 import type { LiveHandle } from "./live/start";
@@ -15,11 +16,23 @@ import type { ShareState } from "./share/url-state";
 import { createCreditsLink } from "./status/link";
 import { createBaseNow, createNow, parseTimeOverride } from "./time/now";
 
-const locale = detectLocale(window.location.search, navigator.languages);
+const locale = detectLocale(
+  window.location.search,
+  navigator.languages,
+  readSessionLocale(() => window.sessionStorage),
+);
 const t = createTranslator(locale);
 
+// Metadatos según el idioma (index.html trae los de es). El manifiesto lo lee el navegador al
+// instalar: cada idioma tiene el suyo (`manifest.<lang>.webmanifest`).
 document.documentElement.lang = locale;
 document.title = t("app.name");
+document.querySelector('meta[name="description"]')?.setAttribute("content", t("app.description"));
+if (locale !== DEFAULT_LOCALE) {
+  document
+    .querySelector('link[rel="manifest"]')
+    ?.setAttribute("href", `/manifest.${locale}.webmanifest`);
+}
 
 const app = document.getElementById("app");
 if (!app) throw new Error("Falta #app en index.html");
@@ -193,7 +206,7 @@ bottom.append(modes.element, modes.status, creditsLink);
 
 const shell = document.createElement("main");
 shell.className = "shell";
-shell.append(top, bottom);
+shell.append(top, createLanguageSelector({ t, locale }), bottom);
 
 // Velo superior: funde el mar con el fondo hacia el horizonte (el color lo fija el mapa según la luz).
 const veil = document.createElement("div");

@@ -18,7 +18,6 @@ export const WARN_RGB: Rgb = [255, 176, 32];
 /** `--pulso-error` #FF6B6B. */
 export const ERROR_RGB: Rgb = [255, 107, 107];
 
-export const ATTRIBUTION = "Open-Meteo.com (datos CAMS)";
 export const ATTRIBUTION_URL = "https://open-meteo.com/";
 
 export type Pollutant = "pm25" | "pm10" | "no2" | "o3" | "so2";
