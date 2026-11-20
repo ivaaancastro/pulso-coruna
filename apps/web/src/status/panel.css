@@ -299,3 +299,10 @@
     padding: 0 var(--pulso-space-5) var(--pulso-space-5);
   }
 }
+
+/* prefers-reduced-motion: el panel aparece sin animación. */
+@media (prefers-reduced-motion: reduce) {
+  .credits[open] {
+    animation: none;
+  }
+}

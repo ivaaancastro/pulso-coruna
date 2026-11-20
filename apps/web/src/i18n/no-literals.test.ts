@@ -24,6 +24,12 @@ interface Allowed {
   why: string;
 }
 
+/** Ficheros enteros exentos: datos de catálogo cuyo texto son nombres propios y fórmulas legales. */
+const ALLOWED_FILES: Readonly<Record<string, string>> = {
+  "status/sources.ts":
+    "Catálogo de atribuciones: nombres propios de fuentes y textos de licencia/atribución exigidos por cada titular (no se traducen).",
+};
+
 const ALLOWED: readonly Allowed[] = [
   {
     file: "live/deck-a11y.ts",
@@ -260,6 +266,7 @@ function audit(file: string, code: string): Finding[] {
   const seen = new Set<ts.Node>();
   const report = (node: ts.Node, text: string, why: string): void => {
     if (seen.has(node)) return;
+    if (ALLOWED_FILES[rel]) return;
     if (ALLOWED.some((a) => a.file === rel && a.text === text)) return;
     seen.add(node);
     const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1;

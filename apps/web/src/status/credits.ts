@@ -69,7 +69,7 @@ export function createCreditsPanel(opts: CreditsOptions): CreditsPanel {
   dialog.innerHTML =
     `<div class="credits__sheet"><header class="credits__header">` +
     `<h2 class="credits__title" id="credits-title">${t("credits.title")}</h2>` +
-    `<button type="button" class="credits__close" aria-label="${t("card.close")}">×</button></header>` +
+    `<button type="button" class="credits__close">×</button></header>` +
     `<div class="credits__body"><p class="credits__intro">${t("credits.intro")}</p>` +
     `<div class="credits__notice"></div>` +
     `<h3 class="credits__section">${t("credits.sources")}</h3><ul class="credits__list"></ul>` +
@@ -80,6 +80,7 @@ export function createCreditsPanel(opts: CreditsOptions): CreditsPanel {
   const notice = q<HTMLElement>(".credits__notice");
   const list = q<HTMLElement>(".credits__list");
   const live = q<HTMLElement>("[role=status]");
+  q<HTMLElement>(".credits__close").setAttribute("aria-label", t("card.close"));
 
   let view: StatusView = { kind: opts.noApi ? "noapi" : "loading" };
   let opener: HTMLElement | null = null;
