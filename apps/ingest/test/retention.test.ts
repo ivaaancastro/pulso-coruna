@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { silentLogger } from "../src/clock.js";
 import { loadConfig } from "../src/config.js";
 import { migrate } from "../src/db/migrate.js";
-import { cutoffFor, runRetention, startRetention } from "../src/db/retention.js";
+import { cutoffFor, runRetention, startRetention, withDeadlockRetry } from "../src/db/retention.js";
 import { FakeClock } from "./fake-clock.js";
 import { createTestDb, testDatabaseUrl } from "./test-db.js";
 
@@ -221,5 +221,27 @@ describe.skipIf(!testDatabaseUrl)("retención contra TimescaleDB (sintético, >3
     await clock.advance(1000);
     await vi.waitFor(async () => expect(await lastRun()).toBe(now + 1000), { timeout: 10_000 });
     await job.stop();
+  });
+});
+
+describe("withDeadlockRetry (puro)", () => {
+  it("reintenta ante deadlock y devuelve el resultado", async () => {
+    let n = 0;
+    const r = await withDeadlockRetry(async () => {
+      if (++n < 3) throw Object.assign(new Error("deadlock detected"), { code: "40P01" });
+      return "ok";
+    });
+    expect(r).toBe("ok");
+    expect(n).toBe(3);
+  });
+  it("no reintenta otros errores", async () => {
+    let n = 0;
+    await expect(
+      withDeadlockRetry(async () => {
+        n++;
+        throw new Error("boom");
+      }),
+    ).rejects.toThrow("boom");
+    expect(n).toBe(1);
   });
 });
