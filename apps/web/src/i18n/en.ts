@@ -2,6 +2,13 @@ import type { Messages } from "./es";
 
 export const en: Messages = {
   "app.name": "Pulso A Coruña",
+  "app.description":
+    "A Coruña as a living organism: buses, bikes, wind, tides, ships, air and planes.",
+  "lang.label": "Language",
+  "lang.current": "Language: {language}",
+  "lang.gl": "Galego",
+  "lang.es": "Castellano",
+  "lang.en": "English",
   "map.label": "3D map of A Coruña: peninsula, bay and buildings",
   "map.unavailable": "The map could not be loaded on this device",
   "clock.label": "Current time in A Coruña",
@@ -63,6 +70,7 @@ export const en: Messages = {
   "air.level.6": "Extremely poor",
   "air.eaqi": "European index (EAQI)",
   "air.eaqi.value": "{value}, level {level} of 6",
+  "air.attribution": "Open-Meteo.com (CAMS data)",
   "air.model": "CAMS model, not a measurement",
   "air.city": "A single value for the whole city (a cell of about 40 km)",
   "air.pollutants": "Pollutants",
@@ -109,7 +117,7 @@ export const en: Messages = {
   "status.layer.sea": "Sea",
   "status.layer.ship": "Ships",
   "status.layer.air": "Air",
-  "status.layer.plane": "Planes",
+  "status.layer.plane": "Aircraft",
   "status.layer.train": "Train",
   "status.nodata": "{layer}: no data, last seen {ago}",
   "status.nodata.unknown": "{layer}: no data",
