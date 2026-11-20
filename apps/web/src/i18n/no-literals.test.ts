@@ -24,6 +24,12 @@ interface Allowed {
   why: string;
 }
 
+/** Ficheros enteros exentos: datos de catálogo cuyo texto son nombres propios y fórmulas legales. */
+const ALLOWED_FILES: Readonly<Record<string, string>> = {
+  "status/sources.ts":
+    "Catálogo de atribuciones: nombres propios de fuentes y textos de licencia/atribución exigidos por cada titular (no se traducen).",
+};
+
 const ALLOWED: readonly Allowed[] = [
   {
     file: "live/deck-a11y.ts",
@@ -260,6 +266,7 @@ function audit(file: string, code: string): Finding[] {
   const seen = new Set<ts.Node>();
   const report = (node: ts.Node, text: string, why: string): void => {
     if (seen.has(node)) return;
+    if (ALLOWED_FILES[rel]) return;
     if (ALLOWED.some((a) => a.file === rel && a.text === text)) return;
     seen.add(node);
     const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1;
@@ -343,6 +350,13 @@ describe("sin cadenas de interfaz fuera de i18n", () => {
       findings.map((f) => `${f.file}:${f.line} [${f.why}] ${JSON.stringify(f.text)}`),
       "mueve el texto a src/i18n (es, gl, en) o justifícalo en ALLOWED",
     ).toEqual([]);
+  });
+
+  it("los ficheros exentos enteros son solo datos (sin funciones ni lógica)", () => {
+    for (const file of Object.keys(ALLOWED_FILES)) {
+      const code = readFileSync(join(SRC, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+      expect(code, file).not.toMatch(/\bfunction\b|=>|\bclass\b|\bimport\s*\(/);
+    }
   });
 
   it("la lista de excepciones no tiene entradas muertas ni sin motivo", () => {

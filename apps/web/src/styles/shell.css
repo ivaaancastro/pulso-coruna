@@ -405,6 +405,40 @@ body {
   }
 }
 
+/* Estado y créditos (M8.4): enlace discreto. Móvil: bajo el selector de modo (arriba de la atribución del mapa, que ocupa dos líneas). Escritorio: abajo a la izquierda, a la altura de la atribución. */
+.shell__bottom > .credits-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: var(--pulso-space-1);
+  padding: 0 var(--pulso-space-2);
+  font: inherit;
+  font-size: var(--pulso-text-micro);
+  font-stretch: 90%;
+  color: var(--pulso-text-subtle);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pulso-radius-1);
+  text-shadow:
+    0 0 4px var(--pulso-bg),
+    0 0 8px var(--pulso-bg);
+  cursor: pointer;
+}
+
+.shell__bottom > .credits-link:hover {
+  color: var(--pulso-text);
+  text-decoration: underline;
+}
+
+@media (min-width: 1024px) {
+  .shell__bottom > .credits-link {
+    position: absolute;
+    left: calc(var(--pulso-gutter) + env(safe-area-inset-left));
+    bottom: calc(var(--pulso-space-3) + env(safe-area-inset-bottom));
+    margin: 0 0 0 calc(var(--pulso-space-2) * -1);
+  }
+}
+
 /* Selector de idioma (M8.1): botón con el idioma actual a la izquierda de «Compartir», arriba en móvil
    y abajo a la derecha en escritorio (arriba vive la etiqueta de aire); despliega un menú de tres opciones. */
 .lang {
