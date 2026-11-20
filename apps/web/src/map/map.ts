@@ -176,7 +176,8 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
     const c = map.getCenter();
     const lng = Math.min(BOUNDS[1][0], Math.max(BOUNDS[0][0], c.lng));
     const lat = Math.min(BOUNDS[1][1], Math.max(BOUNDS[0][1], c.lat));
-    if (lng !== c.lng || lat !== c.lat) map.easeTo({ center: [lng, lat], duration: 400 });
+    if (lng !== c.lng || lat !== c.lat)
+      map.easeTo({ center: [lng, lat], duration: reducedQuery.matches ? 0 : 400 });
   });
   map.on("error", (e) => console.error("[map]", e.error?.message ?? e));
 

@@ -52,12 +52,15 @@ describe("selector de modo", () => {
     expect(option("replay").tabIndex).toBe(-1);
   });
 
-  it("flechas, Inicio y Fin mueven el foco (cíclico) y siguen siendo focusables", () => {
-    const { option } = setup();
+  it("flechas, Inicio y Fin mueven el foco (cíclico) y marcan la opción (patrón radio)", () => {
+    const { option, selector } = setup();
     option("view").focus();
     key(option("view"), "ArrowRight");
     expect(document.activeElement).toBe(option("replay"));
     expect(option("replay").tabIndex).toBe(0);
+    expect(option("replay").getAttribute("aria-checked")).toBe("true");
+    expect(option("view").tabIndex).toBe(-1);
+    expect(selector.getMode()).toBe("replay");
     key(option("replay"), "ArrowRight");
     expect(document.activeElement).toBe(option("view"));
     key(option("view"), "ArrowLeft");
