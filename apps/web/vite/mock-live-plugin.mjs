@@ -1,6 +1,7 @@
 /* global URL, Buffer, setInterval, clearInterval */
 import { createHash } from "node:crypto";
 import { encode } from "@msgpack/msgpack";
+import { MOCK_HEALTH_PATH, handleMockHealth } from "../src/live/dev/mock-health.ts";
 import { MOCK_PULSE_PATH, handleMockPulse } from "../src/live/dev/mock-pulse.ts";
 import { MOCK_REPLAY_PATH, handleMockReplay } from "../src/live/dev/mock-replay.ts";
 import { MockWorld } from "../src/live/dev/mock-sim.ts";
@@ -49,6 +50,13 @@ export function mockLivePlugin(options = {}) {
         if (req.method !== "GET") return next();
         const url = new URL(req.url ?? "", "http://localhost");
         const reply = handleMockPulse(url.searchParams, { now: Date.now() });
+        for (const [name, value] of Object.entries(reply.headers)) res.setHeader(name, value);
+        res.statusCode = reply.status;
+        res.end(JSON.stringify(reply.body));
+      });
+      server.middlewares.use(MOCK_HEALTH_PATH, (req, res, next) => {
+        if (req.method !== "GET") return next();
+        const reply = handleMockHealth({ now: Date.now() });
         for (const [name, value] of Object.entries(reply.headers)) res.setHeader(name, value);
         res.statusCode = reply.status;
         res.end(JSON.stringify(reply.body));

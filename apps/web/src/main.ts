@@ -12,6 +12,7 @@ import type { LiveHandle } from "./live/start";
 import type { ReplayController, ReplayState } from "./replay/controller";
 import type { PulsoMap } from "./map/map";
 import type { ShareState } from "./share/url-state";
+import { createCreditsLink } from "./status/link";
 import { createBaseNow, createNow, parseTimeOverride } from "./time/now";
 
 const locale = detectLocale(window.location.search, navigator.languages);
@@ -183,9 +184,12 @@ const top = document.createElement("header");
 top.className = "shell__top";
 top.append(clock.element, pulse.element);
 
+// Estado y créditos (M8.4): el panel abre con los créditos al instante; el estado es un chunk diferido.
+const creditsLink = createCreditsLink({ t, locale, streamUrl });
+
 const bottom = document.createElement("div");
 bottom.className = "shell__bottom";
-bottom.append(modes.element, modes.status);
+bottom.append(modes.element, modes.status, creditsLink);
 
 const shell = document.createElement("main");
 shell.className = "shell";

@@ -90,7 +90,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [ ] M8.1 Idiomas gl/es/en
 - [ ] M8.2 Accesibilidad
 - [ ] M8.3 Móvil real antiguo
-- [ ] M8.4 Estado y créditos
+- [x] M8.4 Estado y créditos
 - [ ] M8.5 Clip vertical y OG
 - [ ] M8.6 README, GIF y post técnico
 - [ ] M8.7 Contacto institucional (humano)
