@@ -352,6 +352,13 @@ describe("sin cadenas de interfaz fuera de i18n", () => {
     ).toEqual([]);
   });
 
+  it("los ficheros exentos enteros son solo datos (sin funciones ni lógica)", () => {
+    for (const file of Object.keys(ALLOWED_FILES)) {
+      const code = readFileSync(join(SRC, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+      expect(code, file).not.toMatch(/\bfunction\b|=>|\bclass\b|\bimport\s*\(/);
+    }
+  });
+
   it("la lista de excepciones no tiene entradas muertas ni sin motivo", () => {
     for (const a of ALLOWED) {
       expect(a.why.length, `${a.file}`).toBeGreaterThan(10);

@@ -3,6 +3,8 @@
  * fórmulas de atribución son literales transcritos de `docs/sources/<fuente>.md` y no se traducen.
  * No se inventa ningún término: lo que la nota no documenta queda con `license: null`.
  * Las licencias y atribuciones son decisión humana; al cerrar una, se edita aquí.
+ * Ojo: iTranvías, Portus, aisstream y OpenSky no tienen fórmula de atribución documentada; lo que se
+ * muestra de ellas es solo el nombre de la fuente (provisional, junto a «licencia pendiente»).
  */
 export interface LicenseInfo {
   name: string;
@@ -64,7 +66,7 @@ export const SOURCES: readonly SourceInfo[] = [
   {
     key: "meteogalicia",
     name: "MeteoGalicia",
-    attribution: "Fonte dos datos: Xunta de Galicia (MeteoGalicia)",
+    attribution: "Fonte dos datos: Xunta de Galicia",
     url: "https://abertos.xunta.gal",
     // Licencia declarada en el catálogo Abert@s (docs/sources/meteogalicia.md).
     license: {
