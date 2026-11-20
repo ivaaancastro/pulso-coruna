@@ -104,7 +104,11 @@ export function createModeSelector(
     else return;
     event.preventDefault();
     const mode = MODES[next];
-    if (mode) buttons.get(mode)?.focus();
+    if (!mode) return;
+    // Patrón radio (APG): la flecha mueve el foco y marca la opción; la tabulación no se queda en
+    // un radio sin marcar.
+    buttons.get(mode)?.focus();
+    select(mode);
   });
 
   const listen = document.createElement("button");
