@@ -299,4 +299,29 @@ describe("contexto y arranque", () => {
       vi.useRealTimers();
     }
   });
+
+  it("startAudio: si el arranque falla tras crear el motor, retira el listener y libera los nodos", async () => {
+    const ctx = new FakeContext();
+    const listeners = new Map<string, () => void>();
+    const doc = {
+      hidden: false,
+      addEventListener: (type: "visibilitychange", fn: () => void) => void listeners.set(type, fn),
+      removeEventListener: (type: "visibilitychange") => void listeners.delete(type),
+    };
+    const store = {
+      items: (): ReadonlyMap<string, LayerItem> => {
+        throw new Error("almacén roto");
+      },
+    };
+    vi.useFakeTimers();
+    try {
+      expect(() => startAudio({ ctx, store, doc })).toThrow("almacén roto");
+      expect(listeners.has("visibilitychange")).toBe(false);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(ctx.live()).toEqual([]);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -23,7 +23,7 @@ function setup(over: Partial<StartShareOptions> = {}) {
   });
   const host = document.createElement("main");
   document.body.replaceChildren(host);
-  let mode: "view" | "replay" | "listen" = "view";
+  let mode: "view" | "replay" = "view";
   const replay = {
     active: true,
     getState: () => ({ mode: "replay", t: Date.parse("2026-11-18T10:30:00Z"), speed: 60 }),

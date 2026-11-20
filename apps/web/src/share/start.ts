@@ -13,7 +13,7 @@ export interface StartShareOptions {
   t: Translate;
   /** Estado leído del hash al abrir (ya validado). */
   initial: ShareState;
-  getMode(): "view" | "replay" | "listen";
+  getMode(): "view" | "replay";
   getReplay(): ReplayController | null;
   /** Entra en Reproducir con ese instante/velocidad (el modo y la carga diferida son de `main.ts`). */
   restoreReplay(state: ShareState): Promise<void>;
