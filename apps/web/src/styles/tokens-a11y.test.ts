@@ -11,7 +11,10 @@ for (const m of css.matchAll(/--pulso-([a-z-]+):\s*(#[0-9a-fA-F]{6})\b/g)) {
 }
 const rgb = (name: string) => {
   const hex = tokens.get(name);
-  if (!hex) throw new Error(`Falta el token --pulso-${name}`);
+  if (!hex)
+    throw new Error(
+      `Falta el token --pulso-${name} en tokens.css (los tokens de color deben ser hexadecimales de 6 dígitos, #rrggbb, para que el test los lea)`,
+    );
   return parseHex(hex);
 };
 

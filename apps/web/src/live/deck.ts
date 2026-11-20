@@ -1,5 +1,6 @@
 import { MapLibreOverlay } from "@deck.gl/maplibre";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { watchDeckCanvas } from "./deck-a11y";
 import { LayerPipeline } from "./layer-pipeline";
 import type { LiveLayerDefinition } from "./layer-registry";
 import type { StoreSource } from "./switchable-store";
@@ -31,26 +32,11 @@ export interface LiveOverlay {
   destroy(): void;
 }
 
-/**
- * El canvas de deck.gl es decorativo para la accesibilidad (los objetos solo se eligen con puntero):
- * sin nombre ni rol y con `tabindex=0` sería una parada de teclado vacía. El teclado usa el mapa
- * (MapLibre) y los botones del shell.
- */
-export function hideDeckCanvas(container: ParentNode): boolean {
-  const canvases = container.querySelectorAll<HTMLCanvasElement>(".deck-widget-container canvas");
-  for (const canvas of canvases) {
-    canvas.tabIndex = -1;
-    canvas.setAttribute("aria-hidden", "true");
-  }
-  return canvases.length > 0;
-}
-
 export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   const schedule = opts.schedule ?? ((cb) => void requestAnimationFrame(cb));
   const overlay = new MapLibreOverlay({ interleaved: false, layers: [] });
   opts.map.addControl(overlay);
-  const container = opts.map.getContainer();
-  let canvasHidden = hideDeckCanvas(container);
+  const stopWatching = watchDeckCanvas(opts.map.getContainer());
 
   const pipeline = new LayerPipeline({
     definitions: opts.definitions,
@@ -76,7 +62,6 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
     queued = false;
     if (!alive) return;
     overlay.setProps({ layers: pipeline.collect() });
-    if (!canvasHidden) canvasHidden = hideDeckCanvas(container);
     // Capas animadas: un fotograma tras otro, salvo con reduced-motion (ahí solo cuando cambian los datos).
     if ((animated && !opts.reducedMotion()) || pipeline.isFading) request();
   };
@@ -93,6 +78,7 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   return {
     overlay,
     destroy() {
+      stopWatching();
       alive = false;
       unsubscribe();
       unsubscribeStatus?.();

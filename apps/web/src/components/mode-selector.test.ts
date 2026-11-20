@@ -71,6 +71,39 @@ describe("selector de modo", () => {
     expect(document.activeElement).toBe(option("replay"));
   });
 
+  it("cada tecla de navegación llama a onChange una sola vez y solo si cambia el modo", () => {
+    const { onChange, option } = setup();
+    option("view").focus();
+    key(option("view"), "ArrowRight"); // view -> replay
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith("replay");
+    key(option("replay"), "End"); // ya en el último: sin cambio
+    expect(onChange).toHaveBeenCalledTimes(1);
+    key(option("replay"), "ArrowRight"); // da la vuelta: replay -> view
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange).toHaveBeenLastCalledWith("view");
+    key(option("view"), "Home"); // ya en el primero: sin cambio
+    expect(onChange).toHaveBeenCalledTimes(2);
+    key(option("view"), "ArrowDown");
+    expect(onChange).toHaveBeenCalledTimes(3);
+    key(option("replay"), "ArrowUp");
+    expect(onChange).toHaveBeenCalledTimes(4);
+    key(option("view"), "End");
+    expect(onChange).toHaveBeenCalledTimes(5);
+    key(option("replay"), "Home");
+    expect(onChange).toHaveBeenCalledTimes(6);
+  });
+
+  it("volver a enfocar la opción activa o pulsar teclas ajenas no dispara onChange", () => {
+    const { onChange, option } = setup();
+    option("view").focus();
+    option("view").blur();
+    option("view").focus();
+    key(option("view"), "a");
+    key(option("view"), "Tab");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("seleccionar el modo ya activo anuncia sin disparar onChange", () => {
     const { selector, onChange, option } = setup();
     option("view").click();
