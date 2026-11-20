@@ -19,6 +19,8 @@ export interface PulseControllerOptions {
   url: string;
   /** Reloj de la app: en Reproducir, el reproducido (`time/now.ts`). */
   now: () => number;
+  /** Reloj de pared (monótono) para el reintento: `now` en Reproducir puede ir hacia atrás o muy rápido. */
+  wall?: () => number;
   render: (snapshot: PulseSnapshot) => void;
   fetchWindow: (url: string, w: PulseWindow, signal: AbortSignal) => Promise<PulseData>;
   visibility: { hidden: () => boolean; subscribe: (cb: () => void) => () => void };
@@ -39,6 +41,7 @@ export interface PulseController {
  * visible, con antirrebote al mover el reloj de Reproducir y reintento tras un fallo.
  */
 export function createPulseController(opts: PulseControllerOptions): PulseController {
+  const wall = opts.wall ?? ((): number => performance.now());
   const setTimer = opts.setTimer ?? ((cb, ms) => setTimeout(cb, ms));
   const clearTimer = opts.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   let data: PulseData | null = null;
@@ -63,7 +66,7 @@ export function createPulseController(opts: PulseControllerOptions): PulseContro
       .catch((error: unknown) => {
         if (abort.signal.aborted) return;
         const kind = (error as { kind?: PulseFailure }).kind === "nodata" ? "nodata" : "error";
-        failure = { to: w.to, kind, at: opts.now() };
+        failure = { to: w.to, kind, at: wall() };
       })
       .finally(() => {
         if (inFlight?.abort === abort) inFlight = null;
@@ -77,7 +80,7 @@ export function createPulseController(opts: PulseControllerOptions): PulseContro
     const w = pulseWindow(t);
     const failed = failure?.to === w.to ? failure : null;
     const have = data?.to === w.to;
-    const retryDue = failed ? t - failed.at >= RETRY_MS : true;
+    const retryDue = failed ? wall() - failed.at >= RETRY_MS : true;
     const busy = inFlight?.to === w.to;
     if (!have && !busy && retryDue && !opts.visibility.hidden() && pending?.to !== w.to) {
       if (pending) clearTimer(pending.timer);

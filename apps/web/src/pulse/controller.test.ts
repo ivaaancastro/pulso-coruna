@@ -32,6 +32,7 @@ function setup(over: Partial<PulseControllerOptions> = {}) {
   const controller = createPulseController({
     url: "/api/v1/pulse",
     now: () => now,
+    wall: () => Date.now(),
     render: (s) => snaps.push(s),
     fetchWindow,
     visibility: {
@@ -137,9 +138,30 @@ describe("controlador del índice", () => {
     fail = false;
     await flush(RETRY_MS - 2000);
     expect(s.last().status).toBe("error");
-    s.setNow(T0 + RETRY_MS); // el reloj avanza con el tiempo
+    await flush(2500); // el reintento se mide con reloj de pared
     await flush(TICK_MS * 3);
     expect(s.last().status).toBe("ready");
+    s.controller.destroy();
+  });
+
+  it("el reintento no depende del reloj de la app (Reproducir puede ir hacia atrás o muy rápido)", async () => {
+    let calls = 0;
+    const s = setup({
+      fetchWindow: async () => {
+        calls++;
+        throw new PulseFetchError("HTTP 503", "error");
+      },
+    });
+    s.controller.start();
+    await flush();
+    expect(calls).toBe(1);
+    // El reloj reproducido salta una hora hacia atrás y vuelve: la ventana es otra y luego la misma.
+    s.setNow(T0 - 3_600_000 * 20);
+    s.setNow(T0 + 5000);
+    await flush(TICK_MS * 5);
+    expect(calls).toBe(1); // aún no han pasado 30 s de pared
+    await flush(RETRY_MS);
+    expect(calls).toBe(2);
     s.controller.destroy();
   });
 

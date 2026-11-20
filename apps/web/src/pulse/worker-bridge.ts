@@ -5,6 +5,8 @@ import type { PulseWorkerInput, PulseWorkerOutput } from "./worker-core";
 export interface PulseWorkerLike {
   postMessage(message: PulseWorkerInput): void;
   onmessage: ((event: MessageEvent<PulseWorkerOutput>) => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  onmessageerror: ((event: unknown) => void) | null;
   terminate(): void;
 }
 
@@ -28,6 +30,14 @@ export function createPulseWorkerFetcher(worker: PulseWorkerLike): PulseWorkerFe
     if (m.type === "data") slot.resolve(m.data);
     else slot.reject(new PulseFetchError("fallo en el worker del índice", m.kind));
   };
+  const failAll = (): void => {
+    const slots = [...waiting.values()];
+    waiting.clear();
+    for (const slot of slots)
+      slot.reject(new PulseFetchError("fallo del worker del índice", "error"));
+  };
+  worker.onerror = failAll;
+  worker.onmessageerror = failAll;
   return {
     fetchWindow(url, w, signal) {
       return new Promise<PulseData>((resolve, reject) => {

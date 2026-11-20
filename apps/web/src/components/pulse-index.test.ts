@@ -58,6 +58,12 @@ describe("índice Pulso (vista)", () => {
     expect(view.element.dataset.fixed).toBe("true");
   });
 
+  it("la nota es una región role=status", () => {
+    const { q } = setup();
+    expect(q(".pulse__note").getAttribute("role")).toBe("status");
+    expect(q(".pulse__number").getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("perfil aprendido: sin etiqueta de perfil fijo", () => {
     const { view, q } = setup();
     view.render(deriveSnapshot(data("learned"), null, NOW));

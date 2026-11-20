@@ -84,6 +84,8 @@ export function createPulseIndex(t: Translate, options: PulseIndexOptions = {}):
 
   const note = document.createElement("p");
   note.className = "pulse__note";
+  // Región educada: solo se anuncia el cambio de estado (la nota), no cada refresco del valor.
+  note.setAttribute("role", "status");
 
   root.append(label, figure, svg, note);
 

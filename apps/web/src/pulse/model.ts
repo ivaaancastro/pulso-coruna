@@ -3,7 +3,7 @@ import type { PulsePoint, PulseProfile } from "@pulso/schema";
 /** Paso de la serie (5 min) y ventana (24 h): la ventana alineada al paso permite cachear en CDN. */
 export const PULSE_STEP_MS = 300_000;
 export const PULSE_WINDOW_MS = 24 * 3_600_000;
-/** Un punto más viejo que esto (más un paso) se da por «sin datos recientes». */
+/** Un punto más viejo que esto se da por «sin datos recientes». */
 export const PULSE_STALE_MS = 15 * 60_000;
 
 export interface PulseWindow {
@@ -67,7 +67,7 @@ export function deriveSnapshot(
   const base = { profile: data.profile, points, window, t };
   const last = points[points.length - 1];
   if (!last) return { status: "nodata", value: null, ...base };
-  const stale = t - last.ts > PULSE_STALE_MS + data.stepMs;
+  const stale = t - last.ts > PULSE_STALE_MS;
   return { status: stale ? "stale" : "ready", value: last.value, ...base };
 }
 

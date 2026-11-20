@@ -78,6 +78,8 @@ function fakeWorker() {
   const worker: PulseWorkerLike = {
     postMessage: (m) => sent.push(m),
     onmessage: null,
+    onerror: null,
+    onmessageerror: null,
     terminate: vi.fn(),
   };
   const reply = (m: PulseWorkerOutput): void =>
@@ -109,6 +111,18 @@ describe("puente con el worker", () => {
     await expect(p).rejects.toMatchObject({ name: "AbortError" });
     expect(sent[1]).toEqual({ type: "cancel", id: 1 });
     expect(() => reply({ type: "data", id: 1, data })).not.toThrow();
+  });
+
+  it("onerror / onmessageerror rechazan lo pendiente con error (no se queda cargando)", async () => {
+    for (const hook of ["onerror", "onmessageerror"] as const) {
+      const { worker } = fakeWorker();
+      const f = createPulseWorkerFetcher(worker);
+      const a = f.fetchWindow("/p", W, new AbortController().signal);
+      const b = f.fetchWindow("/p", W, new AbortController().signal);
+      worker[hook]?.(new Event("error"));
+      await expect(a).rejects.toMatchObject({ name: "PulseFetchError", kind: "error" });
+      await expect(b).rejects.toMatchObject({ kind: "error" });
+    }
   });
 
   it("destroy termina el worker", () => {
