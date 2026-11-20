@@ -31,7 +31,7 @@ export interface ReplayParams {
 
 export type ParsedReplay = { ok: true; params: ReplayParams } | { ok: false; error: string };
 
-const parseMs = (raw: unknown, name: string): number | string => {
+export const parseMs = (raw: unknown, name: string): number | string => {
   if (typeof raw !== "string" || !/^\d{1,15}$/.test(raw))
     return `${name} es obligatorio y debe ser epoch ms UTC (entero)`;
   const n = Number(raw);
