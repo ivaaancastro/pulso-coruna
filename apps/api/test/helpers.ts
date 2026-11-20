@@ -3,6 +3,8 @@ import { LAYER_IDS } from "@pulso/schema";
 import type { ApiConfig } from "../src/config.js";
 import { loadConfig } from "../src/config.js";
 import type { DataSource, Latest, SourceHealthRow } from "../src/db.js";
+import { emptyAggregates, type PulseAggregates } from "../src/pulse.js";
+import type { PulseQuery } from "../src/pulse-db.js";
 import {
   emptyReplayRows,
   type ObservationSample,
@@ -70,6 +72,16 @@ export class FakeSource implements DataSource {
   replayCalls: ReplayQuery[] = [];
   /** Fuerza `truncated` en la respuesta de `replay`. */
   truncate = false;
+
+  /** Agregados que devuelve `pulse` (los fija cada test). */
+  pulseAgg: PulseAggregates = emptyAggregates();
+  pulseCalls: PulseQuery[] = [];
+
+  pulse(q: PulseQuery): Promise<PulseAggregates> {
+    this.pulseCalls.push(q);
+    if (this.failing) return Promise.reject(new Error("BD caída"));
+    return Promise.resolve(this.pulseAgg);
+  }
 
   replay(q: ReplayQuery): Promise<ReplayRows> {
     this.replayCalls.push(q);

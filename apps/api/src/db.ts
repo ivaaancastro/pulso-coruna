@@ -8,6 +8,8 @@ import {
 } from "@pulso/schema";
 import postgres, { type Sql } from "postgres";
 import type { ApiConfig } from "./config.js";
+import { readPulseAggregates, type PulseQuery } from "./pulse-db.js";
+import type { PulseAggregates } from "./pulse.js";
 import { readReplayRows, type ReplayQuery, type ReplayRows } from "./replay-db.js";
 
 /** Último estado conocido de cada capa (todas presentes; sin datos = lista vacía). */
@@ -38,6 +40,8 @@ export interface DataSource {
   layerFreshness(): Promise<Partial<Record<LayerId, number>>>;
   /** Histórico de una ventana (M6.2): filas de la tabla bruta o de la de 1 min según `q.resolution`. */
   replay(q: ReplayQuery): Promise<ReplayRows>;
+  /** Actividad agregada por tramo para el índice Pulso (M7.2), desde brutos y vistas de 1 min. */
+  pulse(q: PulseQuery): Promise<PulseAggregates>;
   /** Latencia (ms) de un `select 1`; lanza si la BD no responde. */
   ping(): Promise<number>;
   close(): Promise<void>;
@@ -230,6 +234,10 @@ export class PgDataSource implements DataSource {
 
   replay(q: ReplayQuery): Promise<ReplayRows> {
     return readReplayRows(this.sql, q);
+  }
+
+  pulse(q: PulseQuery): Promise<PulseAggregates> {
+    return readPulseAggregates(this.sql, q);
   }
 
   async ping(): Promise<number> {

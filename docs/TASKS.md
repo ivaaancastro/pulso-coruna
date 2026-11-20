@@ -79,7 +79,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 ## M7 — Escuchar y Pulso
 
 - [ ] M7.1 Motor Web Audio
-- [ ] M7.2 Índice Pulso
+- [x] M7.2 Índice Pulso
+  - [x] M7.2 API: `/api/v1/pulse` con `PulseSchema` v1, razón por capa frente a perfil fijo y media ponderada con pesos en `PULSE_WEIGHTS` (`docs/specs/M7.2-indice-pulso.md`, ADR-0026); el perfil aprendido queda para tener ≥ 1 mes de histórico
 - [ ] M7.3 Visualización del índice
 
 ## M8 — Pulido y lanzamiento
