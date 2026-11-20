@@ -2,7 +2,6 @@ import { INTL_LOCALE, type Locale, type Translate } from "../../i18n";
 import { createCardView, freshness, PANEL_ID, type CardModel } from "../card/panel";
 import {
   AIR_LEVELS,
-  ATTRIBUTION,
   ATTRIBUTION_URL,
   LEVEL_RGB,
   POLLUTANTS,
@@ -77,7 +76,7 @@ export function createAirCard(opts: AirCardOptions): AirCard {
   badge.setAttribute("aria-expanded", "false");
   const badgeName = el("span", "air-badge__name", t("air.badge"));
   const badgeLevel = el("span", "air-badge__level");
-  const badgeAttr = el("span", "air-badge__attr", ATTRIBUTION);
+  const badgeAttr = el("span", "air-badge__attr", t("air.attribution"));
   badge.append(badgeName, badgeLevel, badgeAttr);
 
   // — Tarjeta (panel común)
@@ -128,7 +127,7 @@ export function createAirCard(opts: AirCardOptions): AirCard {
       ],
       notes: r.model ? [{ text: t("air.model"), kind: "model" }, { text: t("air.city") }] : [],
       updated: freshness(t, r.ts, opts.now(), opts.locale),
-      attribution: { text: ATTRIBUTION, href: ATTRIBUTION_URL },
+      attribution: { text: t("air.attribution"), href: ATTRIBUTION_URL },
     };
   };
 
