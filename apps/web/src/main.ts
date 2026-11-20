@@ -6,6 +6,8 @@ import { createClock } from "./components/clock";
 import { createModeSelector } from "./components/mode-selector";
 import { createPulseIndex } from "./components/pulse-index";
 import { createTranslator, detectLocale } from "./i18n";
+import { resolvePulseUrl, resolveStreamUrl } from "./live/config";
+import { deriveSnapshot } from "./pulse/model";
 import type { LiveHandle } from "./live/start";
 import type { ReplayController, ReplayState } from "./replay/controller";
 import type { PulsoMap } from "./map/map";
@@ -32,6 +34,25 @@ map.setAttribute("aria-label", t("map.label"));
 
 const clock = createClock(t, locale);
 const pulse = createPulseIndex(t);
+
+// Índice Pulso (M7.3): la vista va en el JS inicial; el cliente (red + zod) es un chunk aparte.
+// Solo habla con nuestra API (`/api/v1/pulse`, derivada de la misma configuración que el stream).
+const streamUrl = resolveStreamUrl(
+  { dev: import.meta.env.DEV, configured: import.meta.env.VITE_LIVE_URL as string | undefined },
+  window.location.search,
+  window.location,
+);
+const pulseUrl = streamUrl ? resolvePulseUrl(streamUrl) : null;
+if (pulseUrl) {
+  void import("./pulse/start")
+    .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
+    .catch((error: unknown) => {
+      console.error("[pulse] no se pudo iniciar", error);
+      pulse.render(deriveSnapshot(null, "error", now()));
+    });
+} else {
+  pulse.render(deriveSnapshot(null, "nodata", now()));
+}
 
 // Modo Reproducir (M6.3): chunk diferido; se carga la primera vez que se elige. Cambiar de modo no
 // recarga la escena: solo cambia de dónde leen las capas y qué hora usan (ver `replay/controller.ts`).
@@ -160,7 +181,7 @@ const modes = createModeSelector(
 
 const top = document.createElement("header");
 top.className = "shell__top";
-top.append(clock.element, pulse);
+top.append(clock.element, pulse.element);
 
 const bottom = document.createElement("div");
 bottom.className = "shell__bottom";

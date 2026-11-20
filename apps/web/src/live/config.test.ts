@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveReplayUrl, resolveStreamUrl } from "./config";
+import { resolvePulseUrl, resolveReplayUrl, resolveStreamUrl } from "./config";
 
 const loc = { protocol: "http:", host: "localhost:5173" };
 const prod = { protocol: "https:", host: "pulso.example" };
@@ -47,5 +47,21 @@ describe("resolveReplayUrl", () => {
     expect(resolveReplayUrl("https://pulso.example/api/v1/stream")).toBeNull();
     expect(resolveReplayUrl("wss://pulso.example/otra")).toBeNull();
     expect(resolveReplayUrl("no es url")).toBeNull();
+  });
+});
+
+describe("resolvePulseUrl", () => {
+  it("deriva /api/v1/pulse de la URL del stream (nuestra API)", () => {
+    expect(resolvePulseUrl("ws://localhost:5173/api/v1/stream")).toBe(
+      "http://localhost:5173/api/v1/pulse",
+    );
+    expect(resolvePulseUrl("wss://pulso.example/api/v1/stream?x=1")).toBe(
+      "https://pulso.example/api/v1/pulse",
+    );
+  });
+
+  it("null si no es un stream ws(s)", () => {
+    expect(resolvePulseUrl("https://pulso.example/api/v1/stream")).toBeNull();
+    expect(resolvePulseUrl("no es url")).toBeNull();
   });
 });

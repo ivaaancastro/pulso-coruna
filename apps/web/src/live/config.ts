@@ -33,18 +33,28 @@ export function resolveStreamUrl(
   return `${scheme}//${location.host}${target}`;
 }
 
-/** `/api/v1/replay` de nuestra API a partir de la URL del stream (M6.3); `null` si no se puede derivar. */
-export function resolveReplayUrl(streamUrl: string): string | null {
+/** Endpoint hermano del stream (`…/stream` → `…/<name>`) de nuestra API; `null` si no se puede derivar. */
+function siblingUrl(streamUrl: string, name: string): string | null {
   try {
     const url = new URL(streamUrl);
     if (url.protocol !== "ws:" && url.protocol !== "wss:") return null;
     url.protocol = url.protocol === "wss:" ? "https:" : "http:";
-    url.pathname = url.pathname.replace(/\/stream$/, "/replay");
-    if (!url.pathname.endsWith("/replay")) return null;
+    url.pathname = url.pathname.replace(/\/stream$/, `/${name}`);
+    if (!url.pathname.endsWith(`/${name}`)) return null;
     url.search = "";
     url.hash = "";
     return url.toString();
   } catch {
     return null;
   }
+}
+
+/** `/api/v1/replay` de nuestra API a partir de la URL del stream (M6.3); `null` si no se puede derivar. */
+export function resolveReplayUrl(streamUrl: string): string | null {
+  return siblingUrl(streamUrl, "replay");
+}
+
+/** `/api/v1/pulse` de nuestra API a partir de la URL del stream (M7.3); `null` si no se puede derivar. */
+export function resolvePulseUrl(streamUrl: string): string | null {
+  return siblingUrl(streamUrl, "pulse");
 }

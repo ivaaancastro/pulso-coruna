@@ -112,9 +112,29 @@ body {
 }
 
 .pulse {
+  position: relative;
   display: grid;
-  gap: var(--pulso-space-1);
+  /* Móvil/tablet: la serie bajo el número (a la derecha se coloca la etiqueta de aire, ver air-card.css). */
+  grid-template-areas:
+    "label"
+    "value"
+    "series"
+    "note";
+  row-gap: var(--pulso-space-1);
+  align-items: end;
+  justify-items: start;
   max-width: 60ch;
+}
+
+@media (min-width: 1024px) {
+  .pulse {
+    grid-template-areas:
+      "label label"
+      "value series"
+      "note note";
+    grid-template-columns: auto 1fr;
+    column-gap: var(--pulso-space-4);
+  }
 }
 
 .pulse p {
@@ -122,6 +142,7 @@ body {
 }
 
 .pulse__label {
+  grid-area: label;
   font-size: var(--pulso-text-label);
   font-weight: 500;
   font-stretch: 90%;
@@ -129,6 +150,7 @@ body {
 }
 
 .pulse__value {
+  grid-area: value;
   display: flex;
   align-items: baseline;
   gap: var(--pulso-space-2);
@@ -138,11 +160,21 @@ body {
   line-height: 1.1;
   font-variant-numeric: var(--pulso-tabular);
   color: var(--pulso-bus);
+  /* Luz del dato, como la hora (sin parpadeo: solo cambia con el valor). */
+  text-shadow: 0 0 24px color-mix(in srgb, var(--pulso-bus) 28%, transparent);
+  transition:
+    opacity var(--pulso-dur-slow) var(--pulso-ease-drone),
+    color var(--pulso-dur-slow) var(--pulso-ease-drone);
 }
 
 .pulse__number {
   display: inline-block;
   min-width: 2ch;
+  /* El número es el protagonista del bloque, por debajo de la hora (64 px). */
+  font-size: min(calc(var(--pulso-text-display) * 0.7), 56px);
+  font-weight: 300;
+  font-stretch: 125%;
+  line-height: var(--pulso-leading-display);
 }
 
 .pulse__scale {
@@ -152,11 +184,93 @@ body {
   color: var(--pulso-text-subtle);
 }
 
+/* Texto para lectores de pantalla: el número animado va oculto y esto da el valor final. */
+.pulse__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pulse__series {
+  grid-area: series;
+  align-self: end;
+  margin-top: var(--pulso-space-1);
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+  transition: opacity var(--pulso-dur-slow) var(--pulso-ease-drone);
+}
+
+.pulse__mid {
+  stroke: var(--pulso-border-hairline);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.pulse__line {
+  fill: none;
+  stroke: var(--pulso-bus);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pulse__area {
+  fill: color-mix(in srgb, var(--pulso-bus) 14%, transparent);
+  stroke: none;
+}
+
+.pulse__dot {
+  fill: var(--pulso-bus);
+}
+
 .pulse__note {
+  grid-area: note;
   font-size: var(--pulso-text-label);
   font-weight: 500;
   font-stretch: 90%;
   color: var(--pulso-text-subtle);
+}
+
+/* Sin datos / error / cargando: el número se atenúa y la nota lo explica. */
+.pulse[data-status="loading"] .pulse__value,
+.pulse[data-status="nodata"] .pulse__value,
+.pulse[data-status="error"] .pulse__value {
+  opacity: 0.4;
+  color: var(--pulso-text-muted);
+  text-shadow: none;
+}
+
+.pulse[data-status="stale"] .pulse__value {
+  opacity: 0.55;
+  text-shadow: none;
+}
+
+.pulse[data-status="stale"] .pulse__series,
+.pulse[data-status="loading"] .pulse__series,
+.pulse[data-status="nodata"] .pulse__series,
+.pulse[data-status="error"] .pulse__series {
+  opacity: 0.45;
+}
+
+.pulse[data-status="error"] .pulse__note {
+  color: var(--pulso-warn);
+}
+
+/* «Perfil fijo»: etiqueta visible mientras el nivel no esté calibrado. */
+.pulse[data-fixed="true"] .pulse__note {
+  color: var(--pulso-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse__value,
+  .pulse__series {
+    transition: none;
+  }
 }
 
 .modes {

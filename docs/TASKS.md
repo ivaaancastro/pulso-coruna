@@ -82,7 +82,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
   - [x] M7.1 Escuchar: interruptor `aria-pressed` junto a los modos, núcleo puro (pentatónica, rejilla 90 bpm, ≤16 voces) y motor Web Audio nativo en chunk diferido (`docs/specs/M7.1-motor-audio.md`, ADR-0027); sonido real e iOS sin verificar
 - [x] M7.2 Índice Pulso
   - [x] M7.2 API: `/api/v1/pulse` con `PulseSchema` v1, razón por capa frente a perfil fijo y media ponderada con pesos en `PULSE_WEIGHTS` (`docs/specs/M7.2-indice-pulso.md`, ADR-0026); el perfil aprendido queda para tener ≥ 1 mes de histórico
-- [ ] M7.3 Visualización del índice
+- [x] M7.3 Visualización del índice
+  - [x] M7.3 Web: número con contador sobrio y serie de 24 h desde `/api/v1/pulse` (validado con `PulseSchema` en un worker), estados cargando/error/sin datos, etiqueta «perfil fijo», sigue al reloj de Reproducir y mock de desarrollo (`docs/specs/M7.3-visualizacion-pulso.md`)
 
 ## M8 — Pulido y lanzamiento
 
