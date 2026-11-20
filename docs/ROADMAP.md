@@ -143,16 +143,16 @@ Identidad marítima completa.
 
 ### M8 — Pulido y lanzamiento
 
-| ID   | Tarea                      | Criterio de aceptación                                                      |
-| ---- | -------------------------- | --------------------------------------------------------------------------- |
-| M8.1 | Idiomas gl/es/en           | Ninguna cadena fija en el código; gallego por defecto si se pide            |
-| M8.2 | Accesibilidad              | Teclado completo, paleta apta para daltonismo, reduced-motion, contraste AA |
-| M8.3 | Móvil real antiguo         | Presupuestos cumplidos en un dispositivo físico; resultados documentados    |
-| M8.4 | Estado y créditos          | Página de estado de fuentes y atribuciones requeridas                       |
-| M8.5 | Clip vertical y OG         | Clip de 15 s generado en el cliente; imagen OG con el estado real           |
-| M8.6 | README, GIF y post técnico | Números reales de rendimiento y coste                                       |
-| M8.7 | Contacto institucional     | Humano: Concello y Compañía de Tranvías antes de la salida                  |
-| M8.8 | Salida por pasos           | Cerrado → local → global                                                    |
+| ID   | Tarea                      | Criterio de aceptación                                                                                                 |
+| ---- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| M8.1 | Idiomas gl/es/en           | Ninguna cadena fija en el código; gallego por defecto si se pide                                                       |
+| M8.2 | Accesibilidad              | Teclado completo, paleta apta para daltonismo, reduced-motion, contraste AA                                            |
+| M8.3 | Móvil real antiguo         | Presupuestos cumplidos en un dispositivo físico; resultados documentados (protocolo: `docs/launch/M8.3-movil-real.md`) |
+| M8.4 | Estado y créditos          | Página de estado de fuentes y atribuciones requeridas                                                                  |
+| M8.5 | Clip vertical y OG         | Clip de 15 s generado en el cliente; imagen OG con el estado real                                                      |
+| M8.6 | README, GIF y post técnico | Números reales de rendimiento y coste                                                                                  |
+| M8.7 | Contacto institucional     | Humano: Concello y Compañía de Tranvías antes de la salida                                                             |
+| M8.8 | Salida por pasos           | Cerrado → local → global                                                                                               |
 
 ### v2 — Después
 
