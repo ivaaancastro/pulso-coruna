@@ -26,6 +26,11 @@ interface Allowed {
 
 const ALLOWED: readonly Allowed[] = [
   {
+    file: "live/deck-a11y.ts",
+    text: ".deck-widget-container canvas, .deck-canvas, [class*='deck-'] canvas",
+    why: "Selector CSS para localizar el canvas de deck.gl: no es texto de interfaz.",
+  },
+  {
     file: "map/map.ts",
     text: '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a> ',
     why: "Atribución legal con el texto exigido por OpenStreetMap (ODbL): no se traduce.",

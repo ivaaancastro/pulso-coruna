@@ -489,7 +489,9 @@ body {
 /* prefers-reduced-motion: los fundidos de color de los controles pasan a cambio directo. */
 @media (prefers-reduced-motion: reduce) {
   .modes__option,
-  .listen {
+  .listen,
+  .lang__toggle,
+  .lang__option {
     transition: none;
   }
 }
