@@ -1,5 +1,7 @@
 import "./styles/tokens.css";
 import "./styles/shell.css";
+import { createUserContext } from "./audio/context";
+import type { AudioHandle } from "./audio/start";
 import { createClock } from "./components/clock";
 import { createModeSelector } from "./components/mode-selector";
 import { createPulseIndex } from "./components/pulse-index";
@@ -89,33 +91,72 @@ async function restoreReplay(state: ShareState): Promise<void> {
   if (!modes.select("replay")) pendingReplayState = null;
 }
 
-const modes = createModeSelector(t, (mode) => {
-  void (async () => {
-    if (mode === "replay") {
-      const controller = await loadReplay();
-      const pending = pendingReplayState;
-      pendingReplayState = null;
-      if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
-      try {
-        if (pending) controller?.applyState(pending);
-        else controller?.enter();
-      } catch (error) {
-        console.error("[replay] no se pudo entrar", error);
-        controller?.exit();
-        replay = null;
-        modes.select("view");
-        modes.status.textContent = t("replay.unavailable");
-        return;
+// Escuchar (M7.1): interruptor independiente del modo. El AudioContext se crea dentro del gesto del
+// clic (política de autoplay, iOS); el motor es un chunk diferido que solo se descarga al activarlo.
+let audio: Promise<AudioHandle | null> | null = null;
+
+function toggleAudio(on: boolean): boolean | Promise<boolean> {
+  if (!on) {
+    const running = audio;
+    audio = null;
+    void running?.then((handle) => handle?.stop());
+    return true;
+  }
+  const ctx = createUserContext();
+  if (!ctx) return false;
+  audio = Promise.all([import("./audio/start"), liveReady])
+    .then(([m, live]) =>
+      live
+        ? m.startAudio({
+            ctx,
+            store: live.view,
+            // Reproducir en pausa: solo las capas continuas (mar y viento).
+            transientsEnabled: () =>
+              modes.getMode() !== "replay" || (replayController?.getState().playing ?? true),
+          })
+        : null,
+    )
+    .catch((error: unknown) => {
+      console.error("[audio] no se pudo iniciar", error);
+      return null;
+    });
+  return audio.then((handle) => {
+    if (!handle) void ctx.close().catch(() => undefined);
+    return handle !== null;
+  });
+}
+
+const modes = createModeSelector(
+  t,
+  (mode) => {
+    void (async () => {
+      if (mode === "replay") {
+        const controller = await loadReplay();
+        const pending = pendingReplayState;
+        pendingReplayState = null;
+        if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
+        try {
+          if (pending) controller?.applyState(pending);
+          else controller?.enter();
+        } catch (error) {
+          console.error("[replay] no se pudo entrar", error);
+          controller?.exit();
+          replay = null;
+          modes.select("view");
+          modes.status.textContent = t("replay.unavailable");
+          return;
+        }
+        if (!controller) {
+          modes.select("view");
+          modes.status.textContent = t("replay.unavailable");
+        }
+      } else if (replay) {
+        (await replay)?.exit();
       }
-      if (!controller) {
-        modes.select("view");
-        modes.status.textContent = t("replay.unavailable");
-      }
-    } else if (replay) {
-      (await replay)?.exit();
-    }
-  })();
-});
+    })();
+  },
+  toggleAudio,
+);
 
 const top = document.createElement("header");
 top.className = "shell__top";

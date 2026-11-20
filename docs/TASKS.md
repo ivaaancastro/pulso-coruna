@@ -78,7 +78,8 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 
 ## M7 — Escuchar y Pulso
 
-- [ ] M7.1 Motor Web Audio
+- [x] M7.1 Motor Web Audio
+  - [x] M7.1 Escuchar: interruptor `aria-pressed` junto a los modos, núcleo puro (pentatónica, rejilla 90 bpm, ≤16 voces) y motor Web Audio nativo en chunk diferido (`docs/specs/M7.1-motor-audio.md`, ADR-0027); sonido real e iOS sin verificar
 - [ ] M7.2 Índice Pulso
 - [ ] M7.3 Visualización del índice
 

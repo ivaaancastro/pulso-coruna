@@ -24,25 +24,14 @@ describe("selector de modo", () => {
     document.body.replaceChildren();
   });
 
-  it("roles ARIA: radiogroup con tres radios, «Ahora» marcado", () => {
+  it("roles ARIA: radiogroup con dos radios («Ahora» marcado) y un interruptor aparte", () => {
     const { selector, option } = setup();
-    expect(selector.element.getAttribute("role")).toBe("radiogroup");
-    expect(selector.element.getAttribute("aria-label")).toBe("Modo de visualización");
-    expect(selector.element.querySelectorAll('[role="radio"]')).toHaveLength(3);
+    const group = selector.element.querySelector('[role="radiogroup"]');
+    expect(group?.getAttribute("aria-label")).toBe("Modo de visualización");
+    expect(group?.querySelectorAll('[role="radio"]')).toHaveLength(2);
+    expect(group?.querySelector("[data-listen]")).toBeNull();
     expect(option("view").getAttribute("aria-checked")).toBe("true");
     expect(option("replay").getAttribute("aria-checked")).toBe("false");
-  });
-
-  it("Escuchar sigue como próximamente y no cambia el modo; Reproducir ya está disponible", () => {
-    const { selector, onChange, option } = setup();
-    expect(option("replay").getAttribute("aria-disabled")).toBeNull();
-    expect(option("replay").textContent).not.toContain("Próximamente");
-    expect(option("listen").getAttribute("aria-disabled")).toBe("true");
-    expect(option("listen").textContent).toContain("Próximamente");
-    option("listen").click();
-    expect(selector.getMode()).toBe("view");
-    expect(onChange).not.toHaveBeenCalled();
-    expect(selector.status.textContent).toBe("Escuchar estará disponible próximamente.");
   });
 
   it("Reproducir cambia el modo, avisa y se puede volver a Ahora", () => {
@@ -61,7 +50,6 @@ describe("selector de modo", () => {
     const { option } = setup();
     expect(option("view").tabIndex).toBe(0);
     expect(option("replay").tabIndex).toBe(-1);
-    expect(option("listen").tabIndex).toBe(-1);
   });
 
   it("flechas, Inicio y Fin mueven el foco (cíclico) y siguen siendo focusables", () => {
@@ -70,14 +58,14 @@ describe("selector de modo", () => {
     key(option("view"), "ArrowRight");
     expect(document.activeElement).toBe(option("replay"));
     expect(option("replay").tabIndex).toBe(0);
-    key(option("replay"), "End");
-    expect(document.activeElement).toBe(option("listen"));
-    key(option("listen"), "ArrowRight");
+    key(option("replay"), "ArrowRight");
     expect(document.activeElement).toBe(option("view"));
     key(option("view"), "ArrowLeft");
-    expect(document.activeElement).toBe(option("listen"));
-    key(option("listen"), "Home");
+    expect(document.activeElement).toBe(option("replay"));
+    key(option("replay"), "Home");
     expect(document.activeElement).toBe(option("view"));
+    key(option("view"), "End");
+    expect(document.activeElement).toBe(option("replay"));
   });
 
   it("seleccionar el modo ya activo anuncia sin disparar onChange", () => {
@@ -85,5 +73,61 @@ describe("selector de modo", () => {
     option("view").click();
     expect(selector.status.textContent).toBe("Modo Ahora activo.");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  describe("Escuchar", () => {
+    const listenButton = (): HTMLButtonElement => {
+      const el = document.querySelector<HTMLButtonElement>("[data-listen]");
+      if (!el) throw new Error("sin botón");
+      return el;
+    };
+    const flush = () => new Promise((r) => setTimeout(r, 0));
+
+    it("nace apagado, con nombre y aria-pressed, y no es un modo", () => {
+      const onListen = vi.fn(() => true);
+      const selector = createModeSelector(t, vi.fn(), onListen);
+      document.body.replaceChildren(selector.element, selector.status);
+      expect(listenButton().textContent).toContain("Escuchar");
+      expect(listenButton().getAttribute("aria-pressed")).toBe("false");
+      expect(listenButton().tagName).toBe("BUTTON");
+      expect(selector.isListening()).toBe(false);
+      expect(onListen).not.toHaveBeenCalled();
+    });
+
+    it("el clic activa (gesto) y vuelve a apagar; anuncia el estado", async () => {
+      const onListen = vi.fn(() => true);
+      const selector = createModeSelector(t, vi.fn(), onListen);
+      document.body.replaceChildren(selector.element, selector.status);
+      listenButton().click();
+      expect(onListen).toHaveBeenLastCalledWith(true);
+      await flush();
+      expect(listenButton().getAttribute("aria-pressed")).toBe("true");
+      expect(selector.status.textContent).toBe("Sonido activado.");
+      listenButton().click();
+      expect(onListen).toHaveBeenLastCalledWith(false);
+      expect(listenButton().getAttribute("aria-pressed")).toBe("false");
+      expect(selector.status.textContent).toBe("Sonido desactivado.");
+    });
+
+    it("si no se puede activar, vuelve a apagado y lo dice", async () => {
+      const selector = createModeSelector(t, vi.fn(), () => Promise.resolve(false));
+      document.body.replaceChildren(selector.element, selector.status);
+      listenButton().click();
+      expect(listenButton().getAttribute("aria-busy")).toBe("true");
+      await flush();
+      expect(listenButton().getAttribute("aria-pressed")).toBe("false");
+      expect(listenButton().hasAttribute("aria-busy")).toBe(false);
+      expect(selector.status.textContent).toBe("No se pudo activar el sonido en este dispositivo.");
+    });
+
+    it("no depende del modo: cambiar de modo no lo apaga", async () => {
+      const selector = createModeSelector(t, vi.fn(), () => true);
+      document.body.replaceChildren(selector.element, selector.status);
+      listenButton().click();
+      await flush();
+      selector.select("replay");
+      expect(selector.isListening()).toBe(true);
+      expect(listenButton().getAttribute("aria-pressed")).toBe("true");
+    });
   });
 });

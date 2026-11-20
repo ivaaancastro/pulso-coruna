@@ -24,9 +24,7 @@ describe("i18n", () => {
 
   it("sustituye parámetros", () => {
     const t = createTranslator("es");
-    expect(t("mode.unavailable", { mode: "Escuchar" })).toBe(
-      "Escuchar estará disponible próximamente.",
-    );
+    expect(t("mode.selected", { mode: "Escuchar" })).toBe("Modo Escuchar activo.");
   });
 
   it("detecta idioma: parámetro, navegador y valor por defecto", () => {
