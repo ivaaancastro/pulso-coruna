@@ -65,6 +65,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/deploy/Dockerfile.caddy
+      args:
+        VITE_LIVE_URL: ${VITE_LIVE_URL:-/api/v1/stream}
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-localhost}
