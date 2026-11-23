@@ -17,6 +17,8 @@ export interface PulseIndex {
   element: HTMLElement;
   /** Pinta un estado (lo llama el controlador cada segundo: solo toca el DOM si algo cambió). */
   render(snapshot: PulseSnapshot): void;
+  /** Valor y calidad del último estado pintado (el clip lo pone en su overlay, M8.5). */
+  current(): { value: number | null; fixed: boolean };
   destroy(): void;
 }
 
@@ -99,6 +101,8 @@ export function createPulseIndex(t: Translate, options: PulseIndexOptions = {}):
   });
 
   let lastKey = "";
+  let lastValue: number | null = null;
+  let lastFixed = false;
 
   const render = (s: PulseSnapshot): void => {
     // La clave deja fuera `t`: el DOM solo cambia si cambia el valor, el estado o la serie visible.
@@ -106,6 +110,8 @@ export function createPulseIndex(t: Translate, options: PulseIndexOptions = {}):
     const key = `${s.status}|${s.value}|${s.profile}|${s.points.length}|${lastTs}|${s.window?.to ?? 0}`;
     if (key === lastKey) return;
     lastKey = key;
+    lastValue = s.value;
+    lastFixed = s.profile === "fixed";
 
     root.dataset.status = s.status;
     root.dataset.profile = s.profile ?? "";
@@ -167,5 +173,10 @@ export function createPulseIndex(t: Translate, options: PulseIndexOptions = {}):
   mid.setAttribute("y2", String(SERIES_H / 2));
   note.textContent = t("pulse.loading");
 
-  return { element: root, render, destroy: () => animator.destroy() };
+  return {
+    element: root,
+    render,
+    current: () => ({ value: lastValue, fixed: lastFixed }),
+    destroy: () => animator.destroy(),
+  };
 }

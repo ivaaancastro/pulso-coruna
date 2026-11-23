@@ -2,6 +2,7 @@ import "./styles/tokens.css";
 import "./styles/shell.css";
 import { createUserContext } from "./audio/context";
 import type { AudioHandle } from "./audio/start";
+import { createClipButton } from "./clip/button";
 import { createClock } from "./components/clock";
 import { createLanguageSelector } from "./components/language-selector";
 import { createModeSelector } from "./components/mode-selector";
@@ -75,6 +76,8 @@ let replayController: ReplayController | null = null;
 let pulsoMap: PulsoMap | null = null;
 let settleLive: (handle: LiveHandle | null) => void = () => undefined;
 const liveReady = new Promise<LiveHandle | null>((resolve) => (settleLive = resolve));
+let liveHandle: LiveHandle | null = null;
+void liveReady.then((handle) => (liveHandle = handle));
 
 function loadReplay(): Promise<ReplayController | null> {
   replay ??= Promise.all([import("./replay/start"), liveReady])
@@ -206,7 +209,23 @@ bottom.append(modes.element, modes.status, creditsLink);
 
 const shell = document.createElement("main");
 shell.className = "shell";
-shell.append(top, createLanguageSelector({ t, locale }), bottom);
+// Clip vertical (M8.5): solo el botón va en el JS inicial; el motor es un chunk diferido al primer clic.
+const clip = createClipButton({
+  t,
+  context: () =>
+    pulsoMap
+      ? {
+          map: pulsoMap.map,
+          deck: liveHandle?.deck ?? null,
+          t,
+          locale,
+          now,
+          index: pulse.current,
+        }
+      : null,
+});
+
+shell.append(top, createLanguageSelector({ t, locale }), clip.element, bottom);
 
 // Velo superior: funde el mar con el fondo hacia el horizonte (el color lo fija el mapa según la luz).
 const veil = document.createElement("div");

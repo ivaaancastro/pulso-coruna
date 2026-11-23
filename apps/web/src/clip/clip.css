@@ -1,0 +1,118 @@
+/*
+ * Botón «Grabar clip» (M8.5): píldora de 44 px junto a «Compartir» y el selector de idioma (arriba en móvil,
+ * abajo a la derecha en escritorio, como ellos). Solo tokens de
+ * docs/design/tokens.md. Sin transiciones ni animaciones: el avance es por segundos.
+ */
+.clip {
+  position: absolute;
+  /* En la fila de arriba, a la izquierda del selector de idioma y de «Compartir» (debajo chocaría con la etiqueta de aire). */
+  top: calc(var(--pulso-space-6) + env(safe-area-inset-top));
+  right: calc(
+    var(--pulso-gutter) + 2 * (var(--pulso-touch) + var(--pulso-space-2)) +
+      env(safe-area-inset-right)
+  );
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--pulso-space-2);
+  pointer-events: none;
+}
+
+.clip__button {
+  display: grid;
+  place-items: center;
+  width: var(--pulso-touch);
+  height: var(--pulso-touch);
+  padding: 0;
+  color: var(--pulso-text);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-control);
+  border-radius: var(--pulso-radius-pill);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.clip__button:hover {
+  background: var(--pulso-surface-overlay);
+}
+
+.clip__button[aria-disabled="true"] {
+  color: var(--pulso-text-subtle);
+  cursor: default;
+}
+
+.clip__dot {
+  display: none;
+}
+
+.clip[data-state="recording"] .clip__dot,
+.clip[data-state="starting"] .clip__dot {
+  display: inline;
+  color: var(--pulso-error);
+}
+
+.clip[data-state="recording"] .clip__button,
+.clip[data-state="starting"] .clip__button {
+  border-color: var(--pulso-error);
+}
+
+.clip__progress {
+  width: var(--pulso-touch);
+  height: var(--pulso-space-1);
+  appearance: none;
+  border: 0;
+  border-radius: var(--pulso-radius-pill);
+  background: var(--pulso-border-hairline);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.clip__progress[hidden] {
+  display: none;
+}
+
+.clip__progress::-webkit-progress-bar {
+  background: var(--pulso-border-hairline);
+}
+
+.clip__progress::-webkit-progress-value {
+  background: var(--pulso-text);
+}
+
+.clip__progress::-moz-progress-bar {
+  background: var(--pulso-text);
+}
+
+.clip__message {
+  margin: 0;
+  padding: var(--pulso-space-1) var(--pulso-space-3);
+  font-size: var(--pulso-text-label);
+  font-weight: 500;
+  font-stretch: 90%;
+  color: var(--pulso-text);
+  background: var(--pulso-surface);
+  border: 1px solid var(--pulso-border-hairline);
+  border-radius: var(--pulso-radius-pill);
+  max-width: min(260px, calc(100vw - 2 * var(--pulso-gutter)));
+  text-align: right;
+}
+
+.clip__message:not([data-visible]) {
+  /* Vacío: la región sigue renderizada (para que el lector anuncie el cambio) pero no ocupa ni se ve. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+@media (min-width: 1024px) {
+  .clip {
+    top: auto;
+    bottom: calc(var(--pulso-space-7) + var(--pulso-space-2));
+    flex-direction: column-reverse;
+  }
+}
