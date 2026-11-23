@@ -29,12 +29,23 @@ export interface LiveOverlayOptions {
 
 export interface LiveOverlay {
   overlay: MapLibreOverlay;
+  /** Lienzo de deck.gl (`null` si aún no existe). Lo usa el clip (M8.5) para copiarlo. */
+  canvas(): HTMLCanvasElement | null;
+  /** Se llama justo después de cada fotograma de deck.gl (el búfer aún es legible). Devuelve la baja. */
+  onFrame(cb: () => void): () => void;
   destroy(): void;
 }
 
 export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   const schedule = opts.schedule ?? ((cb) => void requestAnimationFrame(cb));
-  const overlay = new MapLibreOverlay({ interleaved: false, layers: [] });
+  const frameListeners = new Set<() => void>();
+  const overlay = new MapLibreOverlay({
+    interleaved: false,
+    layers: [],
+    onAfterRender: () => {
+      for (const cb of frameListeners) cb();
+    },
+  });
   opts.map.addControl(overlay);
   const stopWatching = watchDeckCanvas(opts.map.getContainer());
 
@@ -77,6 +88,11 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
 
   return {
     overlay,
+    canvas: () => overlay.getCanvas(),
+    onFrame(cb) {
+      frameListeners.add(cb);
+      return () => void frameListeners.delete(cb);
+    },
     destroy() {
       stopWatching();
       alive = false;

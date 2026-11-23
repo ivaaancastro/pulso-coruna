@@ -81,6 +81,7 @@ describe("i18n", () => {
       "plane.card.heading.value",
       "status.layer.bus",
       "status.layer.bike",
+      "clip.credit",
     ]);
   });
 });

@@ -91,7 +91,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [x] M8.2 Accesibilidad
 - [ ] M8.3 Móvil real antiguo (humano; protocolo en `docs/launch/M8.3-movil-real.md`)
 - [x] M8.4 Estado y créditos
-- [ ] M8.5 Clip vertical y OG
+- [x] M8.5 Clip vertical y OG (`docs/specs/M8.5-clip-og.md`)
 - [ ] M8.6 README, GIF y post técnico
 - [ ] M8.7 Contacto institucional (humano; dossier y borradores en `docs/launch/M8.7-contacto-institucional.md`)
 - [ ] M8.8 Salida por pasos (humano; checklist en `docs/launch/M8.8-salida-por-pasos.md`)

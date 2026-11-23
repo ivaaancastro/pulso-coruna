@@ -40,6 +40,15 @@ describe("índice Pulso (vista)", () => {
     expect(q(".pulse__note").textContent).toBe("Calculando…");
   });
 
+  it("current() entrega valor y calidad del último estado (para el clip)", () => {
+    const { view } = setup();
+    expect(view.current()).toEqual({ value: null, fixed: false });
+    view.render(deriveSnapshot(data(), null, NOW));
+    expect(view.current()).toEqual({ value: 63, fixed: true });
+    view.render(deriveSnapshot(data("learned", [10]), null, NOW));
+    expect(view.current()).toEqual({ value: 10, fixed: false });
+  });
+
   it("listo: número real, serie con role=img y texto alternativo, etiqueta de perfil fijo", () => {
     const { view, q } = setup();
     view.render(deriveSnapshot(data(), null, NOW));

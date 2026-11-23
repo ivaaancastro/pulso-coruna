@@ -113,6 +113,23 @@ Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/s
 
 Con iTranvías apagada la capa `bus` sale vacía (`[]`) y `health.layers.bus.lastDataAt` es `null`: es lo esperado, no un fallo.
 
+### Vista previa de enlaces con el estado real (M8.5)
+
+`GET /api/v1/share[?lang=gl|es|en]` devuelve un HTML mínimo con las metas Open Graph/Twitter (título y descripción con el índice Pulso actual, imagen `<SHARE_BASE_URL>/og.png`) y redirige al visitante a la web. Hay que fijar `SHARE_BASE_URL` (p. ej. `https://tu-dominio`, sin barra final) en `infra/deploy/.env`; sin ella responde 404. Es el enlace que hay que pegar para que la vista previa muestre el número; los enlaces a la web sin más enseñan la descripción genérica de `index.html`. Spec: `docs/specs/M8.5-clip-og.md`.
+
+Propuesta (decide el humano en M8.8; no está en el `Caddyfile`, no se ha podido validar sin Caddy): que los _scrapers_ que piden la portada reciban esa página, dentro del sitio, **antes** de `handle /api/*`:
+
+```
+	@scrapers {
+		path /
+		header_regexp ua User-Agent (?i)(facebookexternalhit|twitterbot|whatsapp|slackbot|telegrambot|linkedinbot|discordbot)
+	}
+	handle @scrapers {
+		rewrite * /api/v1/share?{query}
+		reverse_proxy api:3000
+	}
+```
+
 ### Probar la API sin el stack completo
 
 Para no arrancar la ingesta (que llama a fuentes reales) basta la BD y la imagen de la API:

@@ -3,6 +3,7 @@ import { createLiveClient, type LiveClient } from "./client";
 import { resolveStreamUrl } from "./config";
 import { resolveHealthUrl } from "./health";
 import { parsePerfOverride, startAutoQuality, type AutoQuality } from "./quality/auto-quality";
+import type { LiveOverlay } from "./deck";
 import { hasLiveLayers, loadLiveLayers } from "./layer-registry";
 import { createSourceMonitor, type SourceMonitor } from "./source-monitor";
 import { SwitchableStore } from "./switchable-store";
@@ -31,6 +32,8 @@ export interface LiveHandle {
   monitor: SourceMonitor;
   /** URL del WebSocket de nuestra API (de ella se deriva la del histórico). */
   streamUrl: string;
+  /** Lienzo y fotogramas de deck.gl, para el clip (M8.5). */
+  deck: Pick<LiveOverlay, "canvas" | "onFrame">;
   destroy(): void;
 }
 
@@ -111,6 +114,7 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
     view,
     monitor,
     streamUrl: url,
+    deck: overlay,
     destroy() {
       monitor.stop();
       label.destroy();

@@ -1,4 +1,5 @@
 import { parsePulseWeights, type PulseWeights } from "./pulse.js";
+import { parseShareBaseUrl } from "./share.js";
 
 export interface ApiConfig {
   databaseUrl: string;
@@ -41,6 +42,10 @@ export interface ApiConfig {
   /** Lecturas de Pulso simultáneas por IP y en total (cada una agrega hasta 24 h en la BD). */
   pulseMaxPerIp: number;
   pulseMaxGlobal: number;
+  /** Origen público de la web (`SHARE_BASE_URL`) para `GET /api/v1/share`; `null` = endpoint desactivado (404). */
+  shareBaseUrl: string | null;
+  /** Cuánto se reutiliza el índice calculado para la vista previa, ms. */
+  shareCacheMs: number;
   dbConnectTimeoutS: number;
   dbIdleTimeoutS: number;
   dbMaxLifetimeS: number;
@@ -105,6 +110,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     pulseWeights: parsePulseWeights(env["PULSE_WEIGHTS"]),
     pulseMaxPerIp: int(env, "API_PULSE_MAX_PER_IP", 2),
     pulseMaxGlobal: int(env, "API_PULSE_MAX_GLOBAL", 2),
+    shareBaseUrl: parseShareBaseUrl(env["SHARE_BASE_URL"]),
+    shareCacheMs: int(env, "API_SHARE_CACHE_MS", 60_000, 1_000),
     dbConnectTimeoutS: int(env, "DB_CONNECT_TIMEOUT_S", 10),
     dbIdleTimeoutS: int(env, "DB_IDLE_TIMEOUT_S", 30),
     dbMaxLifetimeS: int(env, "DB_MAX_LIFETIME_S", 1800),
