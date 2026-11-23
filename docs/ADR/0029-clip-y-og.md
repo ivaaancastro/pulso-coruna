@@ -13,4 +13,4 @@ Clip: `captureStream` + `MediaRecorder` (mp4 si hay, si no WebM) sobre un lienzo
 
 ## Consecuencias
 
-El clip cuesta solo mientras se graba. La vista previa con número exige compartir `/api/v1/share` (o una regla de Caddy, propuesta en `docs/deploy.md`). El chunk del clip pesa ~2,1 KB gzip y deja el JS diferido en 560,5/560 KB: pendiente de decisión humana (ver spec M8.5).
+El clip cuesta solo mientras se graba. La vista previa con número exige compartir `/api/v1/share` (o una regla de Caddy, propuesta en `docs/deploy.md`). El chunk del clip pesa ~2,1 KB gzip y deja el JS diferido en 560,5 KB: el límite pasa a 565 KB (ADR-0030).
