@@ -92,7 +92,7 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [ ] M8.3 Móvil real antiguo (humano; protocolo en `docs/launch/M8.3-movil-real.md`)
 - [x] M8.4 Estado y créditos
 - [x] M8.5 Clip vertical y OG (`docs/specs/M8.5-clip-og.md`)
-- [ ] M8.6 README, GIF y post técnico
+- [x] M8.6 README, GIF y post técnico (`README.md`, `docs/demos/pulso-demo.gif` con datos simulados, borrador `docs/post/pulso-coruna-post-tecnico.md` sin publicar; cifras de móvil real y coste de producción «pendiente» hasta M8.3 y M8.8)
 - [ ] M8.7 Contacto institucional (humano; dossier y borradores en `docs/launch/M8.7-contacto-institucional.md`)
 - [ ] M8.8 Salida por pasos (humano; checklist en `docs/launch/M8.8-salida-por-pasos.md`)
 
