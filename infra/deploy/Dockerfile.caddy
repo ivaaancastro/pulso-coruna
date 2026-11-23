@@ -11,6 +11,9 @@ RUN pnpm install --frozen-lockfile --filter "@pulso/web..."
 COPY tsconfig.base.json ./
 COPY packages packages
 COPY apps/web apps/web
+# La web solo habla con nuestra API (mismo origen, vía Caddy); sin esto el stream queda desactivado en producción.
+ARG VITE_LIVE_URL=/api/v1/stream
+ENV VITE_LIVE_URL=$VITE_LIVE_URL
 RUN pnpm --filter @pulso/web build
 
 FROM caddy:2.11.9-alpine
