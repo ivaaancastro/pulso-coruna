@@ -75,6 +75,7 @@ export function startComposer(c: ClipContext): Composer {
   let gotMap = false;
   let gotDeck = c.deck === null;
   let waiting: (() => void) | null = null;
+  let readyTimer: ReturnType<typeof setTimeout> | undefined;
   const check = (): void => {
     if (gotMap && gotDeck) waiting?.();
   };
@@ -112,16 +113,18 @@ export function startComposer(c: ClipContext): Composer {
     ready: (ms = 1_000) =>
       new Promise<void>((resolve) => {
         const done = (): void => {
+          clearTimeout(readyTimer);
           waiting = null;
           paint();
           resolve();
         };
         if (gotMap && gotDeck) return done();
         waiting = done;
-        setTimeout(done, ms);
+        readyTimer = setTimeout(done, ms);
       }),
     destroy() {
       clearInterval(timer);
+      clearTimeout(readyTimer);
       c.map.off("render", onMap);
       offDeck?.();
     },

@@ -39,12 +39,14 @@ export function startClip(ctx: ClipContext, onProgress: (p: ClipProgress) => voi
   const done = (async (): Promise<ClipOutcome> => {
     onProgress({ phase: "starting", elapsedMs: 0, durationMs: 0 });
     const composer = startComposer(ctx);
+    let stream: MediaStream | undefined;
     document.addEventListener("visibilitychange", onHide);
     try {
       await composer.ready();
       if (asked || hidden) return stopped();
+      stream = composer.canvas.captureStream(CLIP_FPS);
       const recorder = createClipRecorder({
-        stream: composer.canvas.captureStream(CLIP_FPS),
+        stream,
         Recorder: MediaRecorder as unknown as RecorderCtor,
         onProgress,
       });
@@ -56,6 +58,7 @@ export function startClip(ctx: ClipContext, onProgress: (p: ClipProgress) => voi
       return { kind: "done", fileName };
     } finally {
       document.removeEventListener("visibilitychange", onHide);
+      stream?.getTracks().forEach((t) => t.stop());
       composer.destroy();
     }
   })();
