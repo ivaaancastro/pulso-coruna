@@ -18,6 +18,15 @@ import {
 } from "./pulse.js";
 import { parseLayers, snapshotMessage } from "./protocol.js";
 import {
+  SHARE_STEP_MS,
+  SHARE_WINDOW_MS,
+  latestSharePoint,
+  parseShareLang,
+  renderSharePage,
+  shareCacheControl,
+  type SharePoint,
+} from "./share.js";
+import {
   type EncodedReplay,
   ReplayCache,
   buildReplayWindow,
@@ -277,6 +286,87 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
         .header("Retry-After", "5")
         .send({ error: "unavailable", message: "base de datos no disponible" });
     }
+  });
+
+  // --- GET /api/v1/share[?lang=]  (HTML con metas OG y el índice real; ver docs/specs/M8.5) ---
+  // Una sola lectura cada `shareCacheMs` para todos los idiomas y visitantes; si hay que leer la BD se
+  // aplican los mismos topes que a /pulse. Sin datos o con la BD caída: página neutra (nunca 503, el
+  // _scraper_ no mostraría nada), con caché corta.
+  interface ShareState {
+    at: number;
+    ttl: number;
+    point: SharePoint | null;
+  }
+  let shareState: ShareState | undefined;
+  let shareInflight: Promise<ShareState> | undefined;
+  const readShare = async (now: number): Promise<ShareState> => {
+    try {
+      const to = Math.floor(now / SHARE_STEP_MS) * SHARE_STEP_MS + SHARE_STEP_MS;
+      const from = to - SHARE_WINDOW_MS;
+      const params = { from, to, stepMs: SHARE_STEP_MS };
+      const agg = await source.pulse({
+        ...params,
+        layers: activePulseLayers(config.pulseWeights),
+        cutoff: replayCutoff(now, config.replayRawDays),
+      });
+      const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
+      return { at: now, ttl: config.shareCacheMs, point: latestSharePoint(pulse, now) };
+    } catch (e) {
+      app.log.warn({ err: String(e) }, "share: BD no disponible, página neutra");
+      return { at: now, ttl: Math.min(10_000, config.shareCacheMs), point: null };
+    }
+  };
+
+  app.get("/api/v1/share", async (req, reply) => {
+    const base = config.shareBaseUrl;
+    if (!base) {
+      return reply
+        .code(404)
+        .header("Cache-Control", "no-store")
+        .send({ error: "not_found", message: "vista previa no configurada (SHARE_BASE_URL)" });
+    }
+    const now = Date.now();
+    const lang = parseShareLang((req.query as Record<string, unknown>)["lang"]);
+    if (!shareState || now - shareState.at >= shareState.ttl || shareState.at > now) {
+      if (!shareInflight) {
+        if (!pulseLimiter.acquire(req.ip)) {
+          return reply
+            .code(429)
+            .header("Retry-After", "2")
+            .header("Cache-Control", "no-store")
+            .send({
+              error: "too_many_requests",
+              message: `máximo ${config.pulseMaxPerIp} lecturas simultáneas por IP`,
+            });
+        }
+        if (!pulseGlobal.acquire(GLOBAL)) {
+          pulseLimiter.release(req.ip);
+          return reply
+            .code(429)
+            .header("Retry-After", "2")
+            .header("Cache-Control", "no-store")
+            .send({ error: "too_many_requests", message: "demasiadas lecturas a la vez" });
+        }
+        const ip = req.ip;
+        shareInflight = readShare(now).finally(() => {
+          pulseLimiter.release(ip);
+          pulseGlobal.release(GLOBAL);
+          shareInflight = undefined;
+        });
+      }
+      shareState = await shareInflight;
+    }
+    const state = shareState;
+    const body = renderSharePage({ baseUrl: base, lang, point: state.point });
+    const etag = pulseEtag(body);
+    const remaining = Math.max(1, Math.ceil((state.at + state.ttl - Date.now()) / 1000));
+    reply
+      .header("ETag", etag)
+      .header("Cache-Control", shareCacheControl(remaining))
+      .header("Content-Security-Policy", "default-src 'none'")
+      .header("Referrer-Policy", "no-referrer");
+    if (etagMatches(req.headers["if-none-match"], etag)) return reply.code(304).send();
+    return reply.type("text/html; charset=utf-8").send(body);
   });
 
   // --- GET /api/v1/health --- (en caché unos segundos y con consultas unidas)
