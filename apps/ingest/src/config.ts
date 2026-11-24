@@ -43,7 +43,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (!databaseUrl) throw new Error("Falta DATABASE_URL (ver .env.example)");
   const config: IngestConfig = {
     retention: {
-      enabled: bool(env, "RETENTION_ENABLED", true),
+      enabled: bool(env, "INGEST_RETENTION_ENABLED", false),
       rawDays: int(env, "RETENTION_RAW_DAYS", 30),
       intervalMs: int(env, "RETENTION_INTERVAL_MS", 3_600_000),
       statementTimeoutMs: int(env, "RETENTION_STATEMENT_TIMEOUT_MS", 900_000),
