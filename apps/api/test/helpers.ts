@@ -145,6 +145,8 @@ export class FakeSource implements DataSource {
 
 export const testConfig = (over: Partial<ApiConfig> = {}): ApiConfig => ({
   ...loadConfig({ DATABASE_URL: "postgres://x@localhost/x", API_LOG_LEVEL: "silent" }),
+  // Los tests de replay/pulse/share necesitan las rutas montadas; la v1 las deja apagadas por defecto.
+  features: ["replay", "pulse", "share"],
   pollMs: 100,
   wsPingMs: 50,
   ...over,
