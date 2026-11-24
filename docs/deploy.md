@@ -26,7 +26,7 @@ Producción mínima: `docker compose` con TimescaleDB, la ingesta, un backup dia
    - `POSTGRES_PASSWORD=$(openssl rand -hex 24)` (solo letras y dígitos: va dentro de una URL).
    - Opcional: `BACKUP_DIR` (carpeta absoluta del host), `BACKUP_HOUR_UTC`, `BACKUP_KEEP_DAYS`, claves de fuentes.
    - `.env` está ignorado por git; no lo subas nunca.
-4. **Teselas**: genera `coruna.pmtiles` (`infra/tiles/README.md`) y cópialo al VPS en `infra/deploy/tiles/coruna.pmtiles` (o la carpeta de `TILES_DIR`), p. ej. `scp infra/tiles/.work/coruna.pmtiles vps:pulso/infra/deploy/tiles/`. Se sirve en `https://DOMINIO/tiles/coruna.pmtiles`.
+4. **Teselas**: genera `coruna.pmtiles` (`infra/tiles/README.md`) y cópialo al VPS en `infra/deploy/tiles/coruna.pmtiles` (o la carpeta de `TILES_DIR`), p. ej. `scp infra/tiles/.work/coruna.pmtiles vps:pulso/infra/deploy/tiles/`. Se sirve en `https://DOMINIO/tiles/coruna.pmtiles` (~11 MB, zooms 0-16, ADR-0031). Si cambias el fichero, sube el sufijo de `TILES_CACHE` en `apps/web/src/pwa/sw-logic.ts` para que los clientes con la copia offline la renueven.
 5. **Arranque**: `docker compose -f infra/deploy/docker-compose.yml up -d --build` (la primera vez tarda unos minutos: compila la web y la ingesta).
 6. **Comprobación**: `docker compose -f infra/deploy/docker-compose.yml ps` (todo `Up`, `db` `healthy`), `https://DOMINIO` carga y `infra/deploy/scripts/health.sh` (ver abajo).
 

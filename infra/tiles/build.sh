@@ -10,6 +10,9 @@ OSM_URL="https://download.geofabrik.de/europe/spain/galicia-261117.osm.pbf"
 # lon_min,lat_min,lon_max,lat_max: bahía, península, Oleiros, Arteixo, Sada/Bergondo.
 # El borde norte (43,52) es mar abierto: evita el borde oscuro en la intro de cámara (M2.7).
 BOUNDS="-8.58,43.27,-8.25,43.52"
+# Casco urbano con detalle z15-z16 (M-V1, ADR-0031): fuera de esta caja las teselas acaban en z14 y el
+# cliente sobremuestrea. Cubre la ciudad (Oza, Matogrande, Elviña, Monte Alto, península y Riazor).
+DETAIL_BOUNDS="-8.48,43.31,-8.34,43.40"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$HERE/.work"
@@ -39,7 +42,9 @@ java -Xmx3g -cp "$JAR" "$HERE/CorunaTiles.java" \
   --heights="$WORK/heights.tsv" --area=galicia \
   --download --download_dir="$WORK/sources" --tmpdir="$WORK/tmp" \
   --osm-path="$PBF" --bounds="$BOUNDS" \
-  --minzoom=0 --maxzoom=14 \
+  --minzoom=0 --maxzoom=16 \
+  --detail-bounds="$DETAIL_BOUNDS" --base-maxzoom=14 \
+  --exclude-layers=poi,housenumber,mountain_peak,aerodrome_label,aeroway,boundary \
   --nodemap_type=sortedtable --storage=ram \
   --output="$OUT" --force
 
