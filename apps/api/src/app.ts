@@ -101,242 +101,155 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
     }
   });
 
-  // --- GET /api/v1/replay?from=&to=&layers=  (MessagePack, ventana ≤ 5 min; ver docs/specs/M6.2) ---
+  // Rutas de histórico/compartir: solo se montan si su flag está en API_FEATURES (v1 simple: ninguna).
+  // Sin flag no existen y Fastify responde su 404 normal.
+  const features = new Set(config.features);
   const GLOBAL = "\u0000global"; // clave del tope global dentro del mismo limitador
-  const replayLimiter = new ConnectionLimiter(config.replayMaxPerIp);
-  const replayGlobal = new ConnectionLimiter(config.replayMaxGlobal);
-  const replayCache = new ReplayCache(config.replayCacheBytes);
-  const replayInflight = new Map<string, Promise<EncodedReplay | "too_large">>();
-
-  app.get("/api/v1/replay", async (req, reply) => {
-    const now = Date.now();
-    reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
-    const parsed = parseReplayParams(
-      req.query as Record<string, unknown>,
-      now,
-      config.replayMaxAgeDays,
-    );
-    if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
-    const { params } = parsed;
-    const key = `${params.from}:${params.to}:${params.layers.join(",")}`;
-    const settled = params.to <= now - REPLAY_SETTLE_MS;
-    // Solo las ventanas alineadas y asentadas entran en la caché de memoria (acota las claves).
-    const cacheable = settled && isAlignedWindow(params.from, params.to);
-    const send = (v: EncodedReplay) => {
-      reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
-      if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
-      return reply.type("application/msgpack").send(v.body);
-    };
-
-    const hit = cacheable ? replayCache.get(key) : undefined;
-    if (hit) return send(hit);
-
-    // Una consulta por clave a la vez: el cliente que precarga y otro igual comparten trabajo.
-    let work = replayInflight.get(key);
-    if (!work) {
-      // Tope por IP y tope global (el pool de BD se comparte con el directo).
-      if (!replayLimiter.acquire(req.ip)) {
-        return reply
-          .code(429)
-          .header("Retry-After", "2")
-          .send({
-            error: "too_many_requests",
-            message: `máximo ${config.replayMaxPerIp} peticiones de replay simultáneas por IP`,
-          });
-      }
-      if (!replayGlobal.acquire(GLOBAL)) {
-        replayLimiter.release(req.ip);
-        return reply
-          .code(429)
-          .header("Retry-After", "2")
-          .send({ error: "too_many_requests", message: "demasiadas lecturas de replay a la vez" });
-      }
-      const ip = req.ip;
-      const cutoff = replayCutoff(now, config.replayRawDays);
-      const resolution = replayResolution(params.from, cutoff);
-      work = (async (): Promise<EncodedReplay | "too_large"> => {
-        const rows = await source.replay({
-          from: params.from,
-          to: params.to,
-          layers: params.layers,
-          resolution,
-          cutoff,
-          lookbackMs: config.maxAgeMs,
-          maxRows: config.replayMaxRows,
-        });
-        if (rows.truncated) return "too_large";
-        const window = buildReplayWindow(params, rows);
-        const raw = encode(window);
-        const body = Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
-        if (body.length > config.replayMaxBytes) return "too_large";
-        const done: EncodedReplay = {
-          body,
-          etag: replayEtag(body),
-          cacheControl: replayCacheControl({
-            from: params.from,
-            to: params.to,
-            now,
-            resolution,
-            empty: isEmptyWindow(window),
-          }),
-        };
-        if (cacheable && !isEmptyWindow(window)) replayCache.set(key, done);
-        return done;
-      })().finally(() => {
-        replayLimiter.release(ip);
-        replayGlobal.release(GLOBAL);
-        replayInflight.delete(key);
-      });
-      replayInflight.set(key, work);
-    }
-    try {
-      const result = await work;
-      if (result === "too_large") {
-        return reply.code(413).send({
-          error: "too_large",
-          message: "la ventana es demasiado grande: pide menos capas",
-        });
-      }
-      return send(result);
-    } catch (e) {
-      req.log.error({ err: e }, "replay: BD no disponible");
-      return reply
-        .code(503)
-        .header("Retry-After", "5")
-        .send({ error: "unavailable", message: "base de datos no disponible" });
-    }
-  });
-
-  // --- GET /api/v1/pulse?from=&to=[&step=]  (JSON, ventana ≤ 24 h; ver docs/specs/M7.2) ---
+  // Topes compartidos por pulse y share (se crean siempre; sin la ruta no se usan).
   const pulseLimiter = new ConnectionLimiter(config.pulseMaxPerIp);
   const pulseGlobal = new ConnectionLimiter(config.pulseMaxGlobal);
-  interface EncodedPulse {
-    body: string;
-    etag: string;
-    cacheControl: string;
-  }
-  const pulseInflight = new Map<string, Promise<EncodedPulse>>();
+  if (features.has("replay")) {
+    // --- GET /api/v1/replay?from=&to=&layers=  (MessagePack, ventana ≤ 5 min; ver docs/specs/M6.2) ---
+    const replayLimiter = new ConnectionLimiter(config.replayMaxPerIp);
+    const replayGlobal = new ConnectionLimiter(config.replayMaxGlobal);
+    const replayCache = new ReplayCache(config.replayCacheBytes);
+    const replayInflight = new Map<string, Promise<EncodedReplay | "too_large">>();
 
-  app.get("/api/v1/pulse", async (req, reply) => {
-    const now = Date.now();
-    reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
-    const parsed = parsePulseParams(
-      req.query as Record<string, unknown>,
-      now,
-      config.replayMaxAgeDays,
-    );
-    if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
-    const { params } = parsed;
-    const key = `${params.from}:${params.to}:${params.stepMs}`;
-    const send = (v: EncodedPulse) => {
-      reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
-      if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
-      return reply.type("application/json; charset=utf-8").send(v.body);
-    };
+    app.get("/api/v1/replay", async (req, reply) => {
+      const now = Date.now();
+      reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
+      const parsed = parseReplayParams(
+        req.query as Record<string, unknown>,
+        now,
+        config.replayMaxAgeDays,
+      );
+      if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
+      const { params } = parsed;
+      const key = `${params.from}:${params.to}:${params.layers.join(",")}`;
+      const settled = params.to <= now - REPLAY_SETTLE_MS;
+      // Solo las ventanas alineadas y asentadas entran en la caché de memoria (acota las claves).
+      const cacheable = settled && isAlignedWindow(params.from, params.to);
+      const send = (v: EncodedReplay) => {
+        reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
+        if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
+        return reply.type("application/msgpack").send(v.body);
+      };
 
-    let work = pulseInflight.get(key);
-    if (!work) {
-      if (!pulseLimiter.acquire(req.ip)) {
-        return reply
-          .code(429)
-          .header("Retry-After", "2")
-          .send({
+      const hit = cacheable ? replayCache.get(key) : undefined;
+      if (hit) return send(hit);
+
+      // Una consulta por clave a la vez: el cliente que precarga y otro igual comparten trabajo.
+      let work = replayInflight.get(key);
+      if (!work) {
+        // Tope por IP y tope global (el pool de BD se comparte con el directo).
+        if (!replayLimiter.acquire(req.ip)) {
+          return reply
+            .code(429)
+            .header("Retry-After", "2")
+            .send({
+              error: "too_many_requests",
+              message: `máximo ${config.replayMaxPerIp} peticiones de replay simultáneas por IP`,
+            });
+        }
+        if (!replayGlobal.acquire(GLOBAL)) {
+          replayLimiter.release(req.ip);
+          return reply.code(429).header("Retry-After", "2").send({
             error: "too_many_requests",
-            message: `máximo ${config.pulseMaxPerIp} peticiones de pulse simultáneas por IP`,
+            message: "demasiadas lecturas de replay a la vez",
           });
-      }
-      if (!pulseGlobal.acquire(GLOBAL)) {
-        pulseLimiter.release(req.ip);
-        return reply
-          .code(429)
-          .header("Retry-After", "2")
-          .send({ error: "too_many_requests", message: "demasiadas lecturas de pulse a la vez" });
-      }
-      const ip = req.ip;
-      work = (async (): Promise<EncodedPulse> => {
-        const agg = await source.pulse({
-          ...params,
-          layers: activePulseLayers(config.pulseWeights),
-          cutoff: replayCutoff(now, config.replayRawDays),
-        });
-        const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
-        const body = JSON.stringify(pulse);
-        return {
-          body,
-          etag: pulseEtag(body),
-          cacheControl: pulseCacheControl({
+        }
+        const ip = req.ip;
+        const cutoff = replayCutoff(now, config.replayRawDays);
+        const resolution = replayResolution(params.from, cutoff);
+        work = (async (): Promise<EncodedReplay | "too_large"> => {
+          const rows = await source.replay({
+            from: params.from,
             to: params.to,
-            now,
-            empty: pulse.points.length === 0,
-          }),
-        };
-      })().finally(() => {
-        pulseLimiter.release(ip);
-        pulseGlobal.release(GLOBAL);
-        pulseInflight.delete(key);
-      });
-      pulseInflight.set(key, work);
-    }
-    try {
-      return send(await work);
-    } catch (e) {
-      req.log.error({ err: e }, "pulse: BD no disponible");
-      return reply
-        .code(503)
-        .header("Retry-After", "5")
-        .send({ error: "unavailable", message: "base de datos no disponible" });
-    }
-  });
-
-  // --- GET /api/v1/share[?lang=]  (HTML con metas OG y el índice real; ver docs/specs/M8.5) ---
-  // Una sola lectura cada `shareCacheMs` para todos los idiomas y visitantes; si hay que leer la BD se
-  // aplican los mismos topes que a /pulse. Sin datos o con la BD caída: página neutra (nunca 503, el
-  // _scraper_ no mostraría nada), con caché corta.
-  interface ShareState {
-    at: number;
-    ttl: number;
-    point: SharePoint | null;
+            layers: params.layers,
+            resolution,
+            cutoff,
+            lookbackMs: config.maxAgeMs,
+            maxRows: config.replayMaxRows,
+          });
+          if (rows.truncated) return "too_large";
+          const window = buildReplayWindow(params, rows);
+          const raw = encode(window);
+          const body = Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength);
+          if (body.length > config.replayMaxBytes) return "too_large";
+          const done: EncodedReplay = {
+            body,
+            etag: replayEtag(body),
+            cacheControl: replayCacheControl({
+              from: params.from,
+              to: params.to,
+              now,
+              resolution,
+              empty: isEmptyWindow(window),
+            }),
+          };
+          if (cacheable && !isEmptyWindow(window)) replayCache.set(key, done);
+          return done;
+        })().finally(() => {
+          replayLimiter.release(ip);
+          replayGlobal.release(GLOBAL);
+          replayInflight.delete(key);
+        });
+        replayInflight.set(key, work);
+      }
+      try {
+        const result = await work;
+        if (result === "too_large") {
+          return reply.code(413).send({
+            error: "too_large",
+            message: "la ventana es demasiado grande: pide menos capas",
+          });
+        }
+        return send(result);
+      } catch (e) {
+        req.log.error({ err: e }, "replay: BD no disponible");
+        return reply
+          .code(503)
+          .header("Retry-After", "5")
+          .send({ error: "unavailable", message: "base de datos no disponible" });
+      }
+    });
   }
-  let shareState: ShareState | undefined;
-  let shareInflight: Promise<ShareState> | undefined;
-  const readShare = async (now: number): Promise<ShareState> => {
-    try {
-      const to = Math.floor(now / SHARE_STEP_MS) * SHARE_STEP_MS + SHARE_STEP_MS;
-      const from = to - SHARE_WINDOW_MS;
-      const params = { from, to, stepMs: SHARE_STEP_MS };
-      const agg = await source.pulse({
-        ...params,
-        layers: activePulseLayers(config.pulseWeights),
-        cutoff: replayCutoff(now, config.replayRawDays),
-      });
-      const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
-      return { at: now, ttl: config.shareCacheMs, point: latestSharePoint(pulse, now) };
-    } catch (e) {
-      app.log.warn({ err: String(e) }, "share: BD no disponible, página neutra");
-      return { at: now, ttl: Math.min(10_000, config.shareCacheMs), point: null };
-    }
-  };
 
-  app.get("/api/v1/share", async (req, reply) => {
-    const base = config.shareBaseUrl;
-    if (!base) {
-      return reply
-        .code(404)
-        .header("Cache-Control", "no-store")
-        .send({ error: "not_found", message: "vista previa no configurada (SHARE_BASE_URL)" });
+  if (features.has("pulse")) {
+    // --- GET /api/v1/pulse?from=&to=[&step=]  (JSON, ventana ≤ 24 h; ver docs/specs/M7.2) ---
+    interface EncodedPulse {
+      body: string;
+      etag: string;
+      cacheControl: string;
     }
-    const now = Date.now();
-    const lang = parseShareLang((req.query as Record<string, unknown>)["lang"]);
-    if (!shareState || now - shareState.at >= shareState.ttl || shareState.at > now) {
-      if (!shareInflight) {
+    const pulseInflight = new Map<string, Promise<EncodedPulse>>();
+
+    app.get("/api/v1/pulse", async (req, reply) => {
+      const now = Date.now();
+      reply.header("Cache-Control", "no-store"); // errores: nunca cacheables; `send` lo sustituye
+      const parsed = parsePulseParams(
+        req.query as Record<string, unknown>,
+        now,
+        config.replayMaxAgeDays,
+      );
+      if (!parsed.ok) return reply.code(400).send({ error: "bad_request", message: parsed.error });
+      const { params } = parsed;
+      const key = `${params.from}:${params.to}:${params.stepMs}`;
+      const send = (v: EncodedPulse) => {
+        reply.header("ETag", v.etag).header("Cache-Control", v.cacheControl);
+        if (etagMatches(req.headers["if-none-match"], v.etag)) return reply.code(304).send();
+        return reply.type("application/json; charset=utf-8").send(v.body);
+      };
+
+      let work = pulseInflight.get(key);
+      if (!work) {
         if (!pulseLimiter.acquire(req.ip)) {
           return reply
             .code(429)
             .header("Retry-After", "2")
-            .header("Cache-Control", "no-store")
             .send({
               error: "too_many_requests",
-              message: `máximo ${config.pulseMaxPerIp} lecturas simultáneas por IP`,
+              message: `máximo ${config.pulseMaxPerIp} peticiones de pulse simultáneas por IP`,
             });
         }
         if (!pulseGlobal.acquire(GLOBAL)) {
@@ -344,30 +257,127 @@ export async function buildApp(config: ApiConfig, source: DataSource): Promise<B
           return reply
             .code(429)
             .header("Retry-After", "2")
-            .header("Cache-Control", "no-store")
-            .send({ error: "too_many_requests", message: "demasiadas lecturas a la vez" });
+            .send({ error: "too_many_requests", message: "demasiadas lecturas de pulse a la vez" });
         }
         const ip = req.ip;
-        shareInflight = readShare(now).finally(() => {
+        work = (async (): Promise<EncodedPulse> => {
+          const agg = await source.pulse({
+            ...params,
+            layers: activePulseLayers(config.pulseWeights),
+            cutoff: replayCutoff(now, config.replayRawDays),
+          });
+          const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
+          const body = JSON.stringify(pulse);
+          return {
+            body,
+            etag: pulseEtag(body),
+            cacheControl: pulseCacheControl({
+              to: params.to,
+              now,
+              empty: pulse.points.length === 0,
+            }),
+          };
+        })().finally(() => {
           pulseLimiter.release(ip);
           pulseGlobal.release(GLOBAL);
-          shareInflight = undefined;
+          pulseInflight.delete(key);
         });
+        pulseInflight.set(key, work);
       }
-      shareState = await shareInflight;
+      try {
+        return send(await work);
+      } catch (e) {
+        req.log.error({ err: e }, "pulse: BD no disponible");
+        return reply
+          .code(503)
+          .header("Retry-After", "5")
+          .send({ error: "unavailable", message: "base de datos no disponible" });
+      }
+    });
+  }
+
+  if (features.has("share")) {
+    // --- GET /api/v1/share[?lang=]  (HTML con metas OG y el índice real; ver docs/specs/M8.5) ---
+    // Una sola lectura cada `shareCacheMs` para todos los idiomas y visitantes; si hay que leer la BD se
+    // aplican los mismos topes que a /pulse. Sin datos o con la BD caída: página neutra (nunca 503, el
+    // _scraper_ no mostraría nada), con caché corta.
+    interface ShareState {
+      at: number;
+      ttl: number;
+      point: SharePoint | null;
     }
-    const state = shareState;
-    const body = renderSharePage({ baseUrl: base, lang, point: state.point });
-    const etag = pulseEtag(body);
-    const remaining = Math.max(1, Math.ceil((state.at + state.ttl - Date.now()) / 1000));
-    reply
-      .header("ETag", etag)
-      .header("Cache-Control", shareCacheControl(remaining))
-      .header("Content-Security-Policy", "default-src 'none'")
-      .header("Referrer-Policy", "no-referrer");
-    if (etagMatches(req.headers["if-none-match"], etag)) return reply.code(304).send();
-    return reply.type("text/html; charset=utf-8").send(body);
-  });
+    let shareState: ShareState | undefined;
+    let shareInflight: Promise<ShareState> | undefined;
+    const readShare = async (now: number): Promise<ShareState> => {
+      try {
+        const to = Math.floor(now / SHARE_STEP_MS) * SHARE_STEP_MS + SHARE_STEP_MS;
+        const from = to - SHARE_WINDOW_MS;
+        const params = { from, to, stepMs: SHARE_STEP_MS };
+        const agg = await source.pulse({
+          ...params,
+          layers: activePulseLayers(config.pulseWeights),
+          cutoff: replayCutoff(now, config.replayRawDays),
+        });
+        const pulse = computePulse({ ...params, weights: config.pulseWeights, now }, agg);
+        return { at: now, ttl: config.shareCacheMs, point: latestSharePoint(pulse, now) };
+      } catch (e) {
+        app.log.warn({ err: String(e) }, "share: BD no disponible, página neutra");
+        return { at: now, ttl: Math.min(10_000, config.shareCacheMs), point: null };
+      }
+    };
+
+    app.get("/api/v1/share", async (req, reply) => {
+      const base = config.shareBaseUrl;
+      if (!base) {
+        return reply
+          .code(404)
+          .header("Cache-Control", "no-store")
+          .send({ error: "not_found", message: "vista previa no configurada (SHARE_BASE_URL)" });
+      }
+      const now = Date.now();
+      const lang = parseShareLang((req.query as Record<string, unknown>)["lang"]);
+      if (!shareState || now - shareState.at >= shareState.ttl || shareState.at > now) {
+        if (!shareInflight) {
+          if (!pulseLimiter.acquire(req.ip)) {
+            return reply
+              .code(429)
+              .header("Retry-After", "2")
+              .header("Cache-Control", "no-store")
+              .send({
+                error: "too_many_requests",
+                message: `máximo ${config.pulseMaxPerIp} lecturas simultáneas por IP`,
+              });
+          }
+          if (!pulseGlobal.acquire(GLOBAL)) {
+            pulseLimiter.release(req.ip);
+            return reply
+              .code(429)
+              .header("Retry-After", "2")
+              .header("Cache-Control", "no-store")
+              .send({ error: "too_many_requests", message: "demasiadas lecturas a la vez" });
+          }
+          const ip = req.ip;
+          shareInflight = readShare(now).finally(() => {
+            pulseLimiter.release(ip);
+            pulseGlobal.release(GLOBAL);
+            shareInflight = undefined;
+          });
+        }
+        shareState = await shareInflight;
+      }
+      const state = shareState;
+      const body = renderSharePage({ baseUrl: base, lang, point: state.point });
+      const etag = pulseEtag(body);
+      const remaining = Math.max(1, Math.ceil((state.at + state.ttl - Date.now()) / 1000));
+      reply
+        .header("ETag", etag)
+        .header("Cache-Control", shareCacheControl(remaining))
+        .header("Content-Security-Policy", "default-src 'none'")
+        .header("Referrer-Policy", "no-referrer");
+      if (etagMatches(req.headers["if-none-match"], etag)) return reply.code(304).send();
+      return reply.type("text/html; charset=utf-8").send(body);
+    });
+  }
 
   // --- GET /api/v1/health --- (en caché unos segundos y con consultas unidas)
   let healthCache: { at: number; report: HealthReport } | undefined;

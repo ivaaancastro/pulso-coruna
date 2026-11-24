@@ -47,7 +47,7 @@ docker compose exec db psql -U pulso -d pulso -c "SELECT * FROM source_health"
 
 Con `registry.ts` sin adaptadores la ingesta arranca y migra pero no graba nada (`sources: []` en el log). «Primer día grabado» = dejarla 24 h con los adaptadores cableados y revisar `health.sh` (las filas deben crecer y `rows_written_total` subir en cada fuente).
 
-**Retención (M6.1).** La ingesta lleva un job (sin servicio nuevo en compose) que cada hora agrega a 1 muestra/min/entidad (`positions_1m`, `station_status_1m`, `observations_1m`) y borra los chunks brutos de más de `RETENTION_RAW_DAYS` (30, mínimo 7) solo si ya están agregados. Se configura en `infra/deploy/.env` (`RETENTION_ENABLED`, `RETENTION_RAW_DAYS`, `RETENTION_INTERVAL_MS`). Estado: bloque «retencion» de `health.sh` (tabla `retention_status`) y logs `retención` / `retención fallida`. Spec: `docs/specs/M6.1-retencion.md`.
+**Retención (M6.1).** La ingesta lleva un job (sin servicio nuevo en compose) que cada hora agrega a 1 muestra/min/entidad (`positions_1m`, `station_status_1m`, `observations_1m`) y borra los chunks brutos de más de `RETENTION_RAW_DAYS` (30, mínimo 7) solo si ya están agregados. **En la v1 simple está apagada** (`INGEST_RETENTION_ENABLED=false` por defecto): no hay pool ni job, la BD solo es el bus ingesta→API y los brutos crecen; activa el job solo si activas el histórico. Se configura en `infra/deploy/.env` (`INGEST_RETENTION_ENABLED`, `RETENTION_RAW_DAYS`, `RETENTION_INTERVAL_MS`). Estado: bloque «retencion» de `health.sh` (tabla `retention_status`) y logs `retención` / `retención fallida`. Spec: `docs/specs/M6.1-retencion.md`.
 
 Logs: `docker compose logs -f ingest` (JSON, rotados a 3×10 MB).
 
@@ -93,6 +93,17 @@ docker compose -f infra/deploy/docker-compose.yml down -v   # borra también los
 
 Si 80/443 están ocupados en tu máquina, cambia `HTTP_PORT`/`HTTPS_PORT` (y pide `https://localhost:PUERTO`).
 
+## Modo v1 simple (solo tiempo real)
+
+Por defecto la v1 sirve únicamente el directo: `GET /api/v1/snapshot`, WS `/api/v1/stream` y `GET /api/v1/health`. Lo que solo sirve al histórico queda apagado por configuración (el código y las migraciones siguen ahí):
+
+- `API_FEATURES` (lista separada por comas, vacía por defecto): `replay` monta `/api/v1/replay`, `pulse` monta `/api/v1/pulse`, `share` monta `/api/v1/share` (además necesita `SHARE_BASE_URL`). Sin el flag la ruta no existe y responde 404. Un nombre desconocido impide arrancar.
+- `INGEST_RETENTION_ENABLED` (`false`): job de retención/agregados de la ingesta (ver «Retención»). Las migraciones 0002/0003 (agregados `*_1m`, `retention_status`) se siguen aplicando, pero quedan sin uso en la v1.
+- Los datos sintéticos (`apps/ingest/scripts/seed-synthetic.ts`) son un script manual; la ingesta nunca los arranca.
+- Backup diario: opcional en la v1 (la BD se reconstruye sola con la ingesta); si no lo quieres, no levantes el servicio `backup` (`docker compose up -d --scale backup=0`).
+
+Para volver al histórico: `API_FEATURES=replay,pulse,share` e `INGEST_RETENTION_ENABLED=true`. Spec: `docs/specs/V1-backend.md`.
+
 ## API (M4.1)
 
 El servicio `api` (`Dockerfile.api`, imagen sin `node_modules`, usuario `node`) arranca con el resto y lee de la BD lo que graba la ingesta. No publica puertos: Caddy lo expone en `/api/*` (incluido el WebSocket) en el mismo dominio que la web, así que no hace falta CORS. Spec: `docs/specs/M4.1-api-snapshot-stream.md`.
@@ -109,13 +120,13 @@ curl -k "https://localhost/api/v1/snapshot?layers=bike"
 docker compose -f infra/deploy/docker-compose.yml logs -f api
 ```
 
-Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/src/config.ts`): `API_WS_MAX_PER_IP` (10), `API_POLL_MS` (2000), `API_WS_PING_MS` (30000), `API_CORS_ORIGINS` (`*`), `API_MAX_AGE_*_MS` (cuánto tiempo sigue «viva» una lectura: 5 min móviles, 1 h bicis, 6 h observaciones), `API_HEALTH_STALE_FACTOR` (3), y para `GET /api/v1/replay` (M6.2): `API_REPLAY_MAX_AGE_DAYS` (365), `API_REPLAY_RAW_DAYS` (30), `API_REPLAY_MAX_ROWS`, `API_REPLAY_MAX_BYTES` (4 MiB), `API_REPLAY_MAX_PER_IP` (4), `API_REPLAY_CACHE_BYTES` (32 MiB). `API_TRUST_PROXY=true` ya lo fija compose: la API toma la IP real de `X-Forwarded-For` que pone Caddy; **no** lo actives si la API queda expuesta sin proxy.
+Variables opcionales (en `infra/deploy/.env`; valores por defecto en `apps/api/src/config.ts`): `API_WS_MAX_PER_IP` (10), `API_POLL_MS` (2000), `API_WS_PING_MS` (30000), `API_CORS_ORIGINS` (`*`), `API_MAX_AGE_*_MS` (cuánto tiempo sigue «viva» una lectura: 5 min móviles, 1 h bicis, 6 h observaciones), `API_HEALTH_STALE_FACTOR` (3), `API_FEATURES` (vacía; ver «Modo v1 simple»), y, con `replay` activo, para `GET /api/v1/replay` (M6.2): `API_REPLAY_MAX_AGE_DAYS` (365), `API_REPLAY_RAW_DAYS` (30), `API_REPLAY_MAX_ROWS`, `API_REPLAY_MAX_BYTES` (4 MiB), `API_REPLAY_MAX_PER_IP` (4), `API_REPLAY_CACHE_BYTES` (32 MiB). `API_TRUST_PROXY=true` ya lo fija compose: la API toma la IP real de `X-Forwarded-For` que pone Caddy; **no** lo actives si la API queda expuesta sin proxy.
 
 Con iTranvías apagada la capa `bus` sale vacía (`[]`) y `health.layers.bus.lastDataAt` es `null`: es lo esperado, no un fallo.
 
 ### Vista previa de enlaces con el estado real (M8.5)
 
-`GET /api/v1/share[?lang=gl|es|en]` devuelve un HTML mínimo con las metas Open Graph/Twitter (título y descripción con el índice Pulso actual, imagen `<SHARE_BASE_URL>/og.png`) y redirige al visitante a la web. Hay que fijar `SHARE_BASE_URL` (p. ej. `https://tu-dominio`, sin barra final) en `infra/deploy/.env`; sin ella responde 404. Es el enlace que hay que pegar para que la vista previa muestre el número; los enlaces a la web sin más enseñan la descripción genérica de `index.html`. Spec: `docs/specs/M8.5-clip-og.md`.
+`GET /api/v1/share[?lang=gl|es|en]` devuelve un HTML mínimo con las metas Open Graph/Twitter (título y descripción con el índice Pulso actual, imagen `<SHARE_BASE_URL>/og.png`) y redirige al visitante a la web. Requiere `API_FEATURES=share` y fijar `SHARE_BASE_URL` (p. ej. `https://tu-dominio`, sin barra final) en `infra/deploy/.env`; sin ella responde 404. Es el enlace que hay que pegar para que la vista previa muestre el número; los enlaces a la web sin más enseñan la descripción genérica de `index.html`. Spec: `docs/specs/M8.5-clip-og.md`.
 
 Propuesta (decide el humano en M8.8; no está en el `Caddyfile`, no se ha podido validar sin Caddy): que los _scrapers_ que piden la portada reciban esa página, dentro del sitio, **antes** de `handle /api/*`:
 

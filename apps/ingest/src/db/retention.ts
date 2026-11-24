@@ -166,7 +166,9 @@ export function startRetention(
   const ac = new AbortController();
   const { config, clock, logger } = o;
   if (!config.enabled) {
-    logger.warn("retención desactivada (RETENTION_ENABLED=false): los brutos crecen sin límite");
+    logger.warn(
+      "retención desactivada (INGEST_RETENTION_ENABLED=false): los brutos crecen sin límite",
+    );
     return { async stop() {} };
   }
   logger.info("retención activa", { rawDays: config.rawDays, intervalMs: config.intervalMs });
