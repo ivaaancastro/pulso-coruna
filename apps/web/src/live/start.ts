@@ -9,6 +9,7 @@ import { createSourceMonitor, type SourceMonitor } from "./source-monitor";
 import { SwitchableStore } from "./switchable-store";
 import { createStatusLabel } from "./status-label";
 import { createTranslator, detectLocale } from "../i18n";
+import { pixelRatioFor } from "../map/pixel-ratio";
 
 export interface StartLiveOptions {
   map: MapLibreMap;
@@ -100,6 +101,10 @@ export async function startLive(opts: StartLiveOptions): Promise<LiveHandle | nu
     motion,
     forced: dev ? parsePerfOverride(opts.search) : null,
     onChange: (level, fps) => {
+      // Nitidez: DPR del mapa y de deck.gl siguen al nivel (3× solo en «high»).
+      const ratio = pixelRatioFor(window.devicePixelRatio, level);
+      if (opts.map.getPixelRatio() !== ratio) opts.map.setPixelRatio(ratio);
+      overlay.overlay.setProps({ useDevicePixels: ratio });
       window.dispatchEvent(new CustomEvent("pulso:quality", { detail: { level, fps } }));
       if (dev) console.debug(`[live] calidad ${level} (${Math.round(fps)} fps)`);
     },

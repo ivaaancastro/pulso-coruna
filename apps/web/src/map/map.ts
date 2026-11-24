@@ -13,6 +13,7 @@ import {
   type Camera,
 } from "./intro";
 import { paletteAt, type MapPalette } from "./palette";
+import { pixelRatioFor } from "./pixel-ratio";
 import { buildStyle, lightFor, skyFor } from "./style";
 
 /** Este módulo es el chunk diferido del mapa: MapLibre + pmtiles solo entran por aquí. */
@@ -128,8 +129,9 @@ export function createPulsoMap(opts: PulsoMapOptions): PulsoMap {
     maxZoom: 17,
     attributionControl: false,
     fadeDuration: reducedQuery.matches ? 0 : 300,
-    pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-    canvasContextAttributes: { antialias: false, powerPreference: "high-performance" },
+    pixelRatio: pixelRatioFor(window.devicePixelRatio),
+    // MSAA: bordes de edificios 3D y líneas sin dientes de sierra (el auto-quality baja el DPR si cuesta).
+    canvasContextAttributes: { antialias: true, powerPreference: "high-performance" },
   });
   // Deja libre la zona de la hora y el índice: la Torre queda justo debajo.
   map.setPadding(

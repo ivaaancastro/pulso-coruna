@@ -1,5 +1,6 @@
 import { MapLibreOverlay } from "@deck.gl/maplibre";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { pixelRatioFor } from "../map/pixel-ratio";
 import { watchDeckCanvas } from "./deck-a11y";
 import { LayerPipeline } from "./layer-pipeline";
 import type { LiveLayerDefinition } from "./layer-registry";
@@ -42,6 +43,9 @@ export function attachLiveOverlay(opts: LiveOverlayOptions): LiveOverlay {
   const overlay = new MapLibreOverlay({
     interleaved: false,
     layers: [],
+    // Misma densidad que el mapa (tope 3, baja con el auto-quality) y MSAA explícito.
+    useDevicePixels: pixelRatioFor(window.devicePixelRatio),
+    deviceProps: { webgl: { antialias: true, powerPreference: "high-performance" } },
     onAfterRender: () => {
       for (const cb of frameListeners) cb();
     },
