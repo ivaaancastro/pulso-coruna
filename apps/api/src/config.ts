@@ -1,7 +1,26 @@
 import { parsePulseWeights, type PulseWeights } from "./pulse.js";
 import { parseShareBaseUrl } from "./share.js";
 
+/** Rutas opcionales (solo sirven al histórico/compartir). La v1 simple no activa ninguna. */
+export const API_FEATURES = ["replay", "pulse", "share"] as const;
+export type ApiFeature = (typeof API_FEATURES)[number];
+
+export function parseFeatures(raw: string | undefined): ApiFeature[] {
+  const out: ApiFeature[] = [];
+  for (const f of (raw ?? "")
+    .split(",")
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean)) {
+    if (!(API_FEATURES as readonly string[]).includes(f))
+      throw new Error(`API_FEATURES: "${f}" desconocida (válidas: ${API_FEATURES.join(", ")})`);
+    if (!out.includes(f as ApiFeature)) out.push(f as ApiFeature);
+  }
+  return out;
+}
+
 export interface ApiConfig {
+  /** Rutas opcionales activas (`API_FEATURES`, por defecto ninguna): replay, pulse, share. */
+  features: ApiFeature[];
   databaseUrl: string;
   host: string;
   port: number;
@@ -82,6 +101,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     .map((o) => o.trim())
     .filter(Boolean);
   return {
+    features: parseFeatures(env["API_FEATURES"]),
     databaseUrl,
     host: env["API_HOST"] || "0.0.0.0",
     port: int(env, "API_PORT", 3000),
