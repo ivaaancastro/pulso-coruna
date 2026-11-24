@@ -96,6 +96,15 @@ Checklist operativa. Detalle, criterios y presupuestos en `docs/ROADMAP.md`. Una
 - [ ] M8.7 Contacto institucional (humano; dossier y borradores en `docs/launch/M8.7-contacto-institucional.md`)
 - [ ] M8.8 Salida por pasos (humano; checklist en `docs/launch/M8.8-salida-por-pasos.md`)
 
+## v1 simple (mapa nítido y tiempo real)
+
+- [x] V1.1 Flags web: Escuchar, Reproducir, Pulso, clip y compartir apagados (`docs/specs/V1-simple.md`)
+- [x] V1.2 API/ingesta: replay, pulse, share y retención apagados (`docs/specs/V1-backend.md`)
+- [x] V1.3 Teselas z16 en el casco urbano (ADR-0031)
+- [x] V1.4 Nitidez de render y estilo (`docs/specs/V1-nitidez.md`)
+- [ ] V1.5 Humano: móvil real (M8.3), contacto institucional (M8.7), salida por pasos (M8.8), hosting, claves y licencias
+- [ ] v1.1 (parche): reactivar Escuchar, Reproducir, Pulso, clip y compartir
+
 ## Puertas de calidad
 
 No se cierra un hito sin su puerta (ver `docs/ROADMAP.md`).

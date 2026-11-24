@@ -8,6 +8,8 @@ _Demo de ~11 s con **datos simulados** (`dev:mock`), hora fijada a la noche del 
 
 ## Estado
 
+> **Alcance de la v1 (decidido el 2026-11-24):** mapa muy nítido y datos en tiempo real. **Apagados por defecto** (el código sigue ahí, se reactivan con `VITE_FEATURES=all` en la web y `API_FEATURES=replay,pulse,share` + `INGEST_RETENTION_ENABLED=true` en el servidor): Escuchar, Reproducir (histórico), índice Pulso, clip y compartir. Volverán como parche o versión nueva; ver [`docs/specs/V1-simple.md`](docs/specs/V1-simple.md) y [`docs/specs/V1-backend.md`](docs/specs/V1-backend.md). Las secciones de abajo que describen esas funciones corresponden a la **v1.1**.
+
 Desarrollo completado hasta M8 salvo las tareas humanas (y esta documentación, M8.6): todavía **no hay despliegue público**. Pendiente de una persona: prueba en móvil real (M8.3), contacto institucional con el Concello y la Compañía de Tranvías (M8.7) y salida por pasos (M8.8). Checklist en [`docs/TASKS.md`](docs/TASKS.md), plan en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Datos que importa saber antes de mirar la demo:
@@ -28,7 +30,7 @@ Datos que importa saber antes de mirar la demo:
 | Aire       | Open-Meteo / Calidade do Aire              | Halos por calidad                                           |
 | Aviones    | OpenSky                                    | Trazas                                                      |
 
-### Modos
+### Modos (en la v1 solo «Ahora»; el resto es v1.1)
 
 - **Ahora**: estado en vivo recibido por WebSocket (snapshot al conectar y deltas cada ≤ 2 s).
 - **Reproducir**: línea temporal con selector de día y velocidades 1×/60×/600× sobre el histórico grabado (30 días en bruto, después una muestra por minuto y entidad). Un día entero a 600× dura 2 min 24 s.

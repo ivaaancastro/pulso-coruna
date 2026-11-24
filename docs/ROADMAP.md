@@ -20,7 +20,7 @@ Medidos con la skill `perf-budget` (móvil de gama media emulado: CPU 4×, red �
 | Primer fotograma del mapa (`performance.mark('map:first-frame')`; LCP no ve el canvas) | < 2,0 s                          |
 | JS inicial (gzip, sin librería de mapa)                                                | < 250 KB                         |
 | Mapa + deck.gl + capas (gzip, diferida)                                                | < 565 KB (ADR-0030)              |
-| INP (tocar entidad, cambiar modo, arrastrar línea temporal)                            | < 100 ms                         |
+| INP (tocar entidad; v1.1: cambiar modo, arrastrar línea temporal)                      | < 100 ms                         |
 | Trabajo en hilo principal por fotograma                                                | < 8 ms (interpolación en worker) |
 | Peticiones del navegador a terceros                                                    | 0                                |
 | Degradación automática                                                                 | si < 45 fps durante 3 s          |
@@ -153,6 +153,14 @@ Identidad marítima completa.
 | M8.6 | README, GIF y post técnico | Números reales de rendimiento y coste                                                                                  |
 | M8.7 | Contacto institucional     | Humano: Concello y Compañía de Tranvías antes de la salida                                                             |
 | M8.8 | Salida por pasos           | Cerrado → local → global                                                                                               |
+
+### v1 simple — Mapa nítido y tiempo real (2026-11-24)
+
+Decisión del humano: la primera versión prioriza gráficos y datos en vivo. **Apagados por flag** (no borrados): Escuchar (M7.1), Reproducir (M6), índice Pulso (M7.2/M7.3), clip y OG (M8.5) y compartir. Hecho: flags de compilación (`V1-simple`), extras de API/ingesta apagados (`V1-backend`), teselas a z16 en el casco urbano (ADR-0031) y nitidez de render (`V1-nitidez`).
+
+### v1.1 — Parche posterior
+
+Reactivar Escuchar, Reproducir, índice Pulso, clip y compartir cuando se decida (requieren histórico, retención y calibrar el perfil del índice).
 
 ### v2 — Después
 
