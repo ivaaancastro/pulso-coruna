@@ -34,10 +34,18 @@ export interface ModeSelector {
  */
 export type ListenHandler = (on: boolean) => boolean | Promise<boolean>;
 
+export interface ModeSelectorParts {
+  /** Grupo de modos («Ahora»/«Reproducir»). Por defecto sí. */
+  modes?: boolean;
+  /** Interruptor «Escuchar». Por defecto sí. */
+  listen?: boolean;
+}
+
 export function createModeSelector(
   t: Translate,
   onChange: (mode: Mode) => void = () => undefined,
   onListen: ListenHandler = () => false,
+  parts: ModeSelectorParts = {},
 ): ModeSelector {
   let current: Mode = "view";
   let listening = false;
@@ -154,7 +162,8 @@ export function createModeSelector(
       });
   });
 
-  bar.append(group, listen);
+  if (parts.modes !== false) bar.append(group);
+  if (parts.listen !== false) bar.append(listen);
   paint(current);
   return {
     element: bar,

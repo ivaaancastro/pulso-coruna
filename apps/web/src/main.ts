@@ -1,15 +1,14 @@
 import "./styles/tokens.css";
 import "./styles/shell.css";
-import { createUserContext } from "./audio/context";
+import type { AudioContextLike } from "./audio/context";
 import type { AudioHandle } from "./audio/start";
-import { createClipButton } from "./clip/button";
 import { createClock } from "./components/clock";
 import { createLanguageSelector } from "./components/language-selector";
-import { createModeSelector } from "./components/mode-selector";
-import { createPulseIndex } from "./components/pulse-index";
+import type { Mode, ModeSelector } from "./components/mode-selector";
+import type { PulseIndex } from "./components/pulse-index";
+import { features } from "./features";
 import { createTranslator, DEFAULT_LOCALE, detectLocale, readSessionLocale } from "./i18n";
 import { resolvePulseUrl, resolveStreamUrl } from "./live/config";
-import { deriveSnapshot } from "./pulse/model";
 import type { LiveHandle } from "./live/start";
 import type { ReplayController, ReplayState } from "./replay/controller";
 import type { PulsoMap } from "./map/map";
@@ -48,26 +47,19 @@ map.setAttribute("role", "region");
 map.setAttribute("aria-label", t("map.label"));
 
 const clock = createClock(t, locale);
-const pulse = createPulseIndex(t);
 
-// Índice Pulso (M7.3): la vista va en el JS inicial; el cliente (red + zod) es un chunk aparte.
-// Solo habla con nuestra API (`/api/v1/pulse`, derivada de la misma configuración que el stream).
+// v1 simple: Escuchar, Reproducir, Pulso, clip y compartir son flags (`features.ts`). Apagados no se
+// importa ni se monta nada de ellos. La cámara en el hash sigue activa (desacoplada de Reproducir).
+
 const streamUrl = resolveStreamUrl(
   { dev: import.meta.env.DEV, configured: import.meta.env.VITE_LIVE_URL as string | undefined },
   window.location.search,
   window.location,
 );
-const pulseUrl = streamUrl ? resolvePulseUrl(streamUrl) : null;
-if (pulseUrl) {
-  void import("./pulse/start")
-    .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
-    .catch((error: unknown) => {
-      console.error("[pulse] no se pudo iniciar", error);
-      pulse.render(deriveSnapshot(null, "error", now()));
-    });
-} else {
-  pulse.render(deriveSnapshot(null, "nodata", now()));
-}
+
+const top = document.createElement("header");
+top.className = "shell__top";
+top.append(clock.element);
 
 // Modo Reproducir (M6.3): chunk diferido; se carga la primera vez que se elige. Cambiar de modo no
 // recarga la escena: solo cambia de dónde leen las capas y qué hora usan (ver `replay/controller.ts`).
@@ -79,6 +71,14 @@ const liveReady = new Promise<LiveHandle | null>((resolve) => (settleLive = reso
 let liveHandle: LiveHandle | null = null;
 void liveReady.then((handle) => (liveHandle = handle));
 
+// Selector de modos / Escuchar: solo existe si hay algo más que «Ahora» (chunk diferido).
+let modes: ModeSelector | null = null;
+let settleModes: () => void = () => undefined;
+const modesReady = new Promise<void>((resolve) => (settleModes = resolve));
+if (!features.replay && !features.listen) settleModes();
+
+const getMode = (): Mode => modes?.getMode() ?? "view";
+
 function loadReplay(): Promise<ReplayController | null> {
   replay ??= Promise.all([import("./replay/start"), liveReady])
     .then(([m, live]) =>
@@ -89,7 +89,7 @@ function loadReplay(): Promise<ReplayController | null> {
             showTime: (ms) => clock.render(ms),
             refreshPalette: () => pulsoMap?.refreshPalette(),
             host: bottom,
-            before: modes.element,
+            before: modes?.element ?? null,
             search: window.location.search,
           })
         : null,
@@ -105,12 +105,18 @@ function loadReplay(): Promise<ReplayController | null> {
 
 // URL compartible (M6.4): el módulo es un chunk diferido y solo se descarga si hay hash (el estado
 // se lee antes de crear el mapa para nacer ya en la cámara del enlace) o tras el primer fotograma.
+// Sin Reproducir, del enlace solo cuenta la cámara.
 const sharedState: Promise<ShareState | null> =
   window.location.hash.length > 1
     ? import("./share/url-state")
-        .then((m) =>
-          m.parseShareHash(window.location.hash, createBaseNow(window.location.search)()),
-        )
+        .then((m) => {
+          const state = m.parseShareHash(
+            window.location.hash,
+            createBaseNow(window.location.search)(),
+          );
+          if (!state || features.replay) return state;
+          return state.camera ? { mode: "view" as const, camera: state.camera } : null;
+        })
         .catch(() => null)
     : Promise.resolve(null);
 
@@ -119,6 +125,7 @@ let pendingReplayState: Partial<ReplayState> | null = null;
 
 /** Abre Reproducir en el instante y la velocidad del enlace; en pausa salvo que pida `p=1`. */
 async function restoreReplay(state: ShareState): Promise<void> {
+  await modesReady;
   pendingReplayState = {
     mode: "replay",
     ...(state.t !== undefined ? { t: state.t } : {}),
@@ -126,14 +133,17 @@ async function restoreReplay(state: ShareState): Promise<void> {
     playing: state.play === true,
   };
   // La entrada real la hace la continuación de `modes.select` (mismo `loadReplay()`), con ese estado.
-  if (!modes.select("replay")) pendingReplayState = null;
+  if (!modes?.select("replay")) pendingReplayState = null;
 }
 
 // Escuchar (M7.1): interruptor independiente del modo. El AudioContext se crea dentro del gesto del
 // clic (política de autoplay, iOS); el motor es un chunk diferido que solo se descarga al activarlo.
 let audio: Promise<AudioHandle | null> | null = null;
 
-function toggleAudio(on: boolean): boolean | Promise<boolean> {
+function toggleAudio(
+  on: boolean,
+  createUserContext: () => AudioContextLike | null,
+): boolean | Promise<boolean> {
   if (!on) {
     const running = audio;
     audio = null;
@@ -150,7 +160,7 @@ function toggleAudio(on: boolean): boolean | Promise<boolean> {
             store: live.view,
             // Reproducir en pausa: solo las capas continuas (mar y viento).
             transientsEnabled: () =>
-              modes.getMode() !== "replay" || (replayController?.getState().playing ?? true),
+              getMode() !== "replay" || (replayController?.getState().playing ?? true),
           })
         : null,
     )
@@ -164,68 +174,62 @@ function toggleAudio(on: boolean): boolean | Promise<boolean> {
   });
 }
 
-const modes = createModeSelector(
-  t,
-  (mode) => {
-    void (async () => {
-      if (mode === "replay") {
-        const controller = await loadReplay();
-        const pending = pendingReplayState;
-        pendingReplayState = null;
-        if (modes.getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
-        try {
-          if (pending) controller?.applyState(pending);
-          else controller?.enter();
-        } catch (error) {
-          console.error("[replay] no se pudo entrar", error);
-          controller?.exit();
-          replay = null;
-          modes.select("view");
-          modes.status.textContent = t("replay.unavailable");
-          return;
-        }
-        if (!controller) {
-          modes.select("view");
-          modes.status.textContent = t("replay.unavailable");
-        }
-      } else if (replay) {
-        (await replay)?.exit();
+function onModeChange(mode: Mode): void {
+  void (async () => {
+    if (mode === "replay") {
+      const controller = await loadReplay();
+      const pending = pendingReplayState;
+      pendingReplayState = null;
+      if (getMode() !== "replay") return; // el usuario ya cambió de modo mientras cargaba
+      try {
+        if (pending) controller?.applyState(pending);
+        else controller?.enter();
+      } catch (error) {
+        console.error("[replay] no se pudo entrar", error);
+        controller?.exit();
+        replay = null;
+        modes?.select("view");
+        if (modes) modes.status.textContent = t("replay.unavailable");
+        return;
       }
-    })();
-  },
-  toggleAudio,
-);
-
-const top = document.createElement("header");
-top.className = "shell__top";
-top.append(clock.element, pulse.element);
+      if (!controller) {
+        modes?.select("view");
+        if (modes) modes.status.textContent = t("replay.unavailable");
+      }
+    } else if (replay) {
+      (await replay)?.exit();
+    }
+  })();
+}
 
 // Estado y créditos (M8.4): el panel abre con los créditos al instante; el estado es un chunk diferido.
 const creditsLink = createCreditsLink({ t, locale, streamUrl });
 
 const bottom = document.createElement("div");
 bottom.className = "shell__bottom";
-bottom.append(modes.element, modes.status, creditsLink);
+bottom.append(creditsLink);
+
+if (features.replay || features.listen) {
+  void Promise.all([
+    import("./components/mode-selector"),
+    features.listen ? import("./audio/context") : null,
+  ])
+    .then(([m, audioCtx]) => {
+      const createUserContext = audioCtx ? () => audioCtx.createUserContext() : () => null;
+      modes = m.createModeSelector(t, onModeChange, (on) => toggleAudio(on, createUserContext), {
+        modes: features.replay,
+        listen: features.listen,
+      });
+      bottom.prepend(modes.element, modes.status);
+    })
+    .catch((error: unknown) => console.error("[modes] no se pudo iniciar", error))
+    .finally(settleModes);
+}
 
 const shell = document.createElement("main");
 shell.className = "shell";
-// Clip vertical (M8.5): solo el botón va en el JS inicial; el motor es un chunk diferido al primer clic.
-const clip = createClipButton({
-  t,
-  context: () =>
-    pulsoMap
-      ? {
-          map: pulsoMap.map,
-          deck: liveHandle?.deck ?? null,
-          t,
-          locale,
-          now,
-          index: pulse.current,
-        }
-      : null,
-});
-
-shell.append(top, createLanguageSelector({ t, locale }), clip.element, bottom);
+const languageSelector = createLanguageSelector({ t, locale });
+shell.append(top, languageSelector, bottom);
 
 // Velo superior: funde el mar con el fondo hacia el horizonte (el color lo fija el mapa según la luz).
 const veil = document.createElement("div");
@@ -234,6 +238,49 @@ veil.setAttribute("aria-hidden", "true");
 
 app.append(map, veil, shell);
 clock.start(now);
+
+// Índice Pulso (M7.3): la vista y el cliente son chunks diferidos. Solo habla con nuestra API
+// (`/api/v1/pulse`, derivada de la misma configuración que el stream).
+if (features.pulse) {
+  const pulseUrl = streamUrl ? resolvePulseUrl(streamUrl) : null;
+  void Promise.all([import("./components/pulse-index"), import("./pulse/model")]).then(
+    ([view, model]) => {
+      const pulse: PulseIndex = view.createPulseIndex(t);
+      top.append(pulse.element);
+      if (pulseUrl) {
+        void import("./pulse/start")
+          .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
+          .catch((error: unknown) => {
+            console.error("[pulse] no se pudo iniciar", error);
+            pulse.render(model.deriveSnapshot(null, "error", now()));
+          });
+      } else {
+        pulse.render(model.deriveSnapshot(null, "nodata", now()));
+      }
+
+      // Clip vertical (M8.5): depende del índice (lo pone en su cuadro). El motor es otro chunk.
+      if (features.clip) {
+        void import("./clip/button").then((c) => {
+          const clip = c.createClipButton({
+            t,
+            context: () =>
+              pulsoMap
+                ? {
+                    map: pulsoMap.map,
+                    deck: liveHandle?.deck ?? null,
+                    t,
+                    locale,
+                    now,
+                    index: pulse.current,
+                  }
+                : null,
+          });
+          languageSelector.after(clip.element);
+        });
+      }
+    },
+  );
+}
 
 Promise.all([import("./map/map"), sharedState])
   .then(([{ createPulsoMap }, shared]) => {
@@ -263,9 +310,10 @@ Promise.all([import("./map/map"), sharedState])
               host: shell,
               t,
               initial: shared ?? { mode: "view" },
-              getMode: modes.getMode,
+              getMode,
               getReplay: () => replayController,
               restoreReplay,
+              showButton: features.share,
             }),
           )
           .catch((error: unknown) => console.error("[share] no se pudo iniciar", error));

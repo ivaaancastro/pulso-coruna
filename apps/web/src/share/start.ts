@@ -17,6 +17,8 @@ export interface StartShareOptions {
   getReplay(): ReplayController | null;
   /** Entra en Reproducir con ese instante/velocidad (el modo y la carga diferida son de `main.ts`). */
   restoreReplay(state: ShareState): Promise<void>;
+  /** Montar el botón de compartir (flag `share`). Sin él solo se sincroniza la cámara en el hash. */
+  showButton?: boolean;
   location?: Location;
   history?: History;
 }
@@ -83,11 +85,14 @@ export function startShare(opts: StartShareOptions): ShareHandle {
   };
   document.addEventListener("visibilitychange", onHide);
 
-  const button = createShareButton({
-    t: opts.t,
-    getUrl: () => buildShareUrl(loc, current(true)),
-  });
-  opts.host.append(button.element);
+  const button =
+    opts.showButton === false
+      ? null
+      : createShareButton({
+          t: opts.t,
+          getUrl: () => buildShareUrl(loc, current(true)),
+        });
+  if (button) opts.host.append(button.element);
 
   if (opts.initial.mode === "replay") {
     void opts
@@ -105,7 +110,7 @@ export function startShare(opts: StartShareOptions): ShareHandle {
       sync.stop();
       opts.map.off("moveend", onMoveEnd);
       document.removeEventListener("visibilitychange", onHide);
-      button.element.remove();
+      button?.element.remove();
     },
   };
 }
