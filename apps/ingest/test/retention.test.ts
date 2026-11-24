@@ -20,17 +20,19 @@ describe("cutoffFor (puro)", () => {
 
 describe("config de retención (puro)", () => {
   const base = { DATABASE_URL: "postgres://x" };
-  it("por defecto: activa, 30 días, cada hora", () => {
+  it("por defecto: desactivada (v1), 30 días, cada hora", () => {
     expect(loadConfig(base).retention).toMatchObject({
-      enabled: true,
+      enabled: false,
       rawDays: 30,
       intervalMs: 3_600_000,
     });
   });
   it("se configura por env y valida", () => {
-    const r = loadConfig({ ...base, RETENTION_ENABLED: "false", RETENTION_RAW_DAYS: "10" });
-    expect(r.retention).toMatchObject({ enabled: false, rawDays: 10 });
-    expect(() => loadConfig({ ...base, RETENTION_ENABLED: "quizá" })).toThrow(/RETENTION_ENABLED/);
+    const r = loadConfig({ ...base, INGEST_RETENTION_ENABLED: "true", RETENTION_RAW_DAYS: "10" });
+    expect(r.retention).toMatchObject({ enabled: true, rawDays: 10 });
+    expect(() => loadConfig({ ...base, INGEST_RETENTION_ENABLED: "quizá" })).toThrow(
+      /INGEST_RETENTION_ENABLED/,
+    );
     expect(() => loadConfig({ ...base, RETENTION_RAW_DAYS: "0" })).toThrow(/RETENTION_RAW_DAYS/);
     expect(() => loadConfig({ ...base, RETENTION_RAW_DAYS: "3" })).toThrow(/>= 7/);
   });

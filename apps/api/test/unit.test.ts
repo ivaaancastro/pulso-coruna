@@ -180,4 +180,13 @@ describe("config", () => {
     expect(() => loadConfig({ ...base, API_WS_MAX_PER_IP: "0" })).toThrow();
     expect(() => loadConfig({ ...base, API_TRUST_PROXY: "si" })).toThrow();
   });
+
+  it("API_FEATURES: vacía por defecto, admite lista y rechaza desconocidas", () => {
+    expect(loadConfig(base).features).toEqual([]);
+    expect(loadConfig({ ...base, API_FEATURES: " replay, share ,replay" }).features).toEqual([
+      "replay",
+      "share",
+    ]);
+    expect(() => loadConfig({ ...base, API_FEATURES: "replay,foo" })).toThrow(/API_FEATURES/);
+  });
 });

@@ -15,13 +15,16 @@ const sql = connect(config.databaseUrl, {
   statementTimeoutMs: config.dbStatementTimeoutMs,
 });
 
-// Pool propio para la retención: su statement_timeout es mucho mayor que el de la ingesta.
-const retentionSql = connect(config.databaseUrl, {
-  connectTimeoutS: config.dbConnectTimeoutS,
-  idleTimeoutS: config.dbIdleTimeoutS,
-  maxLifetimeS: config.dbMaxLifetimeS,
-  statementTimeoutMs: config.retention.statementTimeoutMs,
-});
+// Pool propio para la retención (su statement_timeout es mucho mayor que el de la ingesta). Solo existe
+// con INGEST_RETENTION_ENABLED=true: la v1 simple no agrega ni borra (la BD solo es el bus ingesta→API).
+const retentionSql = config.retention.enabled
+  ? connect(config.databaseUrl, {
+      connectTimeoutS: config.dbConnectTimeoutS,
+      idleTimeoutS: config.dbIdleTimeoutS,
+      maxLifetimeS: config.dbMaxLifetimeS,
+      statementTimeoutMs: config.retention.statementTimeoutMs,
+    })
+  : undefined;
 
 const boot = new AbortController();
 let scheduler: ReturnType<typeof startScheduler> | undefined;
@@ -39,7 +42,7 @@ const shutdown = async (signal: string, code = 0): Promise<void> => {
   await Promise.all([scheduler?.stop(), retention?.stop()]);
   await Promise.allSettled(adapters.map((a) => a.close?.()));
   await sql.end({ timeout: 5 }).catch(() => {});
-  await retentionSql.end({ timeout: 5 }).catch(() => {});
+  await retentionSql?.end({ timeout: 5 }).catch(() => {});
   process.exit(code);
 };
 process.on("SIGINT", () => void shutdown("SIGINT"));
@@ -69,10 +72,16 @@ if (!stopping) {
     logger,
     config,
   });
-  retention = startRetention(retentionSql, {
-    config: config.retention,
-    clock: systemClock,
-    logger,
-  });
+  if (retentionSql) {
+    retention = startRetention(retentionSql, {
+      config: config.retention,
+      clock: systemClock,
+      logger,
+    });
+  } else {
+    logger.info(
+      "retención apagada (INGEST_RETENTION_ENABLED=false): modo v1, sin agregados ni borrado",
+    );
+  }
   logger.info("ingesta en marcha", { sources: adapters.map((a) => a.id) });
 }
