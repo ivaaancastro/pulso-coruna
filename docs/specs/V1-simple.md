@@ -28,12 +28,15 @@ VITE_FEATURES=listen,replay,pulse,clip,share pnpm --filter @pulso/web build
 ```
 
 Por defecto (variable vacía o ausente) todas están apagadas. Nombres desconocidos se ignoran.
-El parser está en `apps/web/src/features.ts`.
+El parser está en `apps/web/src/features-parse.ts`; `vite.config.ts` lo lee y declara los flags
+como constantes de compilación (`__FEATURE_*__`, tipadas en `src/feature-flags.d.ts`). En `main.ts`
+se usan directamente (no a través de un módulo) para que el bundler elimine ramas e `import()`.
+Cambiar un flag exige reconstruir.
 
 ## Comportamiento
 
-- Con todo apagado no se descarga ni se monta nada de esas funciones: `main.ts` solo importa el
-  chunk `features-ui` si hay algún flag activo. No se monta el selector de modos si solo existe «Ahora»;
-  con solo `listen` aparece únicamente el botón Escuchar.
+- Con todo apagado el build ni siquiera emite los chunks de esas funciones (audio, replay, pulse,
+  clip). No se monta el selector de modos si solo existe «Ahora»; con solo `listen` aparece
+  únicamente el botón Escuchar.
 - Sin `replay`, un enlace con `mode=replay` se abre en «Ahora» y solo se aplica su cámara.
 - La API no cambia (los endpoints de pulso y clip siguen existiendo).

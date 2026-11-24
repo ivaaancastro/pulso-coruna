@@ -27,7 +27,3 @@ export function parseFeatures(raw: string | undefined | null): Features {
     share: has("share"),
   };
 }
-
-export const features: Features = parseFeatures(
-  import.meta.env.VITE_FEATURES as string | undefined,
-);

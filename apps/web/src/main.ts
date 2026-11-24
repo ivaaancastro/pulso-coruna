@@ -1,13 +1,13 @@
 import "./styles/tokens.css";
 import "./styles/shell.css";
-import type { AudioContextLike } from "./audio/context";
+import { createUserContext, type AudioContextLike } from "./audio/context";
 import type { AudioHandle } from "./audio/start";
 import { createClock } from "./components/clock";
 import { createLanguageSelector } from "./components/language-selector";
-import type { Mode, ModeSelector } from "./components/mode-selector";
-import type { PulseIndex } from "./components/pulse-index";
-import { features } from "./features";
+import { createModeSelector, type Mode, type ModeSelector } from "./components/mode-selector";
+import { createPulseIndex, type PulseIndex } from "./components/pulse-index";
 import { createTranslator, DEFAULT_LOCALE, detectLocale, readSessionLocale } from "./i18n";
+import { deriveSnapshot } from "./pulse/model";
 import { resolvePulseUrl, resolveStreamUrl } from "./live/config";
 import type { LiveHandle } from "./live/start";
 import type { ReplayController, ReplayState } from "./replay/controller";
@@ -75,7 +75,7 @@ void liveReady.then((handle) => (liveHandle = handle));
 let modes: ModeSelector | null = null;
 let settleModes: () => void = () => undefined;
 const modesReady = new Promise<void>((resolve) => (settleModes = resolve));
-if (!features.replay && !features.listen) settleModes();
+if (!__FEATURE_REPLAY__ && !__FEATURE_LISTEN__) settleModes();
 
 const getMode = (): Mode => modes?.getMode() ?? "view";
 
@@ -114,7 +114,7 @@ const sharedState: Promise<ShareState | null> =
             window.location.hash,
             createBaseNow(window.location.search)(),
           );
-          if (!state || features.replay) return state;
+          if (!state || __FEATURE_REPLAY__) return state;
           return state.camera ? { mode: "view" as const, camera: state.camera } : null;
         })
         .catch(() => null)
@@ -209,24 +209,18 @@ const bottom = document.createElement("div");
 bottom.className = "shell__bottom";
 bottom.append(creditsLink);
 
-// UI de las funciones con flag: un único chunk diferido, solo si hay alguna activa.
-const featuresUi =
-  features.replay || features.listen || features.pulse ? import("./features-ui") : null;
-
-if (featuresUi && (features.replay || features.listen)) {
-  void featuresUi
-    .then((ui) => {
-      modes = ui.createModeSelector(
-        t,
-        onModeChange,
-        (on) => toggleAudio(on, ui.createUserContext),
-        { modes: features.replay, listen: features.listen },
-      );
-      bottom.prepend(modes.element, modes.status);
-    })
-    .catch((error: unknown) => console.error("[modes] no se pudo iniciar", error))
-    .finally(settleModes);
+// Selector de modos / Escuchar: solo se crea con algún flag (constantes de compilación: apagado, el
+// código y sus imports se eliminan del bundle).
+if (__FEATURE_REPLAY__ || __FEATURE_LISTEN__) {
+  modes = createModeSelector(
+    t,
+    __FEATURE_REPLAY__ ? onModeChange : undefined,
+    __FEATURE_LISTEN__ ? (on) => toggleAudio(on, createUserContext) : undefined,
+    { modes: __FEATURE_REPLAY__, listen: __FEATURE_LISTEN__ },
+  );
+  bottom.prepend(modes.element, modes.status);
 }
+settleModes();
 
 const shell = document.createElement("main");
 shell.className = "shell";
@@ -243,41 +237,43 @@ clock.start(now);
 
 // Índice Pulso (M7.3): la vista y el cliente son chunks diferidos. Solo habla con nuestra API
 // (`/api/v1/pulse`, derivada de la misma configuración que el stream).
-if (featuresUi && features.pulse) {
+if (__FEATURE_PULSE__) {
   const pulseUrl = streamUrl ? resolvePulseUrl(streamUrl) : null;
-  void featuresUi.then((ui) => {
-    const pulse: PulseIndex = ui.createPulseIndex(t);
+  {
+    const pulse: PulseIndex = createPulseIndex(t);
     top.append(pulse.element);
     if (pulseUrl) {
       void import("./pulse/start")
         .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
         .catch((error: unknown) => {
           console.error("[pulse] no se pudo iniciar", error);
-          pulse.render(ui.deriveSnapshot(null, "error", now()));
+          pulse.render(deriveSnapshot(null, "error", now()));
         });
     } else {
-      pulse.render(ui.deriveSnapshot(null, "nodata", now()));
+      pulse.render(deriveSnapshot(null, "nodata", now()));
     }
 
     // Clip vertical (M8.5): depende del índice (lo pone en su cuadro). El motor es otro chunk.
-    if (features.clip) {
-      const clip = ui.createClipButton({
-        t,
-        context: () =>
-          pulsoMap
-            ? {
-                map: pulsoMap.map,
-                deck: liveHandle?.deck ?? null,
-                t,
-                locale,
-                now,
-                index: pulse.current,
-              }
-            : null,
+    if (__FEATURE_CLIP__) {
+      void import("./clip/button").then((c) => {
+        const clip = c.createClipButton({
+          t,
+          context: () =>
+            pulsoMap
+              ? {
+                  map: pulsoMap.map,
+                  deck: liveHandle?.deck ?? null,
+                  t,
+                  locale,
+                  now,
+                  index: pulse.current,
+                }
+              : null,
+        });
+        languageSelector.after(clip.element);
       });
-      languageSelector.after(clip.element);
     }
-  });
+  }
 }
 
 Promise.all([import("./map/map"), sharedState])
@@ -311,7 +307,7 @@ Promise.all([import("./map/map"), sharedState])
               getMode,
               getReplay: () => replayController,
               restoreReplay,
-              showButton: features.share,
+              showButton: __FEATURE_SHARE__,
             }),
           )
           .catch((error: unknown) => console.error("[share] no se pudo iniciar", error));

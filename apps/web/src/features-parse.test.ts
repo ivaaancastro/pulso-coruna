@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFeatures } from "./features";
+import { parseFeatures } from "./features-parse";
 
 describe("parseFeatures", () => {
   it("apaga todo por defecto", () => {
