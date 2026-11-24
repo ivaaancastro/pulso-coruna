@@ -209,17 +209,19 @@ const bottom = document.createElement("div");
 bottom.className = "shell__bottom";
 bottom.append(creditsLink);
 
-if (features.replay || features.listen) {
-  void Promise.all([
-    import("./components/mode-selector"),
-    features.listen ? import("./audio/context") : null,
-  ])
-    .then(([m, audioCtx]) => {
-      const createUserContext = audioCtx ? () => audioCtx.createUserContext() : () => null;
-      modes = m.createModeSelector(t, onModeChange, (on) => toggleAudio(on, createUserContext), {
-        modes: features.replay,
-        listen: features.listen,
-      });
+// UI de las funciones con flag: un único chunk diferido, solo si hay alguna activa.
+const featuresUi =
+  features.replay || features.listen || features.pulse ? import("./features-ui") : null;
+
+if (featuresUi && (features.replay || features.listen)) {
+  void featuresUi
+    .then((ui) => {
+      modes = ui.createModeSelector(
+        t,
+        onModeChange,
+        (on) => toggleAudio(on, ui.createUserContext),
+        { modes: features.replay, listen: features.listen },
+      );
       bottom.prepend(modes.element, modes.status);
     })
     .catch((error: unknown) => console.error("[modes] no se pudo iniciar", error))
@@ -241,45 +243,41 @@ clock.start(now);
 
 // Índice Pulso (M7.3): la vista y el cliente son chunks diferidos. Solo habla con nuestra API
 // (`/api/v1/pulse`, derivada de la misma configuración que el stream).
-if (features.pulse) {
+if (featuresUi && features.pulse) {
   const pulseUrl = streamUrl ? resolvePulseUrl(streamUrl) : null;
-  void Promise.all([import("./components/pulse-index"), import("./pulse/model")]).then(
-    ([view, model]) => {
-      const pulse: PulseIndex = view.createPulseIndex(t);
-      top.append(pulse.element);
-      if (pulseUrl) {
-        void import("./pulse/start")
-          .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
-          .catch((error: unknown) => {
-            console.error("[pulse] no se pudo iniciar", error);
-            pulse.render(model.deriveSnapshot(null, "error", now()));
-          });
-      } else {
-        pulse.render(model.deriveSnapshot(null, "nodata", now()));
-      }
-
-      // Clip vertical (M8.5): depende del índice (lo pone en su cuadro). El motor es otro chunk.
-      if (features.clip) {
-        void import("./clip/button").then((c) => {
-          const clip = c.createClipButton({
-            t,
-            context: () =>
-              pulsoMap
-                ? {
-                    map: pulsoMap.map,
-                    deck: liveHandle?.deck ?? null,
-                    t,
-                    locale,
-                    now,
-                    index: pulse.current,
-                  }
-                : null,
-          });
-          languageSelector.after(clip.element);
+  void featuresUi.then((ui) => {
+    const pulse: PulseIndex = ui.createPulseIndex(t);
+    top.append(pulse.element);
+    if (pulseUrl) {
+      void import("./pulse/start")
+        .then((m) => m.startPulse({ url: pulseUrl, now, view: pulse }))
+        .catch((error: unknown) => {
+          console.error("[pulse] no se pudo iniciar", error);
+          pulse.render(ui.deriveSnapshot(null, "error", now()));
         });
-      }
-    },
-  );
+    } else {
+      pulse.render(ui.deriveSnapshot(null, "nodata", now()));
+    }
+
+    // Clip vertical (M8.5): depende del índice (lo pone en su cuadro). El motor es otro chunk.
+    if (features.clip) {
+      const clip = ui.createClipButton({
+        t,
+        context: () =>
+          pulsoMap
+            ? {
+                map: pulsoMap.map,
+                deck: liveHandle?.deck ?? null,
+                t,
+                locale,
+                now,
+                index: pulse.current,
+              }
+            : null,
+      });
+      languageSelector.after(clip.element);
+    }
+  });
 }
 
 Promise.all([import("./map/map"), sharedState])
