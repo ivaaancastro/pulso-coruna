@@ -2,7 +2,7 @@
 
 export const CACHE_PREFIX = "pulso-";
 /** Teselas: caché propia, independiente de la versión del shell. Cambiar el sufijo para renovarlas. */
-export const TILES_CACHE = `${CACHE_PREFIX}tiles-v2`;
+export const TILES_CACHE = `${CACHE_PREFIX}tiles-v3`;
 export const TILES_PATH = "/tiles/coruna.pmtiles";
 
 export type Strategy =

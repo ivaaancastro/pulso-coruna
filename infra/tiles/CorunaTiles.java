@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.locationtech.jts.geom.Envelope;
 import org.openmaptiles.OpenMapTilesProfile;
 import org.openmaptiles.generated.OpenMapTilesSchema;
 
@@ -25,10 +26,22 @@ public class CorunaTiles {
   static class HeightsProfile extends OpenMapTilesProfile {
     private final Map<String, String> levels;
     long injected = 0;
+    /** Caja (coords. de mundo 0..1) del casco urbano: fuera de ella las teselas no pasan de BASE_MAXZOOM. */
+    private final Envelope detail;
+    private final int baseMaxZoom;
 
-    HeightsProfile(Planetiler planetiler, Map<String, String> levels) {
+    HeightsProfile(Planetiler planetiler, Map<String, String> levels, Envelope detail, int baseMaxZoom) {
       super(planetiler);
       this.levels = levels;
+      this.detail = detail;
+      this.baseMaxZoom = baseMaxZoom;
+    }
+
+    /** lon,lat -> coordenadas de mundo Web Mercator normalizadas (x a la derecha, y hacia abajo). */
+    static double worldX(double lon) { return (lon + 180) / 360; }
+    static double worldY(double lat) {
+      double r = Math.toRadians(lat);
+      return 0.5 - Math.log(Math.tan(Math.PI / 4 + r / 2)) / (2 * Math.PI);
     }
 
     @Override
@@ -43,6 +56,14 @@ public class CorunaTiles {
         }
       }
       super.processFeature(f, features);
+      // Detalle z15-z16 solo en el casco urbano: el resto del bbox se queda en BASE_MAXZOOM (sobremuestreo).
+      if (detail != null) {
+        for (FeatureCollector.Feature feat : features) {
+          if (feat.getMaxZoom() > baseMaxZoom && !detail.intersects(feat.getGeometry().getEnvelopeInternal())) {
+            feat.setMaxZoom(baseMaxZoom);
+          }
+        }
+      }
     }
 
     @Override
@@ -63,10 +84,21 @@ public class CorunaTiles {
 
     Path sources = args.file("download_dir", "download directory", Path.of("data", "sources"));
     String area = args.getString("area", "name of the extract", "monaco");
+    // --detail-bounds=lon_min,lat_min,lon_max,lat_max: zonas con zoom > --base-maxzoom solo dentro de esta caja.
+    String detailArg = args.getString("detail-bounds", "caja con detalle z15+ (vacío = todo el bbox)", "");
+    int baseMaxZoom = args.getInteger("base-maxzoom", "zoom máximo fuera de la caja de detalle", 14);
+    Envelope detail = null;
+    if (!detailArg.isBlank()) {
+      String[] b = detailArg.split(",");
+      double x0 = HeightsProfile.worldX(Double.parseDouble(b[0])), x1 = HeightsProfile.worldX(Double.parseDouble(b[2]));
+      double y0 = HeightsProfile.worldY(Double.parseDouble(b[3])), y1 = HeightsProfile.worldY(Double.parseDouble(b[1]));
+      detail = new Envelope(x0, x1, y0, y1);
+    }
+    final Envelope detailBox = detail;
     HeightsProfile[] holder = new HeightsProfile[1];
     Planetiler.create(args)
       .setDefaultLanguages(OpenMapTilesSchema.LANGUAGES)
-      .setProfile(pl -> holder[0] = new HeightsProfile(pl, levels))
+      .setProfile(pl -> holder[0] = new HeightsProfile(pl, levels, detailBox, baseMaxZoom))
       .addShapefileSource("EPSG:3857", OpenMapTilesProfile.LAKE_CENTERLINE_SOURCE,
         sources.resolve("lake_centerline.shp.zip"), "https://dev.maptiler.download/geodata/omt/lake_centerline.shp.zip")
       .addShapefileSource(OpenMapTilesProfile.WATER_POLYGON_SOURCE,

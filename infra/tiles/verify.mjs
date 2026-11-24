@@ -255,7 +255,6 @@ const required = [
   "transportation",
   "transportation_name",
   "place",
-  "boundary",
 ];
 for (const l of required) if (!layerCount[l]) fail.push(`falta la capa ${l}`);
 if (mb > maxMb) fail.push(`tamaño ${mb.toFixed(2)} MB > ${maxMb} MB`);

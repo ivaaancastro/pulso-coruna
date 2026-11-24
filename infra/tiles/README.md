@@ -1,6 +1,6 @@
 # Teselas propias de A Coruña (M2.1)
 
-OSM → PMTiles (vectorial, esquema OpenMapTiles 3.16) con [Planetiler](https://github.com/onthegomap/planetiler) v0.10.2. Resultado medido: **7,67 MB**, zooms 0–14, bbox `-8.58,43.27,-8.25,43.52` (bahía, península, Oleiros, Arteixo, Sada y Bergondo; el norte hasta 43,52 es mar abierto, para que la intro de cámara no muestre el borde de las teselas). Desde M2.7 las alturas de edificios usan plantas reales del Catastro (ver «Alturas reales»).
+OSM → PMTiles (vectorial, esquema OpenMapTiles 3.16) con [Planetiler](https://github.com/onthegomap/planetiler) v0.10.2. Resultado medido: **10,7 MiB (11,23 MB)**, zooms 0–16 (z15-16 solo en el casco urbano, ADR-0031), bbox `-8.58,43.27,-8.25,43.52` (bahía, península, Oleiros, Arteixo, Sada y Bergondo; el norte hasta 43,52 es mar abierto, para que la intro de cámara no muestre el borde de las teselas). Desde M2.7 las alturas de edificios usan plantas reales del Catastro (ver «Alturas reales»).
 
 ## Reproducir
 
@@ -26,7 +26,9 @@ Comando efectivo (lo que ejecuta `build.sh`):
 java -Xmx3g -cp .work/planetiler.jar CorunaTiles.java --heights=.work/heights.tsv --area=galicia \
   --download --download_dir=.work/sources \
   --tmpdir=.work/tmp --osm-path=.work/sources/galicia-261117.osm.pbf \
-  --bounds=-8.58,43.27,-8.25,43.52 --minzoom=0 --maxzoom=14 \
+  --bounds=-8.58,43.27,-8.25,43.52 --minzoom=0 --maxzoom=16 \
+  --exclude-layers=poi,housenumber,mountain_peak,aerodrome_label,aeroway,boundary \
+  --detail-bounds=-8.48,43.31,-8.34,43.40 --base-maxzoom=14 \
   --nodemap_type=sortedtable --storage=ram --output=.work/coruna.pmtiles --force
 ```
 
@@ -50,7 +52,7 @@ Medido (bbox completo): altura real 28,8 % → 75,1 % de los edificios; en A Cor
 
 ## Capas y atributos (OpenMapTiles)
 
-Zoom máximo 14 (más allá, sobremuestreo en cliente). Atributos relevantes para el estilo (M2.2):
+Zoom máximo 16 en el casco urbano (`DETAIL_BOUNDS`) y 14 en el resto del bbox (más allá, sobremuestreo en cliente); las capas `poi`, `housenumber`, `mountain_peak`, `aerodrome_label`, `aeroway` y `boundary` no se generan (el estilo no las usa). Atributos relevantes para el estilo (M2.2):
 
 | Capa                                                                            | Contenido                        | Atributos clave                                                                                                              |
 | ------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -79,7 +81,7 @@ Comprueba cabecera PMTiles v3, tamaño frente al límite (sale con código 1 si 
 
 ```
 Tamaño:     7.67 MB (límite 15 MB)
-Zooms:      0-14
+Zooms:      0-16
 Bbox:       -8.5800, 43.2700, -8.2500, 43.5200
 Tiles:      284 direccionados; 170 en z14
 Edificios z14: 798 features (multipolígonos agrupados), ~94452 polígonos/anillos
