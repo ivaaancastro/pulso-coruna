@@ -53,7 +53,7 @@ export const EXTRUSION_BASE: ExpressionSpecification = ["get", "render_min_heigh
 
 export function buildLayers(p: MapPalette): LayerSpecification[] {
   const textFont = [FONT];
-  const halo = { "text-halo-color": p.bg, "text-halo-width": 1.5, "text-halo-blur": 0.5 };
+  const halo = { "text-halo-color": p.bg, "text-halo-width": 2, "text-halo-blur": 0.4 };
 
   return [
     { id: "background", type: "background", paint: { "background-color": p.land } },
@@ -121,7 +121,7 @@ export function buildLayers(p: MapPalette): LayerSpecification[] {
       minzoom: 13,
       filter: ["all", isLine, notTunnel, ["in", ["get", "class"], ["literal", ROAD_CLASSES_MINOR]]],
       layout: { "line-join": "round" },
-      paint: { "line-color": p.road, "line-width": zoomWidth(13, 0.4, 17, 2.2) },
+      paint: { "line-color": p.road, "line-width": zoomWidth(13, 0.6, 15, 1, 17, 3) },
     },
     {
       id: "road-mid",
@@ -131,7 +131,7 @@ export function buildLayers(p: MapPalette): LayerSpecification[] {
       minzoom: 11,
       filter: ["all", isLine, notTunnel, ["in", ["get", "class"], ["literal", ROAD_CLASSES_MID]]],
       layout: { "line-join": "round" },
-      paint: { "line-color": p.roadMajor, "line-width": zoomWidth(11, 0.4, 17, 3.2) },
+      paint: { "line-color": p.roadMajor, "line-width": zoomWidth(11, 0.6, 15, 1.4, 17, 4) },
     },
     {
       id: "road-major",
@@ -141,7 +141,7 @@ export function buildLayers(p: MapPalette): LayerSpecification[] {
       minzoom: 9,
       filter: ["all", isLine, notTunnel, ["in", ["get", "class"], ["literal", ROAD_CLASSES_MAJOR]]],
       layout: { "line-join": "round" },
-      paint: { "line-color": p.roadMajor, "line-width": zoomWidth(9, 0.6, 17, 4.6) },
+      paint: { "line-color": p.roadMajor, "line-width": zoomWidth(9, 0.8, 14, 1.6, 17, 5.4) },
     },
     {
       // z13: la tesela trae huellas sin atributos de altura; se pintan planas hasta z14.
@@ -173,7 +173,7 @@ export function buildLayers(p: MapPalette): LayerSpecification[] {
           60,
           p.buildingTall,
         ],
-        "fill-extrusion-opacity": 0.94,
+        "fill-extrusion-opacity": 1,
         "fill-extrusion-vertical-gradient": true,
       },
     },
